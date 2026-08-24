@@ -12,8 +12,8 @@ esbuild re-optimize (minutes on Windows) on every first page load.
 (``optimizeDeps.force`` via the ``VITE_FORCE`` env var, read in
 ``client/vite.config.js``) -- the documented recovery for an
 "Outdated Optimize Dep" error. Env var rather than argv because the
-client spec runs ``pnpm run client:start`` -> ``npm run start`` and a
-``--force`` suffix does not survive the double ``npm run`` indirection.
+client spec runs ``bun run client:start`` -> ``npm run start`` and a
+``--force`` suffix does not survive the double ``run`` indirection.
 
 uvicorn ``--reload``-style restarts (exit code 1) used to cascade-kill
 the frontend under ``concurrently --kill-others``. Our supervisor
@@ -60,7 +60,7 @@ def _build_specs(
     return [
         ServiceSpec(
             name="client",
-            argv=["pnpm", "run", "client:start"],
+            argv=["bun", "run", "client:start"],
             cwd=root,
             ready_port=cfg.client_port,
             ready_timeout=60.0,

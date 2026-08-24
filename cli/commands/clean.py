@@ -29,6 +29,7 @@ from cli._common import free_all_ports, preflight
 _TARGETS = [
     "node_modules",
     "client/node_modules",
+    "server/nodejs/node_modules",
     "client/dist",
     "client/.vite",
     # Python venvs. ``server/.venv`` is uv's default location for the

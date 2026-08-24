@@ -84,7 +84,7 @@ class _JobObject:
 
     # Win10/11 supports nested jobs, but the parent must allow it. When
     # the supervisor was launched from another process that already put
-    # us inside a Job Object (npm/pnpm/conhost wrappers occasionally do
+    # us inside a Job Object (npm/bun/conhost wrappers occasionally do
     # this), AssignProcessToJobObject succeeds at the API level but the
     # child silently lands in the OUTER job, not ours. We detect that
     # via IsProcessInJob in ``add()`` and warn explicitly.
@@ -148,7 +148,7 @@ class _JobObject:
                 sys.stderr.write(
                     f"[supervisor] WARN: pid={pid} did not enter our Job Object "
                     f"(already in another job: {in_some_job}). Likely cause: "
-                    f"this supervisor was launched from a wrapper (npm/pnpm/conhost) "
+                    f"this supervisor was launched from a wrapper (npm/bun/conhost) "
                     f"whose own Job Object disallows nesting. Tree-kill on abnormal "
                     f"supervisor exit will not reach this child.\n"
                 )

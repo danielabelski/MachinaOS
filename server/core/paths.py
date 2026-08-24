@@ -61,7 +61,7 @@ under ``<DATA_DIR>/`` means a single ``mv ~/.opencompany /backup``
 carries the entire OpenCompany footprint.
 
 Out of scope: globally-installed binaries (Himalaya — system
-package manager) and npm `package.json` deps managed by pnpm (none
+package manager) and npm `package.json` deps managed by bun (none
 remain after the WhatsApp migration).
 
 Shipped example workflows live at ``<repo>/.opencompany/workflows/`` —

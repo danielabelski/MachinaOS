@@ -13,7 +13,7 @@ project-local CLI. The binary lives at
 ``<package_dir("browser")>/npm/node_modules/.bin/agent-browser[.cmd]``
 and is installed via ``npm install agent-browser --prefix <...>`` on
 first use. No dependency on the workspace ``package.json`` /
-``node_modules`` / pnpm lockfile.
+``node_modules`` / bun lockfile.
 
 All subprocess calls use ``shell=False`` with list argv — Python handles
 Windows .CMD files natively via ``CreateProcessW``, avoiding the BatBadBut

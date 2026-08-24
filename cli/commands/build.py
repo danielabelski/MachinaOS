@@ -1,7 +1,7 @@
 """``company build`` -- replaces ``scripts/build.js``.
 
-Checks toolchain (node, npm, python, uv), then runs the 6-step
-build: ``.env`` bootstrap -> ``pnpm install`` -> client build ->
+Checks toolchain (node, bun, python, uv), then runs the 6-step
+build: ``.env`` bootstrap -> ``bun install`` -> client build ->
 Node.js sidecar bundle -> ``uv sync`` -> compile Python bytecode
 -> pooch-fetch Temporal binary.
 
@@ -191,6 +191,9 @@ def build_command() -> None:
     npm_version = capture(["npm", "--version"])
     console.print(f"  npm: {npm_version or '[red]not found[/]'}")
 
+    bun_version = capture(["bun", "--version"])
+    console.print(f"  bun: {bun_version or '[red]not found[/]'}")
+
     python_cmd = _which_python()
     if not python_cmd or not _check_python(python_cmd):
         error_block(
@@ -225,12 +228,14 @@ def build_command() -> None:
 
     if not is_postinstall:
         console.log("[1/6] Installing dependencies...")
-        run(["pnpm", "install"], cwd=root)
+        run(["bun", "install"], cwd=root)
     else:
         console.log("[1/6] Dependencies already installed by package manager")
 
     console.log("[2/6] Building client...")
-    run(["pnpm", "--filter", "react-flow-client", "run", "build"], cwd=root)
+    # bun requires --filter AFTER the ``run`` subcommand (before it, bun
+    # treats the next word as a script name).
+    run(["bun", "run", "--filter", "react-flow-client", "build"], cwd=root)
 
     # Pre-bundle the Node.js sidecar (server/nodejs) with esbuild so the
     # production `npm start` runs `node dist/index.js` instead of
@@ -238,7 +243,7 @@ def build_command() -> None:
     # whenever the executor is launched. The bundle keeps Express
     # external (it stays in node_modules), so the patch flow is intact.
     console.log("[3/6] Building Node.js sidecar...")
-    run(["pnpm", "--filter", "opencompany-nodejs-executor", "run", "build"], cwd=root)
+    run(["bun", "run", "--filter", "opencompany-nodejs-executor", "build"], cwd=root)
 
     console.log("[4/6] Installing Python dependencies...")
     # ``server/`` is its own standalone uv project; ``uv sync`` at that

@@ -132,7 +132,7 @@ function doctor() {
   }
 
   const has = (f) => { try { readFileSync(resolve(ROOT, f)); return true; } catch { return false; } };
-  console.log(has('pnpm-lock.yaml') ? '    Lockfile: pnpm-lock.yaml' : has('package-lock.json') ? '    Lockfile: package-lock.json' : '    Lockfile: Not Found');
+  console.log(has('bun.lock') ? '    Lockfile: bun.lock' : has('package-lock.json') ? '    Lockfile: package-lock.json' : '    Lockfile: Not Found');
   console.log(has('server/.venv/pyvenv.cfg') ? '    Python venv: OK' : '    Python venv: Missing (run company build)');
   console.log('');
 }
@@ -151,7 +151,7 @@ function run(script, extraArgs = []) {
   // ``-m cli <cmd>``. Skips the ``npm run`` shim that previously re-
   // resolved the system ``python`` (which on PEP 668 systems lacks
   // the CLI runtime deps -- typer/rich/anyio/psutil). The npm-run
-  // path stays as the source-checkout fallback (``pnpm run start``
+  // path stays as the source-checkout fallback (``bun run start``
   // uses package.json scripts directly).
   const venvPy = venvPython();
   if (venvPy) {

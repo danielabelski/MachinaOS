@@ -356,7 +356,7 @@ class BrowserNode(ActionNode):
         svc = get_browser_service()
         if not svc:
             raise RuntimeError(
-                "agent-browser not installed. Run: pnpm install && npx agent-browser install",
+                "agent-browser not installed. Run: bun install && npx agent-browser install",
             )
 
         op = params.operation

@@ -119,7 +119,7 @@ def server_venv_python(root: Path | None = None) -> Path:
 
 
 def node_modules_dir(root: Path | None = None) -> Path:
-    """The pnpm/npm-installed dependency tree at the workspace root."""
+    """The bun/npm-installed dependency tree at the workspace root."""
     return _root(root) / "node_modules"
 
 

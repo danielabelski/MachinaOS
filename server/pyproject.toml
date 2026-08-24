@@ -204,11 +204,11 @@ aws = [
 # PEP 735 dependency groups — included by ``uv sync`` (and ``uv sync
 # --group dev``) by default, but NOT shipped to PyPI consumers. Pre-fix
 # the dev tools lived in ``[project.optional-dependencies].dev`` which
-# meant every ``pnpm install`` (= ``uv sync`` without ``--extra dev``)
+# meant every ``bun install`` (= ``uv sync`` without ``--extra dev``)
 # uninstalled them — broke contributor test workflows on every install
 # / dependency bump. Moving them here keeps ``pip install
 # opencompany-server`` lean for end-users while making contributor
-# checkouts test-ready straight out of ``pnpm install``.
+# checkouts test-ready straight out of ``bun install``.
 dev = [
     "pytest>=8.0.0",
     "pytest-asyncio>=0.24.0",
