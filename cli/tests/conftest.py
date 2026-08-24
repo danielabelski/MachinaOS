@@ -1,19 +1,21 @@
 """Shared fixtures for ``company`` tests.
 
 The release-pipeline config tests need to read files that live in
-pnpm workspace members (``client/``, ``server/nodejs/``) without
+bun workspace members (``client/``, ``server/nodejs/``) without
 hardcoding those filesystem paths in every test. The canonical
-oracle for "where does workspace X live" is pnpm itself:
-
-    pnpm list --json --only-projects --recursive --depth 0
-
-That returns every workspace member's name + absolute path. We invoke
-it once per test session and expose the result as a name → path map.
+source for "where does workspace X live" is the root ``package.json``
+``workspaces`` array (bun's SSOT — ``pnpm-workspace.yaml`` is gone and
+bun has no machine-readable workspace-listing command), so the fixture
+parses it directly: expand each entry (globs included), read every
+member's ``package.json``, and map package name → absolute path.
 
 Tests then reference workspaces by their npm package name (a stable
 identifier defined in each ``package.json``) rather than by path. If
 ``server/nodejs/`` is later renamed or moved, the test suite keeps
-working — pnpm resolves the new location.
+working — the ``workspaces`` array resolves the new location. Parsing
+in-process (no subprocess) also removes the old skip-when-PM-missing
+hazard: a broken ``workspaces`` array now fails loudly instead of
+silently skipping the config tests.
 
 For files that don't live inside a workspace (``.github/workflows``,
 ``scripts/install.js``), tests resolve via the ``root`` fixture which
@@ -24,13 +26,11 @@ canonical worktree-aware helper.
 from __future__ import annotations
 
 import json
-import subprocess
 from pathlib import Path
 
 import pytest
 
 from cli.platform_ import project_root
-from cli.run import which_argv
 
 
 @pytest.fixture(scope="session")
@@ -41,29 +41,22 @@ def root() -> Path:
 
 @pytest.fixture(scope="session")
 def workspace_members(root: Path) -> dict[str, Path]:
-    """Map of pnpm workspace member name → absolute filesystem path.
+    """Map of bun workspace member name → absolute filesystem path.
 
-    Resolved once per session by shelling out to ``pnpm``. The ``--depth 0``
-    + ``--only-projects`` flags trim the output to just workspace members
-    (no transitive npm deps). Skips with a clear message if pnpm isn't
-    installed so the rest of the suite remains runnable.
-
-    Reference: https://pnpm.io/cli/list
+    Parsed once per session from the root ``package.json`` ``workspaces``
+    array. Entries may be globs, so non-literal patterns expand via
+    ``Path.glob``. Doubles as a regression lock that ``workspaces`` holds
+    real member *paths* (bun's pnpm-lock migrator has been observed to
+    write package names instead): a bogus entry yields no ``package.json``
+    and the dependent tests fail on the missing member name.
     """
-    # which_argv resolves Windows .cmd / .bat shims via PATHEXT — the
-    # same helper cli.run uses everywhere else for the same reason.
-    argv = which_argv(
-        ["pnpm", "list", "--json", "--only-projects", "--recursive", "--depth", "0"]
-    )
-    try:
-        out = subprocess.run(
-            argv,
-            cwd=root,
-            check=True,
-            capture_output=True,
-            text=True,
-        )
-    except (FileNotFoundError, subprocess.CalledProcessError) as e:
-        pytest.skip(f"pnpm workspace listing unavailable ({e}); skipping config tests")
-    members = json.loads(out.stdout)
-    return {m["name"]: Path(m["path"]) for m in members}
+    pkg = json.loads((root / "package.json").read_text(encoding="utf-8"))
+    members: dict[str, Path] = {}
+    for pattern in pkg.get("workspaces", []):
+        dirs = sorted(root.glob(pattern)) if "*" in pattern else [root / pattern]
+        for d in dirs:
+            manifest = d / "package.json"
+            if manifest.is_file():
+                m = json.loads(manifest.read_text(encoding="utf-8"))
+                members[m["name"]] = d.resolve()
+    return members

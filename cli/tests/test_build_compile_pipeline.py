@@ -2,7 +2,7 @@
 
 Covers the two new steps wired into ``cli.commands.build.build_command``:
 
-- ``[3/6] Building Node.js sidecar`` -> ``pnpm --filter opencompany-nodejs-executor run build``
+- ``[3/6] Building Node.js sidecar`` -> ``bun run --filter opencompany-nodejs-executor build``
 - ``[5/6] Compiling Python bytecode`` -> ``uv run python -m compileall -q -j 0 ...``
 
 The orchestrator is exercised once per test with every external surface
@@ -118,23 +118,26 @@ def test_source_dirs_constant_covers_runtime_modules():
 # ---------------------------------------------------------------------------
 
 
-def test_build_invokes_sidecar_pnpm_filter(tmp_path: Path):
+def test_build_invokes_sidecar_bun_filter(tmp_path: Path):
     """[3/6] Build Node.js sidecar via the package's ``build`` script."""
     captured = _run_build_capture_invocations(tmp_path)
     match = _find_call(
         captured,
-        lambda c: c[:1] == ["pnpm"]
+        lambda c: c[:2] == ["bun", "run"]
         and "--filter" in c
         and "opencompany-nodejs-executor" in c,
     )
     assert match is not None, (
-        "expected `pnpm --filter opencompany-nodejs-executor run build` in "
+        "expected `bun run --filter opencompany-nodejs-executor build` in "
         f"{[c['argv'] for c in captured]}"
     )
     argv = match[1]["argv"]
-    assert (
-        "run" in argv and "build" in argv
-    ), f"sidecar step must invoke the `build` script, got {argv}"
+    assert "build" in argv, f"sidecar step must invoke the `build` script, got {argv}"
+    # bun rejects --filter BEFORE the run subcommand (it would parse the
+    # next word as a script name) — lock the flag position.
+    assert argv.index("--filter") > argv.index("run"), (
+        f"--filter must come after the `run` subcommand for bun, got {argv}"
+    )
 
 
 def test_sidecar_build_runs_after_client_build(tmp_path: Path):
@@ -352,8 +355,8 @@ def test_only_one_temporal_install_invocation(tmp_path: Path):
 def test_pipeline_order_client_then_sidecar_then_uv_then_compileall(tmp_path: Path):
     """Full ordering invariant for the new pipeline:
 
-    1. client build  (``pnpm --filter react-flow-client run build``)
-    2. sidecar bundle (``pnpm --filter opencompany-nodejs-executor run build``)
+    1. client build  (``bun run --filter react-flow-client build``)
+    2. sidecar bundle (``bun run --filter opencompany-nodejs-executor build``)
     3. uv sync       (``uv sync``)
     4. compileall    (``uv run python -m compileall ...``)
 

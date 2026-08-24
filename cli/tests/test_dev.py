@@ -60,7 +60,7 @@ def test_build_specs_dev_uses_vite_when_available(tmp_path: Path):
     cfg = _cfg()
     specs = dev._build_specs(tmp_path, cfg, daemon=False, use_vite=True)
     by_name = {s.name: s for s in specs}
-    assert by_name["client"].argv[:3] == ["pnpm", "run", "client:start"]
+    assert by_name["client"].argv[:3] == ["bun", "run", "client:start"]
 
 
 def test_build_specs_dev_without_vite_is_backend_only(tmp_path: Path):

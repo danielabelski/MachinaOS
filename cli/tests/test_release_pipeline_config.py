@@ -6,7 +6,7 @@ TypeScript, esbuild, GitHub Actions, ``scripts/install.js``).
 
 Reused infrastructure (no path strings duplicated across tests):
 
-  ``conftest.workspace_members``     → name → Path map from ``pnpm list``
+  ``conftest.workspace_members``     → name → Path map from root ``workspaces``
   ``conftest.root``                  → project_root() for top-level files
   ``cli.commands.build.COMPILEALL_SOURCE_DIRS``
                                      → SSOT for the bytecode-compile path
@@ -209,14 +209,18 @@ def test_client_typecheck_delegates_to_the_root_gate(
     Placement is forced, not stylistic: ``client`` already depends on
     ``typescript@^5.9.3`` (typescript-eslint needs the JS API), and one
     manifest cannot declare the same package twice. Worse, ``typescript``
-    7 and 5 both ship a ``tsc`` bin, so co-locating them would let pnpm's
-    bin-link conflict resolution decide which compiler gates CI.
+    7 and 5 both ship a ``tsc`` bin, so co-locating them would leave the
+    package manager's bin-link conflict resolution deciding which
+    compiler gates CI. (Under bun's isolated linker each package resolves
+    its own ``.bin/tsc`` — root gets 7, client gets 5 — verified during
+    the pnpm→bun migration.)
 
     The client script therefore delegates upward, which keeps the CI
-    command (``pnpm --filter react-flow-client run typecheck``) and its
-    guard below unchanged.
+    command (``bun run --filter react-flow-client typecheck``) and its
+    guard below unchanged. Note bun 1.4 requires the ``--cwd=..`` form —
+    the space-separated ``--cwd ..`` is rejected by ``bun run``.
     """
-    assert client_pkg["scripts"].get("typecheck") == "pnpm -w run typecheck", (
+    assert client_pkg["scripts"].get("typecheck") == "bun --cwd=.. run typecheck", (
         "client typecheck must delegate to the root gate, got "
         f"{client_pkg['scripts'].get('typecheck')!r}"
     )
@@ -263,10 +267,12 @@ def test_client_keeps_typescript_5_for_typescript_eslint(client_pkg: dict):
     """Do NOT 'clean this up' by unifying on one TypeScript.
 
     ``typescript-eslint`` loads the TypeScript API at module scope and
-    declares a peer range that excludes 6.x and 7.x. With
-    ``strict-peer-dependencies=true`` in .npmrc, bumping this is not a
-    warning — it is a hard ``pnpm install`` failure, and CI installs with
-    ``--frozen-lockfile``.
+    declares a peer range that excludes 6.x and 7.x. Under pnpm,
+    ``strict-peer-dependencies=true`` made a bad bump a hard install
+    failure; bun has no strict-peer mode and never errors on peer
+    conflicts (oven-sh/bun#9135), so THIS TEST is now the only guard
+    keeping the client on a TypeScript major that typescript-eslint's
+    peer range accepts.
     """
     version = client_pkg.get("dependencies", {}).get("typescript")
     assert version is not None and version.startswith("^5."), (
@@ -331,8 +337,9 @@ def test_vite_config_chunk_warning_below_one_megabyte(client_dir: Path):
 def test_tsconfig_drops_baseurl_and_sets_typeroots(client_dir: Path):
     """TS 7 / tsgo removed the deprecated ``baseUrl`` option.
     ``typeRoots`` is the explicit replacement for telling the compiler
-    where to find ``@types/*`` packages — needed because pnpm's
-    symlinked ``node_modules`` layout can confuse auto-discovery.
+    where to find ``@types/*`` packages — needed because the symlinked
+    ``node_modules`` layout (pnpm before, bun's isolated linker now)
+    can confuse auto-discovery.
     """
     src = (client_dir / "tsconfig.json").read_text(encoding="utf-8")
     assert not re.search(r'^\s*"baseUrl"', src, re.MULTILINE), (
@@ -342,7 +349,7 @@ def test_tsconfig_drops_baseurl_and_sets_typeroots(client_dir: Path):
     assert re.search(
         r'"typeRoots":\s*\[\s*"\./node_modules/@types"\s*\]',
         src,
-    ), "typeRoots must point at ./node_modules/@types for tsgo + pnpm"
+    ), "typeRoots must point at ./node_modules/@types for tsgo + symlinked node_modules"
     # The path alias must survive the baseUrl removal.
     assert re.search(
         r'"@/\*":\s*\["\./src/\*"\]', src
@@ -352,7 +359,8 @@ def test_tsconfig_drops_baseurl_and_sets_typeroots(client_dir: Path):
 def test_vite_env_dts_references_google_maps(client_dir: Path):
     """``@types/google.maps`` exposes a global ``google.maps`` namespace
     (no module export). tsgo's auto-discovery doesn't pick it up
-    reliably through pnpm's symlinks, so the canonical Google-recommended
+    reliably through symlinked node_modules (pnpm before, bun's isolated
+    linker now), so the canonical Google-recommended
     pattern (a triple-slash reference) is applied once in the
     Vite-injected ambient declarations file.
 
@@ -388,22 +396,29 @@ def _step_by_name(job: dict, step_name: str) -> dict | None:
     return None
 
 
-def test_predeploy_typecheck_step_routes_through_pnpm_script(predeploy_yml: dict):
+def test_predeploy_typecheck_step_routes_through_workspace_filter(predeploy_yml: dict):
     """The CI typecheck step must invoke the npm script (which delegates
     up to the root TypeScript 7 gate) rather than calling ``tsc``
     directly. Keeps the compiler choice in one place — the ROOT
     ``package.json`` — so it can change without editing the workflow.
+
+    Bun's flag placement matters: ``--filter`` must come AFTER the
+    ``run`` subcommand, and the script name goes last (no ``run`` between
+    the filter pattern and the script, unlike pnpm).
     """
     job = predeploy_yml["jobs"]["build-and-lint"]
     step = _step_by_name(job, "TypeScript check")
     assert step is not None, "predeploy.yml must define a `TypeScript check` step"
     cmd = step.get("run", "")
-    assert (
-        "run typecheck" in cmd
-    ), f"predeploy.yml typecheck step must call `pnpm ... run typecheck`, got {cmd!r}"
+    assert cmd.startswith("bun run --filter"), (
+        f"predeploy.yml typecheck step must call `bun run --filter ... typecheck`, got {cmd!r}"
+    )
     assert (
         CLIENT_PKG_NAME in cmd
     ), f"predeploy.yml typecheck step must filter to {CLIENT_PKG_NAME}, got {cmd!r}"
+    assert cmd.rstrip().endswith("typecheck"), (
+        f"predeploy.yml typecheck step must end with the script name, got {cmd!r}"
+    )
     assert "tsc --noEmit" not in cmd, (
         "predeploy.yml still calls `tsc --noEmit` directly — switch to "
         "the typecheck script so the root TypeScript 7 gate is used"
@@ -509,6 +524,55 @@ def test_preinstall_does_not_touch_unrelated_unscoped_opencompany_temps(
 def test_preinstall_never_removes_current_package_directory(preinstall_js_src: str):
     assert "const currentPackageDir = resolve(__dirname, '..')" in preinstall_js_src
     assert "if (fullPath === currentPackageDir) continue" in preinstall_js_src
+
+
+def test_preinstall_gates_source_checkouts_to_bun(preinstall_js_src: str):
+    """The dev-PM gate keys on ``bunfig.toml`` (committed, excluded from
+    the npm tarball by the ``files`` allowlist) and on the user agent
+    starting with ``bun``. Bun's UA contains the literal ``npm/?``
+    substring, so a substring match on ``npm`` would misfire — the gate
+    must use a prefix check. End-user tarball installs (no bunfig.toml)
+    must stay on npm without triggering the gate.
+    """
+    assert "bunfig.toml" in preinstall_js_src
+    assert "agent.startsWith('bun')" in preinstall_js_src
+    assert "pnpm-workspace" not in preinstall_js_src
+
+
+def test_root_manifest_declares_bun_as_the_dev_package_manager(root_pkg: dict):
+    """The ``packageManager`` pin is read by ``oven-sh/setup-bun`` in CI
+    and doubles as the read-floor for ``bun.lock`` (the ranged overrides
+    force lockfileVersion 3, which older bun cannot parse). The security
+    pins that lived in ``pnpm.overrides`` must survive at the top level.
+    """
+    assert root_pkg.get("packageManager", "").startswith("bun@")
+    assert "pnpm" not in root_pkg, (
+        "the pnpm config block must not resurface — its overrides moved to "
+        "the top-level 'overrides' key and peerDependencyRules has no bun "
+        "equivalent"
+    )
+    overrides = root_pkg.get("overrides", {})
+    assert overrides, "top-level overrides (security pins) must exist"
+    assert any("@<" in key or "@>=" in key for key in overrides), (
+        "the version-ranged override keys (e.g. 'esbuild@<0.28.1') must be "
+        "preserved verbatim"
+    )
+    assert root_pkg.get("workspaces") == ["client", "server/nodejs"], (
+        "workspaces must list both member PATHS — pnpm-workspace.yaml is gone "
+        "and bun reads only this array"
+    )
+
+
+def test_bunfig_pins_the_isolated_linker(root: Path):
+    """``linker = "isolated"`` preserves pnpm's phantom-dependency guard
+    (symlinked layout); the tsgo typeRoots / vite-env.d.ts workarounds
+    asserted above depend on it. bun.lock's configVersion=1 implies the
+    same default, but the explicit bunfig makes the choice reviewable.
+    """
+    src = (root / "bunfig.toml").read_text(encoding="utf-8")
+    assert re.search(r'^linker\s*=\s*"isolated"', src, re.MULTILINE), (
+        'bunfig.toml must pin linker = "isolated"'
+    )
 
 
 # ---------------------------------------------------------------------------

@@ -13,6 +13,7 @@ def test_targets_list_is_stable():
     assert clean._TARGETS == [
         "node_modules",
         "client/node_modules",
+        "server/nodejs/node_modules",
         "client/dist",
         "client/.vite",
         "server/.venv",
