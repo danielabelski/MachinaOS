@@ -27,7 +27,8 @@ named `tsgo` — stopped publishing the day before and must not come back.
   (it loads the TS API at module scope and its peer range excludes 6.x/7.x). A
   single manifest cannot declare `typescript` twice.
 - `typescript@7` and `typescript@5` **both** ship a `tsc` bin. Co-locating them
-  would leave pnpm's bin-link conflict resolution deciding which compiler gates
+  would leave bun's bin-link conflict resolution (under the isolated linker)
+  deciding which compiler gates
   CI. (No collision exists today only because `native-preview`'s bin was `tsgo`.)
 - Root declares no `typescript` and no `typescript-eslint`, so there is no peer
   conflict and nothing else claims `tsc`.
@@ -35,15 +36,15 @@ named `tsgo` — stopped publishing the day before and must not come back.
 - root `package.json` → `devDependencies: { "typescript": "7.0.2" }`, **exact —
   no caret**, so the compiler that gates CI never moves on an unrelated install;
   plus `"typecheck": "tsc --noEmit -p client/tsconfig.json"`
-- `client/package.json` → `"typecheck": "pnpm -w run typecheck"` (delegates up,
+- `client/package.json` → `"typecheck": "bun --cwd=.. run typecheck"` (delegates up,
   so the CI command and its guard test stay byte-identical)
   - `"typecheck:tsc": "tsc --noEmit"` — resolves client's own 5.9.3. A **second
     opinion for triaging a red gate**, NOT an equivalent check and NOT a revert
     path: the two compilers check different programs under different default
     rules. Nothing in CI runs it, so verify it independently before trusting it.
-- `.github/workflows/predeploy.yml` → `pnpm --filter react-flow-client run typecheck` in the
+- `.github/workflows/predeploy.yml` → `bun run --filter react-flow-client typecheck` in the
   `build-and-lint` job. (This gate lives in `predeploy.yml`, not `release.yml`.) The cross-OS
-  `test-build-start` matrix additionally runs `pnpm exec tsc --version`, because the TS7
+  `test-build-start` matrix additionally runs `bun run tsc --version`, because the TS7
   compiler is a per-platform Go binary delivered via `optionalDependencies` — the type-check
   itself runs only on ubuntu, so without that step the darwin-arm64 and win32-x64 binaries
   would be installed on every matrix run and never executed.
@@ -135,8 +136,8 @@ Idempotent on re-runs (compileall only rewrites stale pyc; esbuild is determinis
 
 ## Verification
 
-1. `pnpm --filter react-flow-client run typecheck` → <5s, zero errors.
-2. `ANALYZE=1 pnpm --filter react-flow-client run build` → open `client/dist/stats.html`. Expect: no chunk above 600 KB gz, main < 200 KB gz, `vendor-flow` split.
+1. `bun run --filter react-flow-client typecheck` → <5s, zero errors.
+2. `ANALYZE=1 bun run --filter react-flow-client build` → open `client/dist/stats.html`. Expect: no chunk above 600 KB gz, main < 200 KB gz, `vendor-flow` split.
 3. `cd server/nodejs && npm run build && node dist/index.js` → starts on :5682 in <100ms.
 4. `cd server && uv run python -m compileall -q -j 0 services` → plain `__pycache__/*.pyc` present (no `.opt-1.pyc` — nothing loads those).
 5. Cold-start: clean install + `company start > start.log 2>&1` → `Application startup complete` at ≤+50s (was +66.9s).

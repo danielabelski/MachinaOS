@@ -283,7 +283,7 @@ No new handlers were needed. The onboarding system reuses existing generic handl
 7. **Existing user migration**: With existing `workflow.db` where `examples_loaded=1` -- onboarding does NOT appear
 8. **Theme support**: Switch themes -- role-token cards and region tints adapt correctly
 9. **Replay**: Open Settings, click "Replay Welcome Guide" -- wizard reopens from step 0
-10. **TypeScript**: `pnpm run typecheck` (root gate, TypeScript 7) passes clean
+10. **TypeScript**: `bun run typecheck` (root gate, TypeScript 7) passes clean
 
 ## Key Files
 

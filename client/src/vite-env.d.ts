@@ -3,8 +3,9 @@
 /// <reference types="node" />
 // `google.maps` namespace is exposed via @types/google.maps. tsc 5.x
 // auto-loads all @types/* packages, but tsgo (TypeScript 7 native
-// preview) does not pick the namespace up reliably under pnpm's
-// symlinked node_modules layout — the explicit reference here is the
+// preview) does not pick the namespace up reliably under a symlinked
+// node_modules layout (pnpm before, bun's isolated linker now) — the
+// explicit reference here is the
 // canonical fix per https://developers.google.com/maps/documentation/javascript/using-typescript
 // and works for both compilers.
 

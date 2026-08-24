@@ -3,11 +3,11 @@
 Project supervisor CLI for the OpenCompany stack. The public command is
 `company`; the npm package is `@zeenie-ai/opencompany`, and the legacy `machina` bin
 remains as a deprecated compatibility alias. It is also backwards-compatible
-with `pnpm run start`/`dev`/`stop`/etc.
+with `bun run start`/`dev`/`stop`/etc.
 
 ## Install
 
-Done automatically in `scripts/postinstall.js` after `pnpm install`. To
+Done automatically in `scripts/postinstall.js` after `bun install`. To
 install manually:
 
 ```sh
@@ -24,7 +24,7 @@ company stop          # kill ports + orphans + temporal
 Or via the npm scripts (which now invoke the same Python CLI):
 
 ```sh
-pnpm run stop
+bun run stop
 ```
 
 ## Cross-platform notes

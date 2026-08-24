@@ -441,7 +441,7 @@ Dependency order: 0 → {1, 2, 3} parallelizable → 4 → 5 → 7; 6 can overla
 - No `Spinner`. Use `<Loader2 className="h-4 w-4 animate-spin" />` from `lucide-react` (installed by shadcn).
 - No `toast` facade. `import { toast } from 'sonner'` at call sites.
 
-**Verification:** `pnpm exec tsc --noEmit` green; `pnpm build` green; manually open one screen, confirm theme tokens render, confirm a `sonner` toast fires.
+**Verification:** `bun run tsc --noEmit` green; `bun run build` green; manually open one screen, confirm theme tokens render, confirm a `sonner` toast fires.
 
 **Effort:** 0.5 day.
 
@@ -558,7 +558,7 @@ Dependency order: 0 → {1, 2, 3} parallelizable → 4 → 5 → 7; 6 can overla
 - Remove from [client/package.json](../client/package.json): `antd`, `@ant-design/icons`, `styled-components`, `@types/styled-components`.
 - Broaden React Compiler scope to whole `src/`.
 
-**Verification:** full app regression; record bundle size before/after; `pnpm build` + `tsc --noEmit` green.
+**Verification:** full app regression; record bundle size before/after; `bun run build` + `tsc --noEmit` green.
 
 **Rollback:** keep `pre-phase-7` branch; antd reinstalls cleanly if regression found post-deploy.
 
@@ -593,9 +593,9 @@ Each phase behind no flag except Phase 6 (`VITE_USE_NODESPEC`). Rollback = singl
 
 ## End-to-end verification (post Phase 7)
 
-1. `pnpm install && pnpm build` — green, bundle size recorded.
-2. `pnpm exec tsc --noEmit` — zero errors.
+1. `bun install && bun run build` — green, bundle size recorded.
+2. `bun run tsc --noEmit` — zero errors.
 3. Full manual regression: workflow open/save, node CRUD, credential CRUD per provider, parameter edit, workflow run, output render (markdown/JSON/error), theme toggle light↔dark, keyboard nav (Tab/Esc/Enter on all overlays).
-4. Bundle analyzer (`ANALYZE=1 pnpm build` then open `dist/stats.html`): confirm antd + dayjs locales removed.
+4. Bundle analyzer (`ANALYZE=1 bun run build` then open `dist/stats.html`): confirm antd + dayjs locales removed.
 5. `grep -r "from 'antd'" client/src/` returns zero.
 6. `grep -r "styled-components" client/src/` returns zero.

@@ -171,7 +171,8 @@ export default defineConfig(({ mode }) => {
       // `company dev --force` sets VITE_FORCE to re-run dependency
       // pre-bundling — Vite's own recovery for "Outdated Optimize Dep"
       // (equivalent to `vite --force`, which can't be threaded through
-      // the pnpm run -> npm run indirection as an argv flag).
+      // the `bun run client:start` -> `npm run start` indirection as an
+      // argv flag).
       force: !!getEnv('VITE_FORCE', ''),
       // Pre-bundle the heavy deps reached through lazily-loaded panels
       // (chat/markdown stack, canvas) so a late discovery can't trigger

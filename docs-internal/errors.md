@@ -13,7 +13,7 @@ Documented root causes and fixes for errors encountered in OpenCompany developme
 **Contributing factors**:
 - Each worktree contains its own `.venv/`, `node_modules/`, and source tree (thousands of files)
 - Windows Search Indexer and Defender monitor directory trees recursively from the project root
-- pnpm hardlinks from `.pnpm-store` into each worktree's `node_modules/` create additional file-system contention
+- The package manager's store layout (pnpm's `.pnpm-store` hardlinks at the time; bun's isolated linker now symlinks each worktree's `node_modules/` through its `node_modules/.bun/` store) creates additional file-system contention
 - Killing the hung Python process does NOT help -- the next attempt restarts the scan queue from scratch
 
 **Fix**: Move or remove worktrees from inside the project root.
@@ -248,7 +248,7 @@ self.ws = await asyncio.wait_for(
 
 ## 5. `ERR_CONNECTION_REFUSED` on Frontend Auth Check
 
-**Symptom**: After `pnpm run dev`, browser console shows repeated errors:
+**Symptom**: After `bun run dev`, browser console shows repeated errors:
 ```
 GET http://localhost:5678/api/auth/status net::ERR_CONNECTION_REFUSED
 Failed to check auth status (attempt 4/6): TypeError: Failed to fetch

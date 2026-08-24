@@ -125,17 +125,23 @@ The diagram above shows the full lifecycle of a workflow node: one self-containe
 
 ## Local Dev Quick Reference
 
-Development from source uses **pnpm** (not npm). The `scripts/preinstall.js` hook enforces this when `pnpm-workspace.yaml` is present. Install pnpm once with `npm install -g pnpm`.
+Development from source uses **bun** (not npm). The `scripts/preinstall.js` hook enforces this when `bunfig.toml` is present (it keys on the file plus a `bun` user agent; end-user npm tarball installs are unaffected because `bunfig.toml` is not shipped in the package). Install bun once from https://bun.sh — Windows: `powershell -c "irm bun.sh/install.ps1 | iex"`; macOS/Linux: `curl -fsSL https://bun.sh/install | bash`.
 
 ```bash
-pnpm install           # install workspace dependencies
-pnpm run dev           # start the app (Vite HMR + backend; Temporal starts from the backend when TEMPORAL_ENABLED, WhatsApp only on demand)
-pnpm run stop          # stop everything
-pnpm run build         # production build
-pnpm --filter react-flow-client run typecheck   # THE gate: TypeScript 7 (native Go). Same command CI runs.
-pnpm --filter react-flow-client run typecheck:tsc # second opinion under tsc 5.9 — for triaging a red gate, not a substitute
+bun install            # install workspace dependencies
+bun run dev            # start the app (Vite HMR + backend; Temporal starts from the backend when TEMPORAL_ENABLED, WhatsApp only on demand)
+bun run stop           # stop everything
+bun run build          # production build
+bun run --filter react-flow-client typecheck   # THE gate: TypeScript 7 (native Go). Same command CI runs.
+bun run --filter react-flow-client typecheck:tsc # second opinion under tsc 5.9 — for triaging a red gate, not a substitute
 uv run pytest          # run backend tests (from server/, uv-managed venv)
 ```
+
+**Known differences from pnpm** (the workspace migrated from pnpm@9 to bun@1.4):
+
+- **No strict-peer-dependencies equivalent.** bun never errors on peer conflicts, so the check that kept client `typescript` inside typescript-eslint's peer range is gone from install time — the CLI test locking client `typescript` to `^5` (`cli/tests/test_release_pipeline_config.py`) is now the only guard.
+- **Dependabot's `bun` ecosystem does version updates only — no security-update PRs.** Alerts still fire; remediation goes through the top-level `overrides` block in the root `package.json` (the pins formerly under `pnpm.overrides`).
+- **`--bun` is not enabled anywhere.** Node 22 remains the runtime for vite/vitest/eslint/the sidecar. A trial of `--bun` for `vite dev` only is a documented follow-up once the package-manager migration proves stable — never for vitest/eslint (known bun-runtime breakage: oven-sh/bun#20762, #13346).
 
 Full setup and scripts reference: [SETUP.md](docs-internal/SETUP.md) - [SCRIPTS.md](docs-internal/SCRIPTS.md)
 

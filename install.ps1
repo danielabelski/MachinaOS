@@ -229,8 +229,8 @@ function Main {
         Write-Host "    the URL printed by 'company start'"
     }
     Write-Host ""
-    Write-Host "  For development from source, install pnpm:"
-    Write-Host "    npm install -g pnpm"
+    Write-Host "  For development from source, install bun:"
+    Write-Host "    https://bun.sh"
     Write-Host ""
     Write-Host "  Run diagnostics:"
     Write-Host "    company doctor"

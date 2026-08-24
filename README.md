@@ -28,11 +28,13 @@ Open http://localhost:5678 and click the key icon (**API Credentials**) in the t
 <summary><b>Run from source (for contributors)</b></summary>
 
 ```bash
-npm install -g pnpm
+# install bun (https://bun.sh) — Windows: powershell -c "irm bun.sh/install.ps1 | iex"
+curl -fsSL https://bun.sh/install | bash
 git clone https://github.com/zeenie-ai/OpenCompany.git OpenCompany
 cd OpenCompany
-pnpm run build
-pnpm run dev
+bun install
+bun run build
+bun run dev
 ```
 
 The `dev` task starts the Vite client (with HMR) at http://localhost:5678 — the same URL as production — proxying API/WebSocket traffic to the Python backend on :5679; optional daemons (WhatsApp, Temporal) are spawned by the backend on demand. Every port is declared in `.env.template` and overridable in `.env`; nothing is hardcoded. See [SETUP.md](docs-internal/SETUP.md) and [SCRIPTS.md](docs-internal/SCRIPTS.md) for details, and [CONTRIBUTING.md](CONTRIBUTING.md) for the codebase map and contribution recipes.

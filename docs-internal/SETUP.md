@@ -30,13 +30,14 @@ WebSocket + built SPA on the backend port).
 
 ### Local Development (from source)
 
-**Prerequisites:** Node.js 22+, Python 3.12+, uv, 
+**Prerequisites:** Node.js 22+, Python 3.12+, uv, bun 1.4+ (https://bun.sh)
 
 ```bash
 git clone https://github.com/zeenie-ai/OpenCompany.git OpenCompany
 cd OpenCompany
-npm run build
-npm run start
+bun install
+bun run build
+bun run start
 ```
 
 The default server install stays lightweight and does not install the
@@ -145,10 +146,10 @@ When `VITE_AUTH_ENABLED=false` (the default):
 
 | Command | Description |
 |---------|-------------|
-| `npm run start` | Start the app (backend-owned daemons start on demand) |
-| `npm run stop` | Stop all services |
-| `npm run build` | Install dependencies |
-| `npm run dev` | Start development server |
+| `bun run start` | Start the app (backend-owned daemons start on demand) |
+| `bun run stop` | Stop all services |
+| `bun run build` | Install dependencies |
+| `bun run dev` | Start development server |
 
 ## Troubleshooting
 

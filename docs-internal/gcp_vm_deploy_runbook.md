@@ -145,7 +145,6 @@ apt-get update
 apt-get install -y curl ca-certificates git build-essential pkg-config libffi-dev libssl-dev nginx
 curl -fsSL https://deb.nodesource.com/setup_22.x | bash -
 apt-get install -y nodejs
-corepack enable || true
 curl -LsSf https://astral.sh/uv/install.sh | env UV_INSTALL_DIR=/usr/local/bin sh
 
 echo "[opencompany] installing OpenCompany released package..."

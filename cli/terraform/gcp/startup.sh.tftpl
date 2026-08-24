@@ -16,7 +16,6 @@ apt-get update
 apt-get install -y curl ca-certificates git build-essential pkg-config libffi-dev libssl-dev
 curl -fsSL https://deb.nodesource.com/setup_22.x | bash -
 apt-get install -y nodejs
-corepack enable || true
 # uv on a stable system path (company build uses it to sync the Python venv).
 curl -LsSf https://astral.sh/uv/install.sh | env UV_INSTALL_DIR=/usr/local/bin sh
 

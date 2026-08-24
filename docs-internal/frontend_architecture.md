@@ -22,8 +22,8 @@ Post-migration (2026-04-14). Single source of truth for the current frontend.
 |---|---|---|
 | Bundler | Vite 7 | [client/vite.config.js](../client/vite.config.js) |
 | Framework | React 19 | [client/src/main.tsx](../client/src/main.tsx) |
-| Type checker | `typescript@7.0.2` — native Go compiler, **exact-pinned in the root `package.json`** | root `pnpm run typecheck` → `tsc --noEmit -p client/tsconfig.json`; client's `typecheck` delegates up |
-| Type checker (second opinion) | `typescript@^5.9.3` in **client** `dependencies` | Kept for typescript-eslint's peer range (`>=4.8.4 <6.1.0`). Two `typescript` entries cannot live in one manifest, and both 5.x and 7.x expose a `tsc` bin — hence the root/client split. `pnpm typecheck:tsc` runs it for triage only. |
+| Type checker | `typescript@7.0.2` — native Go compiler, **exact-pinned in the root `package.json`** | root `bun run typecheck` → `tsc --noEmit -p client/tsconfig.json`; client's `typecheck` delegates up |
+| Type checker (second opinion) | `typescript@^5.9.3` in **client** `dependencies` | Kept for typescript-eslint's peer range (`>=4.8.4 <6.1.0`). Two `typescript` entries cannot live in one manifest, and both 5.x and 7.x expose a `tsc` bin — hence the root/client split. `bun run typecheck:tsc` runs it for triage only. |
 | Compiler | `babel-plugin-react-compiler@1.0.0` (exact-pinned; `target: '19'` = the React version, not the plugin version) | [vite.config.js](../client/vite.config.js) (scoped: all of `/src/` except `components/ui/`). Pin is exact because semver sorts the old `19.1.0-rc.3` **above** `1.0.0`, so a range would silently reinstall the release candidate — which lacks the incompatible-library skip list. |
 | Styling | Tailwind v4 + `@tailwindcss/vite` | [index.css](../client/src/index.css) + [tailwind.config.js](../client/tailwind.config.js) |
 | Component library | shadcn/ui (CLI `npx shadcn@latest add`) | [components/ui/](../client/src/components/ui/) |
@@ -607,16 +607,16 @@ The DIY widget registry (RHF + zod + a tester+rank dispatch) is modeled on n8n's
 
 ```bash
 # from repo root
-pnpm install            # client deps + server Python deps via postinstall
-pnpm run dev            # supervisor: Vite client (app port, proxying) + uvicorn backend; Temporal/WhatsApp are backend-owned on-demand daemons
-pnpm run build          # full prod build; bundle analyzer at dist/stats.html if ANALYZE=1
+bun install             # client deps + server Python deps via postinstall
+bun run dev             # supervisor: Vite client (app port, proxying) + uvicorn backend; Temporal/WhatsApp are backend-owned on-demand daemons
+bun run build           # full prod build; bundle analyzer at dist/stats.html if ANALYZE=1
 
 # client-only
 cd client
-pnpm dev                # Vite dev server
-pnpm build              # Vite prod build (Tailwind v4 via @tailwindcss/vite plugin)
-pnpm typecheck          # THE gate — delegates up to the root TypeScript 7 compiler
-pnpm typecheck:tsc      # second opinion under client's tsc 5.9.3 (triage only, never the gate)
+bun run dev             # Vite dev server
+bun run build           # Vite prod build (Tailwind v4 via @tailwindcss/vite plugin)
+bun run typecheck       # THE gate — delegates up to the root TypeScript 7 compiler
+bun run typecheck:tsc   # second opinion under client's tsc 5.9.3 (triage only, never the gate)
 ```
 
 **Adding shadcn components:**
@@ -624,7 +624,7 @@ pnpm typecheck:tsc      # second opinion under client's tsc 5.9.3 (triage only, 
 cd client
 OPENCOMPANY_INSTALLING=true npx shadcn@latest add <name>
 ```
-The `OPENCOMPANY_INSTALLING=true` env var suppresses the recursive project postinstall hook during shadcn's internal `pnpm install`. Without it the hook's `company build` run fails and shadcn aborts before writing the component file.
+The `OPENCOMPANY_INSTALLING=true` env var suppresses the recursive project postinstall hook during shadcn's internal package-manager install. Without it the hook's `company build` run fails and shadcn aborts before writing the component file.
 
 ## Migration history (for context)
 

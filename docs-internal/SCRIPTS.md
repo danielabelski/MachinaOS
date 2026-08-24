@@ -24,7 +24,7 @@ deprecation warning; kept for upgrade compatibility).
 | `company dev` | Start in dev mode (Vite HMR + uvicorn). `--force` re-bundles Vite deps (recovers "Outdated Optimize Dep"); `--daemon` binds backend to 0.0.0.0 |
 | `company serve` | Single-port production runtime (uvicorn serves API + WS + built SPA; optional daemons incl. the Node.js executor are backend-spawned on demand) — the systemd `ExecStart` on deployed VMs |
 | `company stop` | Stop all services and free configured ports |
-| `company build` | Full production build (pnpm install → client → sidecar → uv sync → bytecode → temporal binary). Step [0/6] scaffolds `.env` from `.env.template` when missing, generating fresh random secrets (`secrets.token_hex(24)`) for `SECRET_KEY` / `JWT_SECRET_KEY` / `API_KEY_ENCRYPTION_KEY` instead of the dev placeholders; an existing `.env` is untouched |
+| `company build` | Full production build (bun install → client → sidecar → uv sync → bytecode → temporal binary). Step [0/6] scaffolds `.env` from `.env.template` when missing, generating fresh random secrets (`secrets.token_hex(24)`) for `SECRET_KEY` / `JWT_SECRET_KEY` / `API_KEY_ENCRYPTION_KEY` instead of the dev placeholders; an existing `.env` is untouched |
 | `company clean` | Stop services, then remove build artifacts, node_modules, `.venv`, repo-local state (preserves `.opencompany/{workflows,deploy,packages}`) |
 | `company deploy up/status/destroy` | Self-deploy a login-gated VM (gcloud preflight + Terraform; see `cli/commands/deploy/`) |
 | `company daemon start/stop/status/restart` | Detached backend management (PID file under user data dir) |
@@ -87,7 +87,7 @@ The Temporal dev server is backend-owned: the FastAPI lifespan starts it via `Te
 
 | File | Purpose |
 |------|---------|
-| `install.js` | npm-tarball install pipeline (pnpm/uv install, client + sidecar build, bytecode compile, temporal binary fetch) — mirrors `company build`; the compileall command shape is locked in sync by `cli/tests/test_release_pipeline_config.py` |
+| `install.js` | npm-tarball install pipeline (npm/uv install for end users — dev workspaces use bun; client + sidecar build, bytecode compile, temporal binary fetch) — mirrors `company build`; the compileall command shape is locked in sync by `cli/tests/test_release_pipeline_config.py` |
 | `preinstall.js` | Legacy-package/temp cleanup (also runs on uninstall) |
 | `postinstall.js` | npm lifecycle entry that guards recursion and invokes install.js |
 | `migrate_icons.py`, `migrate_skill_icons.py` | One-off icon-migration utilities (historical) |
@@ -130,7 +130,7 @@ Key variables in `.env` (see `.env.template` for the full list):
 | Node.js | 22+ | https://nodejs.org/ |
 | Python | 3.12+ (CLI); server venv accepts 3.11–3.12 | https://python.org/ |
 | uv | latest | `curl -LsSf https://astral.sh/uv/install.sh \| sh` |
-| pnpm | 9.x | `corepack enable` (root `packageManager` pin) |
+| bun | 1.4.x | official installer (https://bun.sh); root `packageManager` pin read by `oven-sh/setup-bun` in CI |
 
 ---
 

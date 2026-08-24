@@ -464,7 +464,7 @@ The overlay only re-binds the keys most visible on the canvas (primary, focus, a
 When changing a component, verify under all four themes:
 
 ```bash
-cd client && pnpm dev
+cd client && bun run dev
 ```
 
 1. `<html data-theme="light">` — clean default, near-white surfaces
@@ -475,7 +475,7 @@ cd client && pnpm dev
 Build + typecheck must stay clean:
 
 ```bash
-cd client && pnpm typecheck && pnpm build
+cd client && bun run typecheck && bun run build
 ```
 
 Touched components should pass lint:

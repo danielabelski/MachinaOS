@@ -8,7 +8,7 @@ reference rot fast.
 
 ## Headline numbers (current baseline)
 
-Measured on Windows, dev mode (`pnpm run dev` → `company dev`),
+Measured on Windows, dev mode (`bun run dev` → `company dev`),
 warm OS file cache, with bytecode pre-compile applied:
 
 | Metric | Value | Source |
@@ -217,7 +217,7 @@ grep -E "Freeing ports|Importing FastAPI|AIService imported|All imports complete
 
 ```bash
 cd client
-ANALYZE=1 pnpm exec vite build
+ANALYZE=1 bun run vite build
 # open client/dist/stats.html in a browser → treemap with gzip sizes
 ```
 
@@ -230,7 +230,7 @@ real regressions in other chunks fire while the icons baseline doesn't.
 
 ```bash
 cd client
-pnpm exec vitest run src/lib/__tests__/connectionConfig.test.ts
+bun run vitest run src/lib/__tests__/connectionConfig.test.ts
 ```
 
 10 tests, locks RFC 6455 close code, AUTH_RETRY envelope, full-jitter

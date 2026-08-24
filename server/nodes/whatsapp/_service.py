@@ -325,7 +325,7 @@ async def get_client(force_reconnect: bool = False, *, spawn: bool = True) -> RP
     """
     global _client
     # Lazy-spawn the edgymeow binary on first use so its session DB lives
-    # under <data_dir>/whatsapp/ instead of the pnpm package directory.
+    # under <data_dir>/whatsapp/ instead of the npm package directory.
     # Idempotent: no-op if already running or disabled via settings.
     if spawn:
         from nodes.whatsapp import get_whatsapp_runtime

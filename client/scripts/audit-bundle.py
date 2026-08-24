@@ -1,7 +1,7 @@
 """Bundle audit — prints top contributors to the main chunk sourcemap.
 
 Usage:
-    cd client && ANALYZE=1 pnpm run build && python scripts/audit-bundle.py
+    ANALYZE=1 bun run --filter react-flow-client build && cd client && python scripts/audit-bundle.py
 """
 
 from __future__ import annotations
@@ -17,7 +17,7 @@ def main() -> int:
     os.chdir(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     matches = glob.glob("dist/assets/index-*.js.map")
     if not matches:
-        print("no dist/assets/index-*.js.map found; run ANALYZE=1 pnpm run build first")
+        print("no dist/assets/index-*.js.map found; run ANALYZE=1 bun run --filter react-flow-client build first")
         return 1
     # Pick the largest sourcemap — that's the main chunk, not a lazy panel.
     sourcemap_path = max(matches, key=lambda p: os.path.getsize(p))
@@ -51,8 +51,8 @@ def main() -> int:
             normalized = "node_modules/" + normalized.split("/node_modules/", 1)[1]
         print(f"{n:>10,}  {100 * n / total:>4.1f}%  {normalized[:90]}")
 
-    # Bucketed by package / src subtree. pnpm stores deps under a
-    # content-addressable path like `node_modules/.pnpm/<pkg>@<ver>_<hash>/
+    # Bucketed by package / src subtree. bun's isolated linker stores deps
+    # under a versioned store path like `node_modules/.bun/<pkg>@<ver>/
     # node_modules/<pkg>/...` — we want to collapse on the innermost
     # `node_modules/<pkg>` segment so the bucket is the actual package name.
     buckets: dict[str, int] = defaultdict(int)
@@ -60,7 +60,7 @@ def main() -> int:
         normalized = s.replace("\\", "/")
         if "/node_modules/" in normalized:
             # Find the LAST `/node_modules/` occurrence so we skip the
-            # .pnpm wrapper and land on the real package.
+            # .bun store wrapper and land on the real package.
             after = normalized.rsplit("/node_modules/", 1)[1]
             parts = after.split("/")
             if parts[0].startswith("@") and len(parts) >= 2:
