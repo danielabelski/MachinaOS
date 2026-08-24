@@ -36,7 +36,7 @@
   "engines": {
     "node": ">=22.0.0"
   },
-  "packageManager": "pnpm@9.15.0",
+  "packageManager": "bun@1.4.0",
   "files": [
     "bin/",
     "scripts/",
@@ -65,7 +65,8 @@
     "install.ps1"
   ],
   "workspaces": [
-    "client"
+    "client",
+    "server/nodejs"
   ],
   "scripts": {
     "start": "python -m cli start",
@@ -106,34 +107,25 @@
   "devDependencies": {
     "typescript": "7.0.2"
   },
-  "pnpm": {
-    "peerDependencyRules": {
-      "allowedVersions": {
-        "@emoji-mart/react>react": "19",
-        "react-avatar-editor>react": "19",
-        "react-avatar-editor>react-dom": "19"
-      }
-    },
-    "overrides": {
-      "@babel/core@<7.29.6": "^7.29.7",
-      "@hono/node-server@<2.0.5": "^2.0.5",
-      "body-parser@>=2.0.0 <2.3.0": "^2.3.0",
-      "brace-expansion@<1.1.16": "^1.1.16",
-      "brace-expansion@>=5.0.0 <5.0.9": "^5.0.9",
-      "dompurify@<3.4.13": "^3.4.13",
-      "esbuild@<0.28.1": "^0.28.1",
-      "fast-uri@>=3.0.0 <3.1.5": "^3.1.5",
-      "form-data@>=4.0.0 <4.0.6": "^4.0.6",
-      "hono@<4.12.34": "^4.12.34",
-      "ip-address@>=10.1.1 <10.2.2": "^10.2.2",
-      "js-cookie@<3.0.7": "^3.0.7",
-      "js-yaml@>=4.0.0 <4.3.1": "^4.3.1",
-      "mermaid@<11.16.1": "^11.16.1",
-      "nanoid@<3.3.17": "^3.3.17",
-      "postcss@<8.5.18": "^8.5.18",
-      "qs@<6.15.2": "^6.15.2",
-      "vite@>=7.0.0 <7.3.5": "^7.3.6",
-      "ws@<8.20.1": "^8.20.1"
-    }
+  "overrides": {
+    "@babel/core@<7.29.6": "^7.29.7",
+    "@hono/node-server@<2.0.5": "^2.0.5",
+    "body-parser@>=2.0.0 <2.3.0": "^2.3.0",
+    "brace-expansion@<1.1.16": "^1.1.16",
+    "brace-expansion@>=5.0.0 <5.0.9": "^5.0.9",
+    "dompurify@<3.4.13": "^3.4.13",
+    "esbuild@<0.28.1": "^0.28.1",
+    "fast-uri@>=3.0.0 <3.1.5": "^3.1.5",
+    "form-data@>=4.0.0 <4.0.6": "^4.0.6",
+    "hono@<4.12.34": "^4.12.34",
+    "ip-address@>=10.1.1 <10.2.2": "^10.2.2",
+    "js-cookie@<3.0.7": "^3.0.7",
+    "js-yaml@>=4.0.0 <4.3.1": "^4.3.1",
+    "mermaid@<11.16.1": "^11.16.1",
+    "nanoid@<3.3.17": "^3.3.17",
+    "postcss@<8.5.18": "^8.5.18",
+    "qs@<6.15.2": "^6.15.2",
+    "vite@>=7.0.0 <7.3.5": "^7.3.6",
+    "ws@<8.20.1": "^8.20.1"
   }
 }

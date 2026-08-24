@@ -15,8 +15,8 @@ dist-ssr
 # External design handoff bundle (reference-only; merged copy lives in docs-internal/design-system/)
 design_handoff_theme_system/
 
-# npm-generated lock file. This project uses pnpm (canonical lock:
-# ``pnpm-lock.yaml``, tracked). Source checkouts are gated to pnpm
+# npm-generated lock file. This project uses bun (canonical lock:
+# ``bun.lock``, tracked). Source checkouts are gated to bun
 # by ``scripts/preinstall.js``; ``package-lock.json`` only appears
 # if npm runs outside the workspace. Keep it out of commits.
 package-lock.json
@@ -119,11 +119,11 @@ server/uv.lock
 server/.python-version
 
 # =============================================================================
-# pnpm
+# bun
 # =============================================================================
-pnpm-store/
-.pnpm-store/
-.pnpm-debug.log
+# Legacy binary lockfile (the tracked text ``bun.lock`` is canonical).
+bun.lockb
+.bun-debug*
 
 # =============================================================================
 # Temporary and cache files

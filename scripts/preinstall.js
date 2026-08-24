@@ -24,18 +24,21 @@ if (process.env.CI === 'true' || process.env.GITHUB_ACTIONS === 'true') {
   process.exit(0);
 }
 
-// Enforce pnpm for source checkouts (pnpm-workspace.yaml exists).
-// Skipped for global npm installs (end users) which don't have the workspace file.
+// Enforce bun for source checkouts (bunfig.toml is committed but excluded
+// from the npm tarball by the "files" allowlist, so end-user installs of the
+// published package never carry it and stay on npm).
 try {
-  statSync(resolve(__dirname, '..', 'pnpm-workspace.yaml'));
+  statSync(resolve(__dirname, '..', 'bunfig.toml'));
   const agent = process.env.npm_config_user_agent || '';
-  if (!agent.startsWith('pnpm')) {
-    console.error('This project requires pnpm. Install it: npm install -g pnpm');
-    console.error('Then run: pnpm install');
+  // Bun's user agent is "bun/x.y.z npm/? node/..." — it contains the literal
+  // substring "npm/?", so never substring-match "npm" here.
+  if (!agent.startsWith('bun')) {
+    console.error('This project requires bun for development. Install it: https://bun.sh');
+    console.error('Then run: bun install');
     process.exit(1);
   }
 } catch {
-  // No pnpm-workspace.yaml = global npm install, allow npm
+  // No bunfig.toml = end-user tarball install; npm is allowed.
 }
 
 function getGlobalNodeModules() {

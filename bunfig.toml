@@ -1,0 +1,7 @@
+[install]
+# Belt-and-braces with bun.lock's configVersion=1: phantom-dep-safe isolated
+# layout (node_modules/.bun/ store + symlinked top-level entries), matching the
+# strictness the repo had under pnpm's node-linker=isolated. The tsgo
+# typeRoots / vite-env.d.ts workarounds depend on this layout — do not switch
+# to hoisted.
+linker = "isolated"
