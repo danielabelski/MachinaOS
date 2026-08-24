@@ -32,8 +32,8 @@ jobs:
           node-version: '22'
           package-manager-cache: false
           registry-url: 'https://registry.npmjs.org'
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm run build
+      - run: bun install --frozen-lockfile
+      - run: bun run build
       - run: python -m cli version sync
       - name: Verify npm credentials
         run: npm whoami
@@ -61,8 +61,8 @@ jobs:
           node-version: '22'
           package-manager-cache: false
           registry-url: 'https://npm.pkg.github.com'
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm run build
+      - run: bun install --frozen-lockfile
+      - run: bun run build
       - run: python -m cli version sync
       - name: Configure scoped package
         run: |

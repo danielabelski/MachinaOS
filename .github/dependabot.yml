@@ -10,16 +10,20 @@
 # Do not "fix" the 0 limits without reading the ci_cd.md section first.
 version: 2
 updates:
-  # npm - the root pnpm workspace covers package.json, client/, and
-  # server/nodejs/ through the single pnpm-lock.yaml. (A former `/server`
+  # bun - the root bun workspace covers package.json, client/, and
+  # server/nodejs/ through the single bun.lock. (A former `/server`
   # entry pointed at a manifest deleted in d0e1b816 and was removed.)
-  - package-ecosystem: npm
+  # NOTE: the bun ecosystem supports version updates only - Dependabot
+  # does NOT open security-update PRs for bun.lock (alerts still fire
+  # from the dependency graph). The top-level `overrides` block in
+  # package.json is this repo's actual security-pin remediation channel.
+  - package-ecosystem: bun
     directory: /
     schedule:
       interval: weekly
     open-pull-requests-limit: 0
     groups:
-      npm-security:
+      bun-security:
         applies-to: security-updates
         patterns: ["*"]
 

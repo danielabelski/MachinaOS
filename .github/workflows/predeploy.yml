@@ -18,14 +18,14 @@ jobs:
         with:
           persist-credentials: false
       - uses: ./.github/actions/setup
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm run build
+      - run: bun install --frozen-lockfile
+      - run: bun run build
       - name: Lint client
-        run: pnpm --filter react-flow-client run lint
+        run: bun run --filter react-flow-client lint
       - name: TypeScript check
-        run: pnpm --filter react-flow-client run typecheck
+        run: bun run --filter react-flow-client typecheck
       - name: Frontend tests (vitest)
-        run: pnpm --filter react-flow-client run test
+        run: bun run --filter react-flow-client test
 
   backend-tests:
     name: Backend tests
@@ -66,34 +66,36 @@ jobs:
         with:
           persist-credentials: false
       - uses: ./.github/actions/setup
-      - run: pnpm run build
+      - run: bun run build
 
       # The TS7 compiler is a per-platform Go binary delivered through
       # optionalDependencies. The type-check gate runs on ubuntu only, so
       # without this the darwin-arm64 and win32-x64 binaries are installed
       # on every matrix run and never executed — a broken one would pass CI
-      # and surface on a developer machine instead.
+      # and surface on a developer machine instead. `bun run tsc` resolves
+      # strictly from the root node_modules/.bin (TS7) — never `bunx`,
+      # which falls back to the npm registry.
       - name: TypeScript binary resolves on this platform
-        run: pnpm exec tsc --version
+        run: bun run tsc --version
 
       - name: Test start (Unix)
         if: runner.os != 'Windows'
         shell: bash
         run: |
           APP_PORT=$(grep -E '^PYTHON_BACKEND_PORT=' .env.template | cut -d= -f2)
-          pnpm run start &
+          bun run start &
           PID=$!
           for i in {1..15}; do
             curl -sf "http://localhost:${APP_PORT}/health" > /dev/null 2>&1 && break
             sleep 2
           done
-          kill -0 $PID 2>/dev/null && pnpm run stop || (echo FAILED; exit 1)
+          kill -0 $PID 2>/dev/null && bun run stop || (echo FAILED; exit 1)
 
       - name: Test start (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
-          $job = Start-Job -ScriptBlock { Set-Location $using:PWD; pnpm run start }
+          $job = Start-Job -ScriptBlock { Set-Location $using:PWD; bun run start }
           Start-Sleep -Seconds 15
           if ($job.State -eq "Running") { Stop-Job $job; Remove-Job $job }
           else { Receive-Job $job; exit 1 }
