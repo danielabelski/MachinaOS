@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
+import os
 from typing import Any, Dict, List, Literal, Optional
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from core.paths import safe_path_component
 from services.plugin import ActionNode, NodeContext, NodeUserError, Operation, TaskQueue
 
 
@@ -69,14 +71,16 @@ class ProcessManagerNode(ActionNode):
     @Operation("dispatch")
     async def dispatch(self, ctx: NodeContext, params: ProcessManagerParams) -> Any:
         """Inlined from handlers/process.py (Wave 11.D.1)."""
-        import os
         from services.process_service import get_process_service
 
         svc = get_process_service()
         workflow_id = ctx.workflow_id or "default"
         workspace_dir = ctx.workspace_dir or ""
-        # Each agent node gets its own subfolder in the workspace.
-        agent_dir = os.path.join(workspace_dir, ctx.node_id) if workspace_dir else ""
+        # Each agent node gets its own subfolder in the workspace. Sanitized:
+        # canvas ids can be colon-namespaced ("2:processManager:4") and
+        # ntpath.join parses "2:" as a drive, discarding the workspace prefix,
+        # so the raw id failed the ProcessService containment guardrail.
+        agent_dir = os.path.join(workspace_dir, safe_path_component(ctx.node_id, "node")) if workspace_dir else ""
 
         op = params.operation
         name = _clean(params.name)

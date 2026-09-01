@@ -171,7 +171,8 @@ class ProcessService:
                 "success": False,
                 "error": (
                     f"Working directory must be inside workspace ({workspace_base}) "
-                    f"or daemons ({daemon_base})."
+                    f"or daemons ({daemon_base}); got '{cwd_resolved}'. "
+                    "Omit cwd to run in this node's workspace folder."
                 ),
             }
 

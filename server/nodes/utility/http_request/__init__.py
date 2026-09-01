@@ -6,7 +6,7 @@ from typing import Any, Dict, Literal, Optional
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from services.plugin import ActionNode, NodeContext, Operation, TaskQueue
+from services.plugin import ActionNode, NodeContext, NodeUserError, Operation, TaskQueue
 
 
 class HttpRequestParams(BaseModel):
@@ -125,7 +125,12 @@ class HttpRequestNode(ActionNode):
                 else:
                     kwargs["json"] = body
 
-            response = await client.request(**kwargs)
+            try:
+                response = await client.request(**kwargs)
+            except httpx.ConnectError as e:
+                raise NodeUserError(f"Could not connect to {params.url} ({e}) — is the server running and the URL reachable?") from e
+            except httpx.TimeoutException as e:
+                raise NodeUserError(f"Request to {params.url} timed out after {params.timeout}s ({e}).") from e
             try:
                 response_data = response.json()
             except Exception:

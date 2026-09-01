@@ -46,6 +46,7 @@ from typing import Any, Awaitable, Callable, Dict, List, Optional
 import anyio
 
 from core.logging import get_logger
+from core.paths import safe_path_component
 from services._supervisor.process import BaseProcessSupervisor
 from services.cli_agent.jsonl_watcher import JsonlWatcher, snapshot_jsonl_sizes
 from services.cli_agent.lockfile import remove_ide_lockfile, write_ide_lockfile
@@ -109,7 +110,10 @@ class AICliSession(BaseProcessSupervisor):
         # (per-workflow isolation; ``cwd`` for memory-bound runs is
         # ``repo_root`` which would otherwise be shared across workflows).
         self._workspace_dir = Path(workspace_dir).resolve()
-        self._worktree_dir = self._workspace_dir / node_id / f"wt_{self._task_id}"
+        # safe_path_component: colon-namespaced node ids ("2:codexAgent:1")
+        # parse as a DRIVE under WindowsPath division and discard the
+        # workspace prefix entirely.
+        self._worktree_dir = self._workspace_dir / safe_path_component(node_id, "node") / f"wt_{self._task_id}"
         self._branch = task.branch or f"opencompany/{self._task_id}"
         self._broadcaster = broadcaster
         self._defaults = defaults

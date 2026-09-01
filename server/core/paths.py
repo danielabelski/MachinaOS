@@ -96,11 +96,28 @@ contents manually:
 
 from __future__ import annotations
 
+import re
 from pathlib import Path
 
 from core.logging import get_logger
 
 logger = get_logger(__name__)
+
+_UNSAFE_COMPONENT = re.compile(r"[^A-Za-z0-9._-]")
+
+
+def safe_path_component(value: str, fallback: str = "item") -> str:
+    """Sanitize a wire identifier (node id, process name) into one safe
+    path component.
+
+    Canvas node ids can be colon-namespaced (``2:processManager:4``) and
+    ``ntpath.join`` / ``PureWindowsPath.__truediv__`` parse a leading
+    ``2:`` as a DRIVE, silently discarding the base path — so raw ids
+    must never be joined into a path. Dot-only results (``..``) collapse
+    to ``fallback`` so traversal cannot survive sanitization.
+    """
+    cleaned = _UNSAFE_COMPONENT.sub("_", str(value or ""))
+    return cleaned if cleaned.strip(".") else fallback
 
 
 # Repo root: server/core/paths.py -> parents[2] is the project root.
@@ -297,6 +314,7 @@ def example_workflows_dir() -> Path:
 
 
 __all__ = [
+    "safe_path_component",
     "project_root",
     "opencompany_root",
     "machina_root",

@@ -152,10 +152,17 @@ setattr(_core_pkg, "encryption", _encryption_mod)
 # locally; the stub just keeps import-time ``OPENCOMPANY_CLAUDE_DIR =
 # data_path("claude")`` calls from blowing up.
 _TEST_OPENCOMPANY_ROOT = Path(__file__).parent / "_test_opencompany_root"
+# safe_path_component is pure stdlib and consumed at plugin import time
+# (process_manager's agent_dir), so expose the REAL implementation on the
+# stub — file-load under a private name, same rationale as core.ansi above.
+_paths_spec = _importlib_util.spec_from_file_location("_real_core_paths", SERVER_DIR / "core" / "paths.py")
+_paths_mod = _importlib_util.module_from_spec(_paths_spec)
+_paths_spec.loader.exec_module(_paths_mod)
 _make_submodule(
     "core",
     "paths",
     {
+        "safe_path_component": _paths_mod.safe_path_component,
         "project_root": lambda: _TEST_OPENCOMPANY_ROOT.parent,
         "opencompany_root": lambda: _TEST_OPENCOMPANY_ROOT,
         "machina_root": lambda: _TEST_OPENCOMPANY_ROOT,
