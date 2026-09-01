@@ -13,6 +13,47 @@ User scope (confirmed before this work): stay on npm distribution; **no** Nuitka
 | Node sidecar | `esbuild` bundle to `dist/index.js`, run via `node` | Drops tsx interpreter startup (~500ms-1s every server boot). `--packages=external` keeps Express in `node_modules/` for patch flow. |
 | Python | `python -m compileall -q -j 0 <project dirs>` + `[tool.uv] compile-bytecode = true` | Pre-compile bytecode. Implemented as step `[5/6]` in [`cli/commands/build.py`](../cli/commands/build.py) (`COMPILEALL_SOURCE_DIRS` constant lists the dirs); `server/pyproject.toml`'s `compile-bytecode = true` makes `uv sync` (step `[4/6]`) compile `.venv/` site-packages too. No `-O`: every runtime launches python without `-O`, and per PEP 488 a non-optimized interpreter only loads plain `.pyc` — the earlier `-O` invocation produced `.opt-1.pyc` that nothing ever loaded (fixed 2026-07-14; ~30-50s cold-start gain, see [performance.md](performance.md)). |
 
+## Package manager (bun)
+
+The dev workspace runs on **bun** (migrated from pnpm@9.15.0, 2026-08; pinned
+via `"packageManager": "bun@1.4.0"` — CI's `oven-sh/setup-bun` reads that pin).
+Facts that are load-bearing, each verified during the migration:
+
+- **Scope**: bun installs the workspace and runs scripts; **Node 22 stays the
+  runtime** (vite/vitest/eslint/the sidecar run on node via shebang — never
+  pass `--bun`). Everything npm-facing is deliberately untouched: end-user
+  `npm install -g @zeenie-ai/opencompany`, the backend's
+  `npm install --prefix <DATA_DIR>/packages/` shared tree, the sidecar's
+  user-package endpoints, and `npm publish --provenance` in release.yml.
+- **Gate**: `scripts/preinstall.js` rejects non-bun installs in a source
+  checkout. It keys on `bunfig.toml` existing (committed, excluded from the
+  tarball by the `files` allowlist, so end-user npm installs never trigger it)
+  and on `npm_config_user_agent` **starting with** `bun` — bun's UA is
+  `bun/x.y.z npm/? node/...`, so a substring match on "npm" would misfire.
+- **Layout**: `bunfig.toml` pins `linker = "isolated"` — pnpm-style symlinked
+  `node_modules` with the store at `node_modules/.bun/` (NOT `.pnpm/`). The
+  phantom-dependency guard, the `typeRoots` tsconfig workaround, and the
+  `vite-env.d.ts` triple-slash reference all depend on this layout.
+- **Lockfile**: the tracked text `bun.lock` is **lockfileVersion 3** — forced
+  by the version-ranged keys in the top-level `overrides` block (the security
+  pins formerly under `pnpm.overrides`, moved verbatim). Older bun cannot read
+  it; the `packageManager` pin is the effective read-floor.
+- **Sharp edges** (each bites silently): declaring `trustedDependencies`
+  REPLACES bun's default trusted list rather than extending it — do not declare
+  it (esbuild's install script would stop running); never pass
+  `--omit=optional` (it drops the per-platform rollup/esbuild/TS7 binaries,
+  oven-sh/bun#16696); bun 1.4 rejects the space-separated `--cwd ..` form
+  (`bun --cwd=.. run <script>` is required — this is why the client typecheck
+  script uses `=`); and `--filter` must come AFTER the `run` subcommand.
+- **Lost guard**: pnpm's `strict-peer-dependencies` has no bun equivalent (bun
+  never errors on peer conflicts, oven-sh/bun#9135). The
+  `test_client_keeps_typescript_5_for_typescript_eslint` CLI test is now the
+  only check keeping client `typescript` inside typescript-eslint's peer range.
+- Config invariants (gate source, manifest shape, bunfig linker, workspace
+  paths) are locked by `cli/tests/test_release_pipeline_config.py`; the
+  workspace-member oracle in `cli/tests/conftest.py` parses the root
+  `workspaces` array directly (bun has no `pnpm list --json` equivalent).
+
 ## Implementation steps
 
 ### 1. TypeScript 7 type-check
