@@ -174,22 +174,28 @@ class TestNoCrossPluginReachInSocialBase:
         )
 
 
+# Every plugin that ships a social_send_adapter, with the channel it registers
+# under. A plugin that imports its adapter but never calls
+# register_social_send_handler passes every other test in this file and fails
+# only at runtime, so each one is listed here explicitly.
+SOCIAL_PLATFORM_PLUGINS = [
+    ("nodes.whatsapp", "whatsapp"),
+    ("nodes.whatsapp_business", "whatsapp_business"),
+    ("nodes.discord", "discord"),
+]
+
+
 class TestWhatsappPluginSelfRegistersAsSocialProvider:
     """Importing a platform plugin registers its social send handler.
 
     The two WhatsApp plugins are separate platforms: ``nodes/whatsapp/``
     drives a personal account through the Go bridge, ``nodes/whatsapp_business/``
     the official Cloud API. They share no credential and no API, so they
-    register under distinct keys and socialSend offers both.
+    register under distinct keys and socialSend offers both. Discord is the
+    third registered platform.
     """
 
-    @pytest.mark.parametrize(
-        "module, platform",
-        [
-            ("nodes.whatsapp", "whatsapp"),
-            ("nodes.whatsapp_business", "whatsapp_business"),
-        ],
-    )
+    @pytest.mark.parametrize("module, platform", SOCIAL_PLATFORM_PLUGINS)
     def test_plugin_import_populates_registry(self, module, platform):
         from services.plugin import social_provider_registry as reg
 
@@ -212,16 +218,15 @@ class TestWhatsappPluginSelfRegistersAsSocialProvider:
         break startup instead."""
         from services.plugin import social_provider_registry as reg
 
-        for module in ("nodes.whatsapp", "nodes.whatsapp_business"):
+        for module, _platform in SOCIAL_PLATFORM_PLUGINS:
             try:
                 __import__(module)
             except ImportError as exc:  # pragma: no cover
                 pytest.xfail(f"{module} not importable: {exc}")
 
-        personal = reg.get_social_send_handler("whatsapp")
-        business = reg.get_social_send_handler("whatsapp_business")
-        assert personal is not None and business is not None
-        assert personal is not business
+        handlers = [reg.get_social_send_handler(p) for _m, p in SOCIAL_PLATFORM_PLUGINS]
+        assert all(h is not None for h in handlers)
+        assert len({id(h) for h in handlers}) == len(handlers)
 
     def test_every_registered_platform_is_selectable(self):
         """A registered platform absent from socialSend's channel enum is
@@ -230,7 +235,7 @@ class TestWhatsappPluginSelfRegistersAsSocialProvider:
         from nodes.social.social_send import SocialSendParams
         from services.plugin import social_provider_registry as reg
 
-        for module in ("nodes.whatsapp", "nodes.whatsapp_business"):
+        for module, _platform in SOCIAL_PLATFORM_PLUGINS:
             try:
                 __import__(module)
             except ImportError as exc:  # pragma: no cover

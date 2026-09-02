@@ -68,6 +68,10 @@ register_service_refresh(refresh_discord_status)
 register_canary_trigger_type(DiscordReceiveNode.type, MESSAGE_RECEIVED_TYPE)
 register_canary_trigger_type(DiscordInteractionNode.type, INTERACTION_CREATED_TYPE)
 
+# socialSend offers "discord" in its channel enum; this is what makes that
+# entry dispatch somewhere instead of failing with "no registered handler".
+register_social_send_handler("discord", social_send_adapter)
+
 # Sessions left open count against the account's concurrent-session limit
 # until Discord times them out, which across dev restarts looks like a second
 # instance that will not go away.

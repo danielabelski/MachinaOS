@@ -235,8 +235,10 @@ schemas, two filter builders, a trigger precheck, service refresh, two canary
 trigger types, the social send adapter, and a shutdown hook.
 
 Outside the folder: `nodes/groups.py`, `config/credential_providers.json`,
-`config/node_allowlist.json`, `constants.py` (both trigger frozensets), and the
-three lists in `tests/test_plugin_self_containment.py`.
+`config/node_allowlist.json`, `constants.py` (both trigger frozensets), the
+three lists in `tests/test_plugin_self_containment.py`, and
+`SOCIAL_PLATFORM_PLUGINS` in `tests/test_social_provider_registry.py`, which
+is what asserts the adapter is actually registered rather than just imported.
 
 **`import discord` never appears at module scope** in any file the plugin
 walker touches. [`nodes/__init__.py`](../server/nodes/__init__.py) swallows
