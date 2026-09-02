@@ -232,8 +232,8 @@ Adding a new OpenAI-compatible provider requires a config entry:
 "deepseek": {
   "default_model": "deepseek-v4-flash",
   "detection_patterns": ["deepseek"],
-  "models_endpoint": "https://api.deepseek.com/v1/models",
-  "base_url": "https://api.deepseek.com/v1",
+  "models_endpoint": "https://api.deepseek.com/models",
+  "base_url": "https://api.deepseek.com",
   "max_output_tokens": { "_default": 8192 },
   "context_length": { "_default": 128000 },
   "temperature_range": [0.0, 2.0]
