@@ -63,18 +63,28 @@ def _ancestor_pids() -> set[int]:
 
 
 def find_pids_by_port(port: int) -> set[int]:
-    """Find PIDs listening on ``port`` via psutil's native APIs."""
+    """Find PIDs with a LISTENING socket on ``port`` via psutil's native APIs.
+
+    Only listeners block a fresh ``bind()``. Half-closed connections left
+    by a browser tab after the server dies (``CLOSE_WAIT`` on a dead PID)
+    must not count, or ``company stop`` reports a bindable port as in use.
+    """
     pids: set[int] = set()
     try:
         for conn in psutil.net_connections(kind="inet"):
-            if conn.laddr and conn.laddr.port == port and conn.pid:
+            if (
+                conn.laddr
+                and conn.laddr.port == port
+                and conn.pid
+                and conn.status == psutil.CONN_LISTEN
+            ):
                 pids.add(conn.pid)
     except psutil.AccessDenied:
         # macOS: net_connections() requires root, fall back to lsof.
         if sys.platform == "darwin":
             try:
                 output = subprocess.check_output(
-                    ["lsof", "-ti", f":{port}"],
+                    ["lsof", "-ti", f"tcp:{port}", "-sTCP:LISTEN"],
                     text=True,
                     stderr=subprocess.DEVNULL,
                 )

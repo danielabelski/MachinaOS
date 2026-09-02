@@ -31,6 +31,21 @@ def test_kill_pid_force_kills_on_timeout():
     proc.kill.assert_called_once()
 
 
+def test_find_pids_by_port_counts_only_listeners():
+    """A dead server's half-closed sockets must not make a bindable port
+    look occupied (the 'Port still in use' false positive on stop)."""
+    from types import SimpleNamespace as NS
+
+    conns = [
+        NS(laddr=NS(port=5678), pid=111, status=psutil.CONN_LISTEN),
+        NS(laddr=NS(port=5678), pid=222, status=psutil.CONN_CLOSE_WAIT),
+        NS(laddr=NS(port=5678), pid=333, status=psutil.CONN_ESTABLISHED),
+        NS(laddr=NS(port=9999), pid=444, status=psutil.CONN_LISTEN),
+    ]
+    with patch.object(psutil, "net_connections", return_value=conns):
+        assert ports.find_pids_by_port(5678) == {111}
+
+
 def test_kill_port_excludes_self():
     """The function must never kill its own PID."""
     import os

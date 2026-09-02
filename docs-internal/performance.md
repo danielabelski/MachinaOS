@@ -34,6 +34,26 @@ I/O plus the items in "Open follow-ups" — not bytecode compilation,
 which now happens at build time (`[tool.uv] compile-bytecode = true`
 + the `-O`-less compileall step below).
 
+### Re-measured after the pnpm → bun migration (2026-09-02)
+
+Warm boots on the same Windows machine, taken from the supervisor's
+timestamped console output right after the switch to bun@1.4.0:
+
+| Metric | Pre-bun (table above) | Post-bun |
+|---|---|---|
+| `company start` — Application startup complete | 2.90 s | ~3.6 s |
+| `company start` — `ready on port 5678` | 3.17 s | 4.56 s |
+| `company dev` — Vite `ready in` | — | 8.4 s |
+| `company dev` — backend Application startup complete | — | 12.4 s |
+
+No change attributable to bun: it only installs the workspace and
+launches the `company` CLI; everything after spawn (uvicorn imports,
+lifespan, Vite on Node 22) is byte-identical. The sub-second prod delta
+is machine-load variance, and the dev-mode rows were never benchmarked
+before (Vite and uvicorn compete for I/O during a dev boot, so they are
+not comparable to the prod numbers). The headline baselines above still
+stand.
+
 ## Optimisation history
 
 In chronological order. Each row links to the commit and the

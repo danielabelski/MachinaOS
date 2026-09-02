@@ -13,6 +13,7 @@ import typer
 
 from cli._common import free_all_ports, preflight
 from cli.colors import console
+from cli.config import load_dev_overrides
 from cli.platform_ import platform_name
 from cli.ports import (
     kill_by_pattern,
@@ -21,6 +22,9 @@ from cli.ports import (
 
 
 def stop_command() -> None:
+    # Same port layout ``company dev`` frees (client 5678 + backend 5679);
+    # production binds only 5678, which that set already covers.
+    load_dev_overrides()
     cfg, root = preflight()
 
     console.print()
