@@ -1,10 +1,10 @@
 {
-  "id": "ec302d482a9b4614b14120ff875b8414",
+  "id": "1",
   "name": "AI Assistant",
   "slug": "AI_Assistant_1",
   "nodes": [
     {
-      "id": "ec302d482a9b4614b14120ff875b8414:chatTrigger:1",
+      "id": "1:chatTrigger:1",
       "position": {
         "x": 940,
         "y": 480
@@ -17,7 +17,7 @@
       "height": 86
     },
     {
-      "id": "ec302d482a9b4614b14120ff875b8414:console:1",
+      "id": "1:console:1",
       "position": {
         "x": 1720,
         "y": 520
@@ -30,7 +30,7 @@
       "height": 86
     },
     {
-      "id": "ec302d482a9b4614b14120ff875b8414:simpleMemory:1",
+      "id": "1:simpleMemory:1",
       "position": {
         "x": 1340,
         "y": 740
@@ -39,11 +39,11 @@
       "data": {
         "label": "Memory"
       },
-      "width": 88,
+      "width": 64,
       "height": 86
     },
     {
-      "id": "ec302d482a9b4614b14120ff875b8414:writeTodos:1",
+      "id": "1:writeTodos:1",
       "position": {
         "x": 1440,
         "y": 740
@@ -56,7 +56,7 @@
       "height": 86
     },
     {
-      "id": "ec302d482a9b4614b14120ff875b8414:duckduckgoSearch:1",
+      "id": "1:duckduckgoSearch:1",
       "position": {
         "x": 1520,
         "y": 740
@@ -69,7 +69,7 @@
       "height": 86
     },
     {
-      "id": "ec302d482a9b4614b14120ff875b8414:browser:1",
+      "id": "1:browser:1",
       "position": {
         "x": 1660,
         "y": 740
@@ -82,7 +82,7 @@
       "height": 86
     },
     {
-      "id": "ec302d482a9b4614b14120ff875b8414:fileRead:1",
+      "id": "1:fileRead:1",
       "position": {
         "x": 1960,
         "y": 740
@@ -95,7 +95,7 @@
       "height": 86
     },
     {
-      "id": "ec302d482a9b4614b14120ff875b8414:fileModify:1",
+      "id": "1:fileModify:1",
       "position": {
         "x": 2060,
         "y": 740
@@ -108,7 +108,7 @@
       "height": 86
     },
     {
-      "id": "ec302d482a9b4614b14120ff875b8414:shell:1",
+      "id": "1:shell:1",
       "position": {
         "x": 1860,
         "y": 740
@@ -121,7 +121,7 @@
       "height": 86
     },
     {
-      "id": "ec302d482a9b4614b14120ff875b8414:fsSearch:1",
+      "id": "1:fsSearch:1",
       "position": {
         "x": 1760,
         "y": 740
@@ -134,7 +134,7 @@
       "height": 86
     },
     {
-      "id": "ec302d482a9b4614b14120ff875b8414:processManager:1",
+      "id": "1:processManager:1",
       "position": {
         "x": 2140,
         "y": 740
@@ -147,7 +147,7 @@
       "height": 86
     },
     {
-      "id": "ec302d482a9b4614b14120ff875b8414:pythonExecutor:1",
+      "id": "1:pythonExecutor:1",
       "position": {
         "x": 2260,
         "y": 740
@@ -160,7 +160,7 @@
       "height": 86
     },
     {
-      "id": "ec302d482a9b4614b14120ff875b8414:aiAgent:1",
+      "id": "1:aiAgent:1",
       "position": {
         "x": 1220,
         "y": 400
@@ -173,7 +173,7 @@
       "height": 200
     },
     {
-      "id": "ec302d482a9b4614b14120ff875b8414:masterSkill:1",
+      "id": "1:masterSkill:1",
       "position": {
         "x": 1240,
         "y": 740
@@ -186,7 +186,7 @@
       "height": 86
     },
     {
-      "id": "ec302d482a9b4614b14120ff875b8414:vercelAction:1",
+      "id": "1:vercelAction:1",
       "position": {
         "x": 2380,
         "y": 740
@@ -199,7 +199,7 @@
       "height": 86
     },
     {
-      "id": "ec302d482a9b4614b14120ff875b8414:perplexitySearch:1",
+      "id": "1:perplexitySearch:1",
       "position": {
         "x": 2460,
         "y": 740
@@ -212,14 +212,14 @@
       "height": 86
     },
     {
-      "id": "ec302d482a9b4614b14120ff875b8414:context:1",
+      "id": "1:context:1",
       "position": {
-        "x": 1120,
+        "x": 1140,
         "y": 740
       },
       "type": "context",
       "data": {
-        "agentNodeId": "ec302d482a9b4614b14120ff875b8414:aiAgent:1",
+        "agentNodeId": "1:aiAgent:1",
         "label": "Context",
         "systemManaged": true
       },
@@ -230,163 +230,163 @@
   "edges": [
     {
       "animated": true,
-      "id": "e-chatTrigger-17841962551380-d234a0-aiAgent-178419625513812-d234a0-1784196255138-d234a0",
-      "source": "ec302d482a9b4614b14120ff875b8414:chatTrigger:1",
+      "id": "e-chatTrigger-17883377587790-a4adc2-aiAgent-178833775877912-a4adc2-1788337758779-a4adc2",
+      "source": "1:chatTrigger:1",
       "sourceHandle": "output-main",
-      "target": "ec302d482a9b4614b14120ff875b8414:aiAgent:1",
+      "target": "1:aiAgent:1",
       "targetHandle": "input-main",
       "type": "smoothstep"
     },
     {
       "animated": true,
-      "id": "e-aiAgent-178419625513812-d234a0-console-17841962551381-d234a0-1784196255138-d234a0",
-      "source": "ec302d482a9b4614b14120ff875b8414:aiAgent:1",
+      "id": "e-aiAgent-178833775877912-a4adc2-console-17883377587791-a4adc2-1788337758779-a4adc2",
+      "source": "1:aiAgent:1",
       "sourceHandle": "output-main",
-      "target": "ec302d482a9b4614b14120ff875b8414:console:1",
+      "target": "1:console:1",
       "targetHandle": "input-main",
       "type": "smoothstep"
     },
     {
       "animated": true,
-      "id": "e-masterSkill-178419625513815-d234a0-aiAgent-178419625513812-d234a0-1784196255138-d234a0",
-      "source": "ec302d482a9b4614b14120ff875b8414:masterSkill:1",
+      "id": "e-masterSkill-178833775877913-a4adc2-aiAgent-178833775877912-a4adc2-1788337758779-a4adc2",
+      "source": "1:masterSkill:1",
       "sourceHandle": "output-tool",
-      "target": "ec302d482a9b4614b14120ff875b8414:aiAgent:1",
+      "target": "1:aiAgent:1",
       "targetHandle": "input-skill",
       "type": "smoothstep"
     },
     {
       "animated": true,
-      "id": "e-writeTodos-17841962551383-d234a0-aiAgent-178419625513812-d234a0-1784196255138-d234a0",
-      "source": "ec302d482a9b4614b14120ff875b8414:writeTodos:1",
+      "id": "e-writeTodos-17883377587793-a4adc2-aiAgent-178833775877912-a4adc2-1788337758779-a4adc2",
+      "source": "1:writeTodos:1",
       "sourceHandle": "output-tool",
-      "target": "ec302d482a9b4614b14120ff875b8414:aiAgent:1",
+      "target": "1:aiAgent:1",
       "targetHandle": "input-tools",
       "type": "smoothstep"
     },
     {
       "animated": true,
-      "id": "e-fsSearch-17841962551389-d234a0-aiAgent-178419625513812-d234a0-1784196255138-d234a0",
-      "source": "ec302d482a9b4614b14120ff875b8414:fsSearch:1",
+      "id": "e-fsSearch-17883377587799-a4adc2-aiAgent-178833775877912-a4adc2-1788337758779-a4adc2",
+      "source": "1:fsSearch:1",
       "sourceHandle": "output-tool",
-      "target": "ec302d482a9b4614b14120ff875b8414:aiAgent:1",
+      "target": "1:aiAgent:1",
       "targetHandle": "input-tools",
       "type": "smoothstep"
     },
     {
       "animated": true,
-      "id": "e-shell-17841962551388-d234a0-aiAgent-178419625513812-d234a0-1784196255138-d234a0",
-      "source": "ec302d482a9b4614b14120ff875b8414:shell:1",
+      "id": "e-shell-17883377587798-a4adc2-aiAgent-178833775877912-a4adc2-1788337758779-a4adc2",
+      "source": "1:shell:1",
       "sourceHandle": "output-tool",
-      "target": "ec302d482a9b4614b14120ff875b8414:aiAgent:1",
+      "target": "1:aiAgent:1",
       "targetHandle": "input-tools",
       "type": "smoothstep"
     },
     {
       "animated": true,
-      "id": "e-fileRead-17841962551386-d234a0-aiAgent-178419625513812-d234a0-1784196255138-d234a0",
-      "source": "ec302d482a9b4614b14120ff875b8414:fileRead:1",
+      "id": "e-fileRead-17883377587796-a4adc2-aiAgent-178833775877912-a4adc2-1788337758779-a4adc2",
+      "source": "1:fileRead:1",
       "sourceHandle": "output-tool",
-      "target": "ec302d482a9b4614b14120ff875b8414:aiAgent:1",
+      "target": "1:aiAgent:1",
       "targetHandle": "input-tools",
       "type": "smoothstep"
     },
     {
       "animated": true,
-      "id": "e-fileModify-17841962551387-d234a0-aiAgent-178419625513812-d234a0-1784196255138-d234a0",
-      "source": "ec302d482a9b4614b14120ff875b8414:fileModify:1",
+      "id": "e-fileModify-17883377587797-a4adc2-aiAgent-178833775877912-a4adc2-1788337758779-a4adc2",
+      "source": "1:fileModify:1",
       "sourceHandle": "output-tool",
-      "target": "ec302d482a9b4614b14120ff875b8414:aiAgent:1",
+      "target": "1:aiAgent:1",
       "targetHandle": "input-tools",
       "type": "smoothstep"
     },
     {
       "animated": true,
-      "id": "e-pythonExecutor-178419625513811-d234a0-aiAgent-178419625513812-d234a0-1784196255138-d234a0",
-      "source": "ec302d482a9b4614b14120ff875b8414:pythonExecutor:1",
+      "id": "e-pythonExecutor-178833775877911-a4adc2-aiAgent-178833775877912-a4adc2-1788337758779-a4adc2",
+      "source": "1:pythonExecutor:1",
       "sourceHandle": "output-tool",
-      "target": "ec302d482a9b4614b14120ff875b8414:aiAgent:1",
+      "target": "1:aiAgent:1",
       "targetHandle": "input-tools",
       "type": "smoothstep"
     },
     {
       "animated": true,
-      "id": "e-processManager-178419625513810-d234a0-aiAgent-178419625513812-d234a0-1784196255138-d234a0",
-      "source": "ec302d482a9b4614b14120ff875b8414:processManager:1",
+      "id": "e-processManager-178833775877910-a4adc2-aiAgent-178833775877912-a4adc2-1788337758779-a4adc2",
+      "source": "1:processManager:1",
       "sourceHandle": "output-tool",
-      "target": "ec302d482a9b4614b14120ff875b8414:aiAgent:1",
+      "target": "1:aiAgent:1",
       "targetHandle": "input-tools",
       "type": "smoothstep"
     },
     {
       "animated": true,
-      "id": "e-duckduckgoSearch-17841962551384-d234a0-aiAgent-178419625513812-d234a0-1784196255138-d234a0",
-      "source": "ec302d482a9b4614b14120ff875b8414:duckduckgoSearch:1",
+      "id": "e-duckduckgoSearch-17883377587794-a4adc2-aiAgent-178833775877912-a4adc2-1788337758779-a4adc2",
+      "source": "1:duckduckgoSearch:1",
       "sourceHandle": "output-tool",
-      "target": "ec302d482a9b4614b14120ff875b8414:aiAgent:1",
+      "target": "1:aiAgent:1",
       "targetHandle": "input-tools",
       "type": "smoothstep"
     },
     {
       "animated": true,
-      "id": "reactflow__edge-browser-17841962551385-d234a0output-tool-aiAgent-178419625513812-d234a0input-tools",
-      "source": "ec302d482a9b4614b14120ff875b8414:browser:1",
+      "id": "e-browser-17883377587795-a4adc2-aiAgent-178833775877912-a4adc2-1788337758779-a4adc2",
+      "source": "1:browser:1",
       "sourceHandle": "output-tool",
-      "target": "ec302d482a9b4614b14120ff875b8414:aiAgent:1",
+      "target": "1:aiAgent:1",
       "targetHandle": "input-tools",
       "type": "smoothstep"
     },
     {
       "animated": true,
-      "id": "reactflow__edge-vercelAction-1784200825672output-tool-aiAgent-178419625513812-d234a0input-tools",
-      "source": "ec302d482a9b4614b14120ff875b8414:vercelAction:1",
+      "id": "e-vercelAction-178833775877914-a4adc2-aiAgent-178833775877912-a4adc2-1788337758779-a4adc2",
+      "source": "1:vercelAction:1",
       "sourceHandle": "output-tool",
-      "target": "ec302d482a9b4614b14120ff875b8414:aiAgent:1",
+      "target": "1:aiAgent:1",
       "targetHandle": "input-tools",
       "type": "smoothstep"
     },
     {
       "animated": true,
-      "id": "reactflow__edge-perplexitySearch-1784201431385output-tool-aiAgent-178419625513812-d234a0input-tools",
-      "source": "ec302d482a9b4614b14120ff875b8414:perplexitySearch:1",
+      "id": "e-perplexitySearch-178833775877915-a4adc2-aiAgent-178833775877912-a4adc2-1788337758779-a4adc2",
+      "source": "1:perplexitySearch:1",
       "sourceHandle": "output-tool",
-      "target": "ec302d482a9b4614b14120ff875b8414:aiAgent:1",
+      "target": "1:aiAgent:1",
       "targetHandle": "input-tools",
       "type": "smoothstep"
     },
     {
-      "id": "memory-tool-simpleMemory-17841962551382-d234a0-aiAgent-178419625513812-d234a0",
-      "source": "ec302d482a9b4614b14120ff875b8414:simpleMemory:1",
+      "id": "e-simpleMemory-17883377587792-a4adc2-aiAgent-178833775877912-a4adc2-1788337758779-a4adc2",
+      "source": "1:simpleMemory:1",
       "sourceHandle": "output-tool",
-      "target": "ec302d482a9b4614b14120ff875b8414:aiAgent:1",
+      "target": "1:aiAgent:1",
       "targetHandle": "input-tools"
     },
     {
-      "id": "context-__context__-1-aiAgent-178419625513812-d234a0-aiAgent-178419625513812-d234a0",
-      "source": "ec302d482a9b4614b14120ff875b8414:context:1",
+      "id": "context-__context__-1-aiAgent-178833775877912-a4adc2-aiAgent-178833775877912-a4adc2",
+      "source": "1:context:1",
       "sourceHandle": "output-context",
-      "target": "ec302d482a9b4614b14120ff875b8414:aiAgent:1",
+      "target": "1:aiAgent:1",
       "targetHandle": "input-context",
       "data": {
         "systemManaged": true
       }
     }
   ],
-  "createdAt": "2026-07-16T04:34:15.150Z",
-  "lastModified": "2026-08-19T14:34:07.011Z",
-  "version": "0.1.0",
+  "createdAt": "2026-09-02T02:59:18.803Z",
+  "lastModified": "2026-09-03T15:52:13.809Z",
+  "version": "0.1.1",
   "nodeParameters": {
-    "ec302d482a9b4614b14120ff875b8414:console:1": {
+    "1:console:1": {
       "label": "Console",
       "log_mode": "field",
       "field_path": "{{aiagent.response}}",
       "expression": "",
       "format": "json"
     },
-    "ec302d482a9b4614b14120ff875b8414:simpleMemory:1": {
+    "1:simpleMemory:1": {
       "label": "Memory"
     },
-    "ec302d482a9b4614b14120ff875b8414:browser:1": {
+    "1:browser:1": {
       "operation": "navigate",
       "url": "",
       "selector": "",
@@ -415,13 +415,13 @@
       "action_delay": 0,
       "user_agent": ""
     },
-    "ec302d482a9b4614b14120ff875b8414:fileRead:1": {
+    "1:fileRead:1": {
       "file_path": "",
       "offset": 0,
       "limit": 100,
       "label": "File Read"
     },
-    "ec302d482a9b4614b14120ff875b8414:fileModify:1": {
+    "1:fileModify:1": {
       "operation": "write",
       "file_path": "",
       "content": "",
@@ -430,19 +430,19 @@
       "replace_all": false,
       "label": "File Modify"
     },
-    "ec302d482a9b4614b14120ff875b8414:shell:1": {
+    "1:shell:1": {
       "command": "",
       "timeout": 30,
       "label": "Shell"
     },
-    "ec302d482a9b4614b14120ff875b8414:fsSearch:1": {
+    "1:fsSearch:1": {
       "mode": "ls",
       "path": ".",
       "pattern": "",
       "file_filter": "",
       "label": "FS Search"
     },
-    "ec302d482a9b4614b14120ff875b8414:processManager:1": {
+    "1:processManager:1": {
       "operation": "start",
       "name": "",
       "command": "",
@@ -452,19 +452,19 @@
       "tool_name": "process_manager",
       "tool_description": "Start, stop, and manage long-running processes. Use for dev servers, watchers, build tools. Output streams to Terminal."
     },
-    "ec302d482a9b4614b14120ff875b8414:pythonExecutor:1": {
+    "1:pythonExecutor:1": {
       "code": "# Python Executor - Transform and process data\n#\n# Available:\n#   input_data - dict with connected node outputs\n#   math, json - imported modules\n#   print() - for debugging\n#\n# Set the \"output\" variable with your result\n\n# Example: Get data from connected node\ndata = input_data.get(\"start\", {}) or input_data\n\n# Process data\nresult = {\n    \"message\": \"from Python!\",\n    \"input_received\": data,\n    \"processed\": True\n}\n\n# Set output (required)\noutput = result",
       "timeout": 30,
       "label": "Python Executor"
     },
-    "ec302d482a9b4614b14120ff875b8414:aiAgent:1": {
+    "1:aiAgent:1": {
       "prompt": "{{chattrigger.message}} {{telegramreceive.text}}",
       "provider": "gemini",
       "model": "gemini-3.5-flash",
       "system_message": "You are a helpful assistant",
       "label": "AI Agent"
     },
-    "ec302d482a9b4614b14120ff875b8414:masterSkill:1": {
+    "1:masterSkill:1": {
       "skills_config": {
         "assistant-personality": {
           "enabled": true,
@@ -588,7 +588,7 @@
         }
       }
     },
-    "ec302d482a9b4614b14120ff875b8414:vercelAction:1": {
+    "1:vercelAction:1": {
       "operation": "deploy",
       "path": "",
       "prod": false,
@@ -605,7 +605,7 @@
       "command": "",
       "label": "Vercel"
     },
-    "ec302d482a9b4614b14120ff875b8414:perplexitySearch:1": {
+    "1:perplexitySearch:1": {
       "tool_name": "perplexity_search",
       "tool_description": "AI-powered search using Perplexity Sonar. Returns a markdown-formatted answer with inline citation references and source URLs.",
       "model": "sonar",

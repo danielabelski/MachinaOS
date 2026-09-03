@@ -1,10 +1,10 @@
 {
-  "id": "321151185156422f965c63a299945da7",
+  "id": "2",
   "name": "AI Employee",
-  "slug": "AI_Employee_2",
+  "slug": "AI_Employee_1",
   "nodes": [
     {
-      "id": "321151185156422f965c63a299945da7:perplexitySearch:1",
+      "id": "2:perplexitySearch:1",
       "position": {
         "x": 1020,
         "y": 200
@@ -17,9 +17,9 @@
       "height": 86
     },
     {
-      "id": "321151185156422f965c63a299945da7:duckduckgoSearch:1",
+      "id": "2:duckduckgoSearch:1",
       "position": {
-        "x": 1120,
+        "x": 1140,
         "y": 200
       },
       "type": "duckduckgoSearch",
@@ -30,9 +30,9 @@
       "height": 86
     },
     {
-      "id": "321151185156422f965c63a299945da7:writeTodos:1",
+      "id": "2:writeTodos:1",
       "position": {
-        "x": 1000,
+        "x": 680,
         "y": -440
       },
       "type": "writeTodos",
@@ -43,23 +43,23 @@
       "height": 86
     },
     {
-      "id": "321151185156422f965c63a299945da7:simpleMemory:1",
+      "id": "2:simpleMemory:1",
       "position": {
-        "x": 740,
+        "x": 580,
         "y": -440
       },
       "type": "simpleMemory",
       "data": {
         "label": "Memory"
       },
-      "width": 88,
+      "width": 64,
       "height": 86
     },
     {
-      "id": "321151185156422f965c63a299945da7:chatTrigger:1",
+      "id": "2:chatTrigger:1",
       "position": {
         "x": -200,
-        "y": -760
+        "y": -740
       },
       "type": "chatTrigger",
       "data": {
@@ -69,10 +69,10 @@
       "height": 86
     },
     {
-      "id": "321151185156422f965c63a299945da7:console:1",
+      "id": "2:console:1",
       "position": {
-        "x": 920,
-        "y": -720
+        "x": 840,
+        "y": -700
       },
       "type": "console",
       "data": {
@@ -82,22 +82,9 @@
       "height": 86
     },
     {
-      "id": "321151185156422f965c63a299945da7:processManager:1",
+      "id": "2:httpRequest:1",
       "position": {
-        "x": 860,
-        "y": -440
-      },
-      "type": "processManager",
-      "data": {
-        "label": "Process Manager"
-      },
-      "width": 98,
-      "height": 86
-    },
-    {
-      "id": "321151185156422f965c63a299945da7:httpRequest:1",
-      "position": {
-        "x": 1320,
+        "x": 1340,
         "y": 200
       },
       "type": "httpRequest",
@@ -108,7 +95,7 @@
       "height": 86
     },
     {
-      "id": "321151185156422f965c63a299945da7:fileModify:1",
+      "id": "2:fileModify:1",
       "position": {
         "x": 2100,
         "y": 200
@@ -121,7 +108,7 @@
       "height": 86
     },
     {
-      "id": "321151185156422f965c63a299945da7:fileRead:1",
+      "id": "2:fileRead:1",
       "position": {
         "x": 2000,
         "y": 200
@@ -134,7 +121,7 @@
       "height": 86
     },
     {
-      "id": "321151185156422f965c63a299945da7:fsSearch:1",
+      "id": "2:fsSearch:1",
       "position": {
         "x": 2200,
         "y": 200
@@ -147,7 +134,7 @@
       "height": 86
     },
     {
-      "id": "321151185156422f965c63a299945da7:shell:1",
+      "id": "2:shell:1",
       "position": {
         "x": 1900,
         "y": 200
@@ -160,35 +147,9 @@
       "height": 86
     },
     {
-      "id": "321151185156422f965c63a299945da7:gmaps_nearby_places:1",
+      "id": "2:pythonExecutor:1",
       "position": {
-        "x": 2720,
-        "y": 200
-      },
-      "type": "gmaps_nearby_places",
-      "data": {
-        "label": "Nearby Places"
-      },
-      "width": 81,
-      "height": 86
-    },
-    {
-      "id": "321151185156422f965c63a299945da7:gmaps_locations:1",
-      "position": {
-        "x": 2640,
-        "y": 200
-      },
-      "type": "gmaps_locations",
-      "data": {
-        "label": "Geocoding"
-      },
-      "width": 64,
-      "height": 86
-    },
-    {
-      "id": "321151185156422f965c63a299945da7:pythonExecutor:1",
-      "position": {
-        "x": 1800,
+        "x": 1780,
         "y": 200
       },
       "type": "pythonExecutor",
@@ -199,7 +160,7 @@
       "height": 86
     },
     {
-      "id": "321151185156422f965c63a299945da7:telegramReceive:1",
+      "id": "2:telegramReceive:1",
       "position": {
         "x": -220,
         "y": -620
@@ -212,22 +173,9 @@
       "height": 86
     },
     {
-      "id": "321151185156422f965c63a299945da7:telegramSend:1",
+      "id": "2:twitterSearch:1",
       "position": {
-        "x": 920,
-        "y": -620
-      },
-      "type": "telegramSend",
-      "data": {
-        "label": "Telegram Send"
-      },
-      "width": 84,
-      "height": 86
-    },
-    {
-      "id": "321151185156422f965c63a299945da7:twitterSearch:1",
-      "position": {
-        "x": -240,
+        "x": -300,
         "y": 200
       },
       "type": "twitterSearch",
@@ -238,9 +186,9 @@
       "height": 86
     },
     {
-      "id": "321151185156422f965c63a299945da7:twitterUser:1",
+      "id": "2:twitterUser:1",
       "position": {
-        "x": -340,
+        "x": -400,
         "y": 200
       },
       "type": "twitterUser",
@@ -251,9 +199,9 @@
       "height": 86
     },
     {
-      "id": "321151185156422f965c63a299945da7:whatsappDb:1",
+      "id": "2:whatsappDb:1",
       "position": {
-        "x": -460,
+        "x": -500,
         "y": 200
       },
       "type": "whatsappDb",
@@ -264,10 +212,10 @@
       "height": 86
     },
     {
-      "id": "321151185156422f965c63a299945da7:masterSkill:1",
+      "id": "2:masterSkill:1",
       "position": {
-        "x": 460,
-        "y": -460
+        "x": 260,
+        "y": -440
       },
       "type": "masterSkill",
       "data": {
@@ -277,9 +225,9 @@
       "height": 86
     },
     {
-      "id": "321151185156422f965c63a299945da7:browser:1",
+      "id": "2:browser:1",
       "position": {
-        "x": 1240,
+        "x": 1260,
         "y": 200
       },
       "type": "browser",
@@ -290,22 +238,9 @@
       "height": 86
     },
     {
-      "id": "321151185156422f965c63a299945da7:chatAgent:1",
+      "id": "2:masterSkill:2",
       "position": {
-        "x": 500,
-        "y": -720
-      },
-      "type": "chatAgent",
-      "data": {
-        "label": "Zeenie"
-      },
-      "width": 300,
-      "height": 200
-    },
-    {
-      "id": "321151185156422f965c63a299945da7:masterSkill:2",
-      "position": {
-        "x": -800,
+        "x": -840,
         "y": 200
       },
       "type": "masterSkill",
@@ -316,7 +251,7 @@
       "height": 86
     },
     {
-      "id": "321151185156422f965c63a299945da7:coding_agent:1",
+      "id": "2:coding_agent:1",
       "position": {
         "x": 1460,
         "y": -120
@@ -329,9 +264,9 @@
       "height": 200
     },
     {
-      "id": "321151185156422f965c63a299945da7:productivity_agent:1",
+      "id": "2:productivity_agent:1",
       "position": {
-        "x": -80,
+        "x": -120,
         "y": -120
       },
       "type": "productivity_agent",
@@ -342,20 +277,7 @@
       "height": 200
     },
     {
-      "id": "321151185156422f965c63a299945da7:travel_agent:1",
-      "position": {
-        "x": 2220,
-        "y": -120
-      },
-      "type": "travel_agent",
-      "data": {
-        "label": "Travel Agent"
-      },
-      "width": 300,
-      "height": 200
-    },
-    {
-      "id": "321151185156422f965c63a299945da7:web_agent:1",
+      "id": "2:web_agent:1",
       "position": {
         "x": 740,
         "y": -120
@@ -368,7 +290,7 @@
       "height": 200
     },
     {
-      "id": "321151185156422f965c63a299945da7:social_agent:1",
+      "id": "2:social_agent:1",
       "position": {
         "x": -780,
         "y": -120
@@ -381,9 +303,9 @@
       "height": 200
     },
     {
-      "id": "321151185156422f965c63a299945da7:masterSkill:3",
+      "id": "2:masterSkill:3",
       "position": {
-        "x": -100,
+        "x": -160,
         "y": 200
       },
       "type": "masterSkill",
@@ -394,7 +316,7 @@
       "height": 86
     },
     {
-      "id": "321151185156422f965c63a299945da7:masterSkill:4",
+      "id": "2:masterSkill:4",
       "position": {
         "x": 680,
         "y": 200
@@ -407,7 +329,7 @@
       "height": 86
     },
     {
-      "id": "321151185156422f965c63a299945da7:masterSkill:5",
+      "id": "2:masterSkill:5",
       "position": {
         "x": 1460,
         "y": 200
@@ -420,9 +342,9 @@
       "height": 86
     },
     {
-      "id": "321151185156422f965c63a299945da7:processManager:2",
+      "id": "2:processManager:2",
       "position": {
-        "x": -600,
+        "x": -620,
         "y": 200
       },
       "type": "processManager",
@@ -433,9 +355,9 @@
       "height": 86
     },
     {
-      "id": "321151185156422f965c63a299945da7:processManager:3",
+      "id": "2:processManager:3",
       "position": {
-        "x": 140,
+        "x": 40,
         "y": 200
       },
       "type": "processManager",
@@ -446,7 +368,7 @@
       "height": 86
     },
     {
-      "id": "321151185156422f965c63a299945da7:processManager:4",
+      "id": "2:processManager:4",
       "position": {
         "x": 900,
         "y": 200
@@ -459,9 +381,9 @@
       "height": 86
     },
     {
-      "id": "321151185156422f965c63a299945da7:processManager:5",
+      "id": "2:processManager:5",
       "position": {
-        "x": 1680,
+        "x": 1660,
         "y": 200
       },
       "type": "processManager",
@@ -472,9 +394,9 @@
       "height": 86
     },
     {
-      "id": "321151185156422f965c63a299945da7:processManager:6",
+      "id": "2:processManager:6",
       "position": {
-        "x": 2520,
+        "x": 2540,
         "y": 200
       },
       "type": "processManager",
@@ -485,9 +407,9 @@
       "height": 86
     },
     {
-      "id": "321151185156422f965c63a299945da7:googleGmail:1",
+      "id": "2:googleGmail:1",
       "position": {
-        "x": 280,
+        "x": 160,
         "y": 200
       },
       "type": "googleGmail",
@@ -498,9 +420,9 @@
       "height": 86
     },
     {
-      "id": "321151185156422f965c63a299945da7:writeTodos:2",
+      "id": "2:writeTodos:2",
       "position": {
-        "x": -700,
+        "x": -720,
         "y": 200
       },
       "type": "writeTodos",
@@ -511,9 +433,9 @@
       "height": 86
     },
     {
-      "id": "321151185156422f965c63a299945da7:writeTodos:3",
+      "id": "2:writeTodos:3",
       "position": {
-        "x": 40,
+        "x": -60,
         "y": 200
       },
       "type": "writeTodos",
@@ -524,7 +446,7 @@
       "height": 86
     },
     {
-      "id": "321151185156422f965c63a299945da7:writeTodos:4",
+      "id": "2:writeTodos:4",
       "position": {
         "x": 800,
         "y": 200
@@ -537,9 +459,9 @@
       "height": 86
     },
     {
-      "id": "321151185156422f965c63a299945da7:writeTodos:5",
+      "id": "2:writeTodos:5",
       "position": {
-        "x": 1580,
+        "x": 1560,
         "y": 200
       },
       "type": "writeTodos",
@@ -550,9 +472,9 @@
       "height": 86
     },
     {
-      "id": "321151185156422f965c63a299945da7:writeTodos:6",
+      "id": "2:writeTodos:6",
       "position": {
-        "x": 2420,
+        "x": 2440,
         "y": 200
       },
       "type": "writeTodos",
@@ -563,7 +485,7 @@
       "height": 86
     },
     {
-      "id": "321151185156422f965c63a299945da7:googleSheets:1",
+      "id": "2:googleSheets:1",
       "position": {
         "x": 560,
         "y": 200
@@ -576,7 +498,7 @@
       "height": 86
     },
     {
-      "id": "321151185156422f965c63a299945da7:googleDrive:1",
+      "id": "2:googleDrive:1",
       "position": {
         "x": 460,
         "y": 200
@@ -589,7 +511,7 @@
       "height": 86
     },
     {
-      "id": "321151185156422f965c63a299945da7:googleCalendar:1",
+      "id": "2:googleCalendar:1",
       "position": {
         "x": 360,
         "y": 200
@@ -602,7 +524,7 @@
       "height": 86
     },
     {
-      "id": "321151185156422f965c63a299945da7:masterSkill:6",
+      "id": "2:masterSkill:6",
       "position": {
         "x": 2300,
         "y": 200
@@ -615,7 +537,7 @@
       "height": 86
     },
     {
-      "id": "321151185156422f965c63a299945da7:console:2",
+      "id": "2:console:2",
       "position": {
         "x": -400,
         "y": -60
@@ -628,7 +550,7 @@
       "height": 86
     },
     {
-      "id": "321151185156422f965c63a299945da7:console:3",
+      "id": "2:console:3",
       "position": {
         "x": 320,
         "y": -40
@@ -641,7 +563,7 @@
       "height": 86
     },
     {
-      "id": "321151185156422f965c63a299945da7:console:4",
+      "id": "2:console:4",
       "position": {
         "x": 1120,
         "y": -40
@@ -654,7 +576,7 @@
       "height": 86
     },
     {
-      "id": "321151185156422f965c63a299945da7:console:5",
+      "id": "2:console:5",
       "position": {
         "x": 1820,
         "y": -60
@@ -667,10 +589,10 @@
       "height": 86
     },
     {
-      "id": "321151185156422f965c63a299945da7:console:6",
+      "id": "2:console:6",
       "position": {
-        "x": 2640,
-        "y": -60
+        "x": 2680,
+        "y": -40
       },
       "type": "console",
       "data": {
@@ -680,10 +602,10 @@
       "height": 86
     },
     {
-      "id": "321151185156422f965c63a299945da7:taskTrigger:1",
+      "id": "2:taskTrigger:1",
       "position": {
-        "x": -180,
-        "y": -460
+        "x": -220,
+        "y": -500
       },
       "type": "taskTrigger",
       "data": {
@@ -693,14 +615,118 @@
       "height": 86
     },
     {
-      "id": "321151185156422f965c63a299945da7:context:1",
+      "id": "2:tool_agent:1",
       "position": {
-        "x": 360,
-        "y": -460
+        "x": 2300,
+        "y": -120
+      },
+      "type": "tool_agent",
+      "data": {
+        "label": "Tool Agent"
+      },
+      "width": 300,
+      "height": 200
+    },
+    {
+      "id": "2:canvas:1",
+      "position": {
+        "x": 800,
+        "y": -440
+      },
+      "type": "canvas",
+      "data": {
+        "label": "Canvas"
+      },
+      "width": 64,
+      "height": 86
+    },
+    {
+      "id": "2:cloudflareAction:1",
+      "position": {
+        "x": 2880,
+        "y": 200
+      },
+      "type": "cloudflareAction",
+      "data": {
+        "label": "Cloudflare"
+      },
+      "width": 64,
+      "height": 86
+    },
+    {
+      "id": "2:gcloudAction:1",
+      "position": {
+        "x": 2760,
+        "y": 200
+      },
+      "type": "gcloudAction",
+      "data": {
+        "label": "Google Cloud"
+      },
+      "width": 76,
+      "height": 86
+    },
+    {
+      "id": "2:vercelAction:1",
+      "position": {
+        "x": 2660,
+        "y": 200
+      },
+      "type": "vercelAction",
+      "data": {
+        "label": "Vercel"
+      },
+      "width": 64,
+      "height": 86
+    },
+    {
+      "id": "2:gallery:1",
+      "position": {
+        "x": 1040,
+        "y": -440
+      },
+      "type": "gallery",
+      "data": {
+        "label": "Gallery"
+      },
+      "width": 64,
+      "height": 86
+    },
+    {
+      "id": "2:msMail:1",
+      "position": {
+        "x": 240,
+        "y": 200
+      },
+      "type": "msMail",
+      "data": {
+        "label": "Outlook Mail"
+      },
+      "width": 72,
+      "height": 86
+    },
+    {
+      "id": "2:ai_employee:1",
+      "position": {
+        "x": 260,
+        "y": -740
+      },
+      "type": "ai_employee",
+      "data": {
+        "label": "AI Employee"
+      },
+      "width": 300,
+      "height": 200
+    },
+    {
+      "id": "2:context:7",
+      "position": {
+        "x": 140,
+        "y": -440
       },
       "type": "context",
       "data": {
-        "agentNodeId": "321151185156422f965c63a299945da7:chatAgent:1",
+        "agentNodeId": "2:ai_employee:1",
         "label": "Context",
         "systemManaged": true
       },
@@ -708,29 +734,27 @@
       "height": 86
     },
     {
-      "id": "321151185156422f965c63a299945da7:context:2",
+      "id": "2:taskManager:1",
+      "position": {
+        "x": 880,
+        "y": -440
+      },
+      "type": "taskManager",
+      "data": {
+        "label": "Task Manager"
+      },
+      "width": 79,
+      "height": 86
+    },
+    {
+      "id": "2:context:2",
       "position": {
         "x": 1340,
-        "y": 40
-      },
-      "type": "context",
-      "data": {
-        "agentNodeId": "321151185156422f965c63a299945da7:coding_agent:1",
-        "label": "Context",
-        "systemManaged": true
-      },
-      "width": 64,
-      "height": 86
-    },
-    {
-      "id": "321151185156422f965c63a299945da7:context:3",
-      "position": {
-        "x": -180,
         "y": 20
       },
       "type": "context",
       "data": {
-        "agentNodeId": "321151185156422f965c63a299945da7:productivity_agent:1",
+        "agentNodeId": "2:coding_agent:1",
         "label": "Context",
         "systemManaged": true
       },
@@ -738,14 +762,14 @@
       "height": 86
     },
     {
-      "id": "321151185156422f965c63a299945da7:context:4",
+      "id": "2:context:3",
       "position": {
-        "x": -880,
+        "x": -240,
         "y": 40
       },
       "type": "context",
       "data": {
-        "agentNodeId": "321151185156422f965c63a299945da7:social_agent:1",
+        "agentNodeId": "2:productivity_agent:1",
         "label": "Context",
         "systemManaged": true
       },
@@ -753,14 +777,14 @@
       "height": 86
     },
     {
-      "id": "321151185156422f965c63a299945da7:context:5",
+      "id": "2:context:4",
       "position": {
-        "x": 2120,
-        "y": 20
+        "x": -900,
+        "y": 40
       },
       "type": "context",
       "data": {
-        "agentNodeId": "321151185156422f965c63a299945da7:travel_agent:1",
+        "agentNodeId": "2:social_agent:1",
         "label": "Context",
         "systemManaged": true
       },
@@ -768,14 +792,29 @@
       "height": 86
     },
     {
-      "id": "321151185156422f965c63a299945da7:context:6",
+      "id": "2:context:6",
       "position": {
         "x": 620,
+        "y": 40
+      },
+      "type": "context",
+      "data": {
+        "agentNodeId": "2:web_agent:1",
+        "label": "Context",
+        "systemManaged": true
+      },
+      "width": 64,
+      "height": 86
+    },
+    {
+      "id": "2:context:8",
+      "position": {
+        "x": 2180,
         "y": 20
       },
       "type": "context",
       "data": {
-        "agentNodeId": "321151185156422f965c63a299945da7:web_agent:1",
+        "agentNodeId": "2:tool_agent:1",
         "label": "Context",
         "systemManaged": true
       },
@@ -785,537 +824,433 @@
   ],
   "edges": [
     {
-      "animated": true,
-      "id": "e-chatTrigger-17841962642204-ff6b92-chatAgent-178419626422022-ff6b92-1784196264220-ff6b92",
-      "source": "321151185156422f965c63a299945da7:chatTrigger:1",
-      "sourceHandle": "output-main",
-      "target": "321151185156422f965c63a299945da7:chatAgent:1",
-      "targetHandle": "input-main",
-      "type": "smoothstep"
-    },
-    {
-      "animated": true,
-      "id": "e-telegramReceive-178419626422015-ff6b92-chatAgent-178419626422022-ff6b92-1784196264220-ff6b92",
-      "source": "321151185156422f965c63a299945da7:telegramReceive:1",
-      "sourceHandle": "output-main",
-      "target": "321151185156422f965c63a299945da7:chatAgent:1",
-      "targetHandle": "input-main",
-      "type": "smoothstep"
-    },
-    {
-      "animated": true,
-      "id": "e-web_agent-178419626422028-ff6b92-chatAgent-178419626422022-ff6b92-1784196264220-ff6b92",
-      "source": "321151185156422f965c63a299945da7:web_agent:1",
-      "sourceHandle": "output-top",
-      "target": "321151185156422f965c63a299945da7:chatAgent:1",
-      "targetHandle": "input-tools",
-      "type": "smoothstep"
-    },
-    {
-      "animated": true,
-      "id": "e-productivity_agent-178419626422026-ff6b92-chatAgent-178419626422022-ff6b92-1784196264220-ff6b92",
-      "source": "321151185156422f965c63a299945da7:productivity_agent:1",
-      "sourceHandle": "output-top",
-      "target": "321151185156422f965c63a299945da7:chatAgent:1",
-      "targetHandle": "input-tools",
-      "type": "smoothstep"
-    },
-    {
-      "animated": true,
-      "id": "e-travel_agent-178419626422027-ff6b92-chatAgent-178419626422022-ff6b92-1784196264220-ff6b92",
-      "source": "321151185156422f965c63a299945da7:travel_agent:1",
-      "sourceHandle": "output-top",
-      "target": "321151185156422f965c63a299945da7:chatAgent:1",
-      "targetHandle": "input-tools",
-      "type": "smoothstep"
-    },
-    {
-      "animated": true,
-      "id": "e-coding_agent-178419626422025-ff6b92-chatAgent-178419626422022-ff6b92-1784196264220-ff6b92",
-      "source": "321151185156422f965c63a299945da7:coding_agent:1",
-      "sourceHandle": "output-top",
-      "target": "321151185156422f965c63a299945da7:chatAgent:1",
-      "targetHandle": "input-tools",
-      "type": "smoothstep"
-    },
-    {
-      "animated": true,
-      "id": "e-social_agent-178419626422029-ff6b92-chatAgent-178419626422022-ff6b92-1784196264220-ff6b92",
-      "source": "321151185156422f965c63a299945da7:social_agent:1",
-      "sourceHandle": "output-top",
-      "target": "321151185156422f965c63a299945da7:chatAgent:1",
-      "targetHandle": "input-tools",
-      "type": "smoothstep"
-    },
-    {
-      "animated": true,
-      "id": "e-masterSkill-178419626422020-ff6b92-chatAgent-178419626422022-ff6b92-1784196264220-ff6b92",
-      "source": "321151185156422f965c63a299945da7:masterSkill:1",
+      "id": "e-masterSkill-178833775898229-e5e4b1-productivity_agent-178833775898225-e5e4b1-1788337758982-e5e4b1",
+      "source": "2:masterSkill:3",
       "sourceHandle": "output-tool",
-      "target": "321151185156422f965c63a299945da7:chatAgent:1",
-      "targetHandle": "input-skill",
-      "type": "smoothstep"
+      "target": "2:productivity_agent:1",
+      "targetHandle": "input-skill"
     },
     {
-      "animated": true,
-      "id": "e-writeTodos-17841962642202-ff6b92-chatAgent-178419626422022-ff6b92-1784196264220-ff6b92",
-      "source": "321151185156422f965c63a299945da7:writeTodos:1",
+      "id": "e-masterSkill-178833775898223-e5e4b1-social_agent-178833775898228-e5e4b1-1788337758982-e5e4b1",
+      "source": "2:masterSkill:2",
       "sourceHandle": "output-tool",
-      "target": "321151185156422f965c63a299945da7:chatAgent:1",
-      "targetHandle": "input-tools",
-      "type": "smoothstep"
+      "target": "2:social_agent:1",
+      "targetHandle": "input-skill"
     },
     {
-      "animated": true,
-      "id": "e-masterSkill-178419626422033-ff6b92-productivity_agent-178419626422026-ff6b92-1784196264220-ff6b92",
-      "source": "321151185156422f965c63a299945da7:masterSkill:3",
+      "id": "e-masterSkill-178833775898230-e5e4b1-web_agent-178833775898227-e5e4b1-1788337758982-e5e4b1",
+      "source": "2:masterSkill:4",
       "sourceHandle": "output-tool",
-      "target": "321151185156422f965c63a299945da7:productivity_agent:1",
-      "targetHandle": "input-skill",
-      "type": "smoothstep"
+      "target": "2:web_agent:1",
+      "targetHandle": "input-skill"
     },
     {
-      "animated": true,
-      "id": "e-masterSkill-178419626422024-ff6b92-social_agent-178419626422029-ff6b92-1784196264220-ff6b92",
-      "source": "321151185156422f965c63a299945da7:masterSkill:2",
+      "id": "e-processManager-178833775898232-e5e4b1-social_agent-178833775898228-e5e4b1-1788337758982-e5e4b1",
+      "source": "2:processManager:2",
       "sourceHandle": "output-tool",
-      "target": "321151185156422f965c63a299945da7:social_agent:1",
-      "targetHandle": "input-skill",
-      "type": "smoothstep"
-    },
-    {
-      "animated": true,
-      "id": "e-masterSkill-178419626422034-ff6b92-web_agent-178419626422028-ff6b92-1784196264220-ff6b92",
-      "source": "321151185156422f965c63a299945da7:masterSkill:4",
-      "sourceHandle": "output-tool",
-      "target": "321151185156422f965c63a299945da7:web_agent:1",
-      "targetHandle": "input-skill",
-      "type": "smoothstep"
-    },
-    {
-      "animated": true,
-      "id": "e-processManager-17841962642206-ff6b92-chatAgent-178419626422022-ff6b92-1784196264220-ff6b92",
-      "source": "321151185156422f965c63a299945da7:processManager:1",
-      "sourceHandle": "output-tool",
-      "target": "321151185156422f965c63a299945da7:chatAgent:1",
-      "targetHandle": "input-tools",
-      "type": "smoothstep"
-    },
-    {
-      "animated": true,
-      "id": "e-processManager-178419626422036-ff6b92-social_agent-178419626422029-ff6b92-1784196264220-ff6b92",
-      "source": "321151185156422f965c63a299945da7:processManager:2",
-      "sourceHandle": "output-tool",
-      "target": "321151185156422f965c63a299945da7:social_agent:1",
-      "targetHandle": "input-tools",
-      "type": "smoothstep"
-    },
-    {
-      "animated": true,
-      "id": "e-whatsappDb-178419626422019-ff6b92-social_agent-178419626422029-ff6b92-1784196264220-ff6b92",
-      "source": "321151185156422f965c63a299945da7:whatsappDb:1",
-      "sourceHandle": "output-tool",
-      "target": "321151185156422f965c63a299945da7:social_agent:1",
-      "targetHandle": "input-tools",
-      "type": "smoothstep"
-    },
-    {
-      "animated": true,
-      "id": "e-twitterUser-178419626422018-ff6b92-social_agent-178419626422029-ff6b92-1784196264220-ff6b92",
-      "source": "321151185156422f965c63a299945da7:twitterUser:1",
-      "sourceHandle": "output-tool",
-      "target": "321151185156422f965c63a299945da7:social_agent:1",
-      "targetHandle": "input-tools",
-      "type": "smoothstep"
-    },
-    {
-      "animated": true,
-      "id": "e-twitterSearch-178419626422017-ff6b92-social_agent-178419626422029-ff6b92-1784196264220-ff6b92",
-      "source": "321151185156422f965c63a299945da7:twitterSearch:1",
-      "sourceHandle": "output-tool",
-      "target": "321151185156422f965c63a299945da7:social_agent:1",
-      "targetHandle": "input-tools",
-      "type": "smoothstep"
-    },
-    {
-      "animated": true,
-      "id": "e-googleGmail-178419626422041-ff6b92-productivity_agent-178419626422026-ff6b92-1784196264220-ff6b92",
-      "source": "321151185156422f965c63a299945da7:googleGmail:1",
-      "sourceHandle": "output-tool",
-      "target": "321151185156422f965c63a299945da7:productivity_agent:1",
-      "targetHandle": "input-tools",
-      "type": "smoothstep"
-    },
-    {
-      "animated": true,
-      "id": "e-processManager-178419626422037-ff6b92-productivity_agent-178419626422026-ff6b92-1784196264220-ff6b92",
-      "source": "321151185156422f965c63a299945da7:processManager:3",
-      "sourceHandle": "output-tool",
-      "target": "321151185156422f965c63a299945da7:productivity_agent:1",
-      "targetHandle": "input-tools",
-      "type": "smoothstep"
-    },
-    {
-      "animated": true,
-      "id": "e-processManager-178419626422038-ff6b92-web_agent-178419626422028-ff6b92-1784196264220-ff6b92",
-      "source": "321151185156422f965c63a299945da7:processManager:4",
-      "sourceHandle": "output-tool",
-      "target": "321151185156422f965c63a299945da7:web_agent:1",
-      "targetHandle": "input-tools",
-      "type": "smoothstep"
-    },
-    {
-      "animated": true,
-      "id": "e-perplexitySearch-17841962642200-ff6b92-web_agent-178419626422028-ff6b92-1784196264220-ff6b92",
-      "source": "321151185156422f965c63a299945da7:perplexitySearch:1",
-      "sourceHandle": "output-tool",
-      "target": "321151185156422f965c63a299945da7:web_agent:1",
-      "targetHandle": "input-tools",
-      "type": "smoothstep"
-    },
-    {
-      "animated": true,
-      "id": "e-duckduckgoSearch-17841962642201-ff6b92-web_agent-178419626422028-ff6b92-1784196264220-ff6b92",
-      "source": "321151185156422f965c63a299945da7:duckduckgoSearch:1",
-      "sourceHandle": "output-tool",
-      "target": "321151185156422f965c63a299945da7:web_agent:1",
-      "targetHandle": "input-tools",
-      "type": "smoothstep"
-    },
-    {
-      "animated": true,
-      "id": "e-browser-178419626422021-ff6b92-web_agent-178419626422028-ff6b92-1784196264220-ff6b92",
-      "source": "321151185156422f965c63a299945da7:browser:1",
-      "sourceHandle": "output-tool",
-      "target": "321151185156422f965c63a299945da7:web_agent:1",
-      "targetHandle": "input-tools",
-      "type": "smoothstep"
-    },
-    {
-      "animated": true,
-      "id": "e-httpRequest-17841962642207-ff6b92-web_agent-178419626422028-ff6b92-1784196264220-ff6b92",
-      "source": "321151185156422f965c63a299945da7:httpRequest:1",
-      "sourceHandle": "output-tool",
-      "target": "321151185156422f965c63a299945da7:web_agent:1",
-      "targetHandle": "input-tools",
-      "type": "smoothstep"
-    },
-    {
-      "animated": true,
-      "id": "e-writeTodos-178419626422042-ff6b92-social_agent-178419626422029-ff6b92-1784196264220-ff6b92",
-      "source": "321151185156422f965c63a299945da7:writeTodos:2",
-      "sourceHandle": "output-tool",
-      "target": "321151185156422f965c63a299945da7:social_agent:1",
-      "targetHandle": "input-tools",
-      "type": "smoothstep"
-    },
-    {
-      "animated": true,
-      "id": "e-writeTodos-178419626422043-ff6b92-productivity_agent-178419626422026-ff6b92-1784196264220-ff6b92",
-      "source": "321151185156422f965c63a299945da7:writeTodos:3",
-      "sourceHandle": "output-tool",
-      "target": "321151185156422f965c63a299945da7:productivity_agent:1",
-      "targetHandle": "input-tools",
-      "type": "smoothstep"
-    },
-    {
-      "animated": true,
-      "id": "e-googleCalendar-178419626422049-ff6b92-productivity_agent-178419626422026-ff6b92-1784196264220-ff6b92",
-      "source": "321151185156422f965c63a299945da7:googleCalendar:1",
-      "sourceHandle": "output-tool",
-      "target": "321151185156422f965c63a299945da7:productivity_agent:1",
-      "targetHandle": "input-tools",
-      "type": "smoothstep"
-    },
-    {
-      "animated": true,
-      "id": "e-googleDrive-178419626422048-ff6b92-productivity_agent-178419626422026-ff6b92-1784196264220-ff6b92",
-      "source": "321151185156422f965c63a299945da7:googleDrive:1",
-      "sourceHandle": "output-tool",
-      "target": "321151185156422f965c63a299945da7:productivity_agent:1",
-      "targetHandle": "input-tools",
-      "type": "smoothstep"
-    },
-    {
-      "animated": true,
-      "id": "e-googleSheets-178419626422047-ff6b92-productivity_agent-178419626422026-ff6b92-1784196264220-ff6b92",
-      "source": "321151185156422f965c63a299945da7:googleSheets:1",
-      "sourceHandle": "output-tool",
-      "target": "321151185156422f965c63a299945da7:productivity_agent:1",
-      "targetHandle": "input-tools",
-      "type": "smoothstep"
-    },
-    {
-      "animated": true,
-      "id": "e-writeTodos-178419626422044-ff6b92-web_agent-178419626422028-ff6b92-1784196264220-ff6b92",
-      "source": "321151185156422f965c63a299945da7:writeTodos:4",
-      "sourceHandle": "output-tool",
-      "target": "321151185156422f965c63a299945da7:web_agent:1",
-      "targetHandle": "input-tools",
-      "type": "smoothstep"
-    },
-    {
-      "animated": true,
-      "id": "e-writeTodos-178419626422045-ff6b92-coding_agent-178419626422025-ff6b92-1784196264220-ff6b92",
-      "source": "321151185156422f965c63a299945da7:writeTodos:5",
-      "sourceHandle": "output-tool",
-      "target": "321151185156422f965c63a299945da7:coding_agent:1",
-      "targetHandle": "input-tools",
-      "type": "smoothstep"
-    },
-    {
-      "animated": true,
-      "id": "e-processManager-178419626422039-ff6b92-coding_agent-178419626422025-ff6b92-1784196264220-ff6b92",
-      "source": "321151185156422f965c63a299945da7:processManager:5",
-      "sourceHandle": "output-tool",
-      "target": "321151185156422f965c63a299945da7:coding_agent:1",
-      "targetHandle": "input-tools",
-      "type": "smoothstep"
-    },
-    {
-      "animated": true,
-      "id": "e-pythonExecutor-178419626422014-ff6b92-coding_agent-178419626422025-ff6b92-1784196264220-ff6b92",
-      "source": "321151185156422f965c63a299945da7:pythonExecutor:1",
-      "sourceHandle": "output-tool",
-      "target": "321151185156422f965c63a299945da7:coding_agent:1",
-      "targetHandle": "input-tools",
-      "type": "smoothstep"
-    },
-    {
-      "animated": true,
-      "id": "e-masterSkill-178419626422035-ff6b92-coding_agent-178419626422025-ff6b92-1784196264220-ff6b92",
-      "source": "321151185156422f965c63a299945da7:masterSkill:5",
-      "sourceHandle": "output-tool",
-      "target": "321151185156422f965c63a299945da7:coding_agent:1",
-      "targetHandle": "input-skill",
-      "type": "smoothstep"
-    },
-    {
-      "animated": true,
-      "id": "e-masterSkill-178419626422051-ff6b92-travel_agent-178419626422027-ff6b92-1784196264220-ff6b92",
-      "source": "321151185156422f965c63a299945da7:masterSkill:6",
-      "sourceHandle": "output-tool",
-      "target": "321151185156422f965c63a299945da7:travel_agent:1",
-      "targetHandle": "input-skill",
-      "type": "smoothstep"
-    },
-    {
-      "animated": true,
-      "id": "e-writeTodos-178419626422046-ff6b92-travel_agent-178419626422027-ff6b92-1784196264220-ff6b92",
-      "source": "321151185156422f965c63a299945da7:writeTodos:6",
-      "sourceHandle": "output-tool",
-      "target": "321151185156422f965c63a299945da7:travel_agent:1",
-      "targetHandle": "input-tools",
-      "type": "smoothstep"
-    },
-    {
-      "animated": true,
-      "id": "e-processManager-178419626422040-ff6b92-travel_agent-178419626422027-ff6b92-1784196264220-ff6b92",
-      "source": "321151185156422f965c63a299945da7:processManager:6",
-      "sourceHandle": "output-tool",
-      "target": "321151185156422f965c63a299945da7:travel_agent:1",
-      "targetHandle": "input-tools",
-      "type": "smoothstep"
-    },
-    {
-      "animated": true,
-      "id": "e-gmaps_locations-178419626422013-ff6b92-travel_agent-178419626422027-ff6b92-1784196264220-ff6b92",
-      "source": "321151185156422f965c63a299945da7:gmaps_locations:1",
-      "sourceHandle": "output-tool",
-      "target": "321151185156422f965c63a299945da7:travel_agent:1",
-      "targetHandle": "input-tools",
-      "type": "smoothstep"
-    },
-    {
-      "animated": true,
-      "id": "e-gmaps_nearby_places-178419626422012-ff6b92-travel_agent-178419626422027-ff6b92-1784196264220-ff6b92",
-      "source": "321151185156422f965c63a299945da7:gmaps_nearby_places:1",
-      "sourceHandle": "output-tool",
-      "target": "321151185156422f965c63a299945da7:travel_agent:1",
-      "targetHandle": "input-tools",
-      "type": "smoothstep"
-    },
-    {
-      "animated": true,
-      "id": "e-social_agent-178419626422029-ff6b92-console-178419626422052-ff6b92-1784196264220-ff6b92",
-      "source": "321151185156422f965c63a299945da7:social_agent:1",
-      "sourceHandle": "output-main",
-      "target": "321151185156422f965c63a299945da7:console:2",
-      "targetHandle": "input-main",
-      "type": "smoothstep"
-    },
-    {
-      "animated": true,
-      "id": "e-productivity_agent-178419626422026-ff6b92-console-178419626422053-ff6b92-1784196264220-ff6b92",
-      "source": "321151185156422f965c63a299945da7:productivity_agent:1",
-      "sourceHandle": "output-main",
-      "target": "321151185156422f965c63a299945da7:console:3",
-      "targetHandle": "input-main",
-      "type": "smoothstep"
-    },
-    {
-      "animated": true,
-      "id": "e-web_agent-178419626422028-ff6b92-console-178419626422054-ff6b92-1784196264220-ff6b92",
-      "source": "321151185156422f965c63a299945da7:web_agent:1",
-      "sourceHandle": "output-main",
-      "target": "321151185156422f965c63a299945da7:console:4",
-      "targetHandle": "input-main",
-      "type": "smoothstep"
-    },
-    {
-      "animated": true,
-      "id": "e-coding_agent-178419626422025-ff6b92-console-178419626422055-ff6b92-1784196264220-ff6b92",
-      "source": "321151185156422f965c63a299945da7:coding_agent:1",
-      "sourceHandle": "output-main",
-      "target": "321151185156422f965c63a299945da7:console:5",
-      "targetHandle": "input-main",
-      "type": "smoothstep"
-    },
-    {
-      "animated": true,
-      "id": "e-travel_agent-178419626422027-ff6b92-console-178419626422056-ff6b92-1784196264220-ff6b92",
-      "source": "321151185156422f965c63a299945da7:travel_agent:1",
-      "sourceHandle": "output-main",
-      "target": "321151185156422f965c63a299945da7:console:6",
-      "targetHandle": "input-main",
-      "type": "smoothstep"
-    },
-    {
-      "animated": true,
-      "id": "e-chatAgent-178419626422022-ff6b92-console-17841962642205-ff6b92-1784196264220-ff6b92",
-      "source": "321151185156422f965c63a299945da7:chatAgent:1",
-      "sourceHandle": "output-main",
-      "target": "321151185156422f965c63a299945da7:console:1",
-      "targetHandle": "input-main",
-      "type": "smoothstep"
-    },
-    {
-      "animated": true,
-      "id": "e-chatAgent-178419626422022-ff6b92-telegramSend-178419626422016-ff6b92-1784196264220-ff6b92",
-      "source": "321151185156422f965c63a299945da7:chatAgent:1",
-      "sourceHandle": "output-main",
-      "target": "321151185156422f965c63a299945da7:telegramSend:1",
-      "targetHandle": "input-main",
-      "type": "smoothstep"
-    },
-    {
-      "animated": true,
-      "id": "e-taskTrigger-178419626422057-ff6b92-chatAgent-178419626422022-ff6b92-1784196264220-ff6b92",
-      "source": "321151185156422f965c63a299945da7:taskTrigger:1",
-      "sourceHandle": "output-main",
-      "target": "321151185156422f965c63a299945da7:chatAgent:1",
-      "targetHandle": "input-task",
-      "type": "smoothstep"
-    },
-    {
-      "animated": true,
-      "id": "e-shell-178419626422011-ff6b92-coding_agent-178419626422025-ff6b92-1784196264220-ff6b92",
-      "source": "321151185156422f965c63a299945da7:shell:1",
-      "sourceHandle": "output-tool",
-      "target": "321151185156422f965c63a299945da7:coding_agent:1",
-      "targetHandle": "input-tools",
-      "type": "smoothstep"
-    },
-    {
-      "animated": true,
-      "id": "e-fileRead-17841962642209-ff6b92-coding_agent-178419626422025-ff6b92-1784196264220-ff6b92",
-      "source": "321151185156422f965c63a299945da7:fileRead:1",
-      "sourceHandle": "output-tool",
-      "target": "321151185156422f965c63a299945da7:coding_agent:1",
-      "targetHandle": "input-tools",
-      "type": "smoothstep"
-    },
-    {
-      "animated": true,
-      "id": "e-fileModify-17841962642208-ff6b92-coding_agent-178419626422025-ff6b92-1784196264220-ff6b92",
-      "source": "321151185156422f965c63a299945da7:fileModify:1",
-      "sourceHandle": "output-tool",
-      "target": "321151185156422f965c63a299945da7:coding_agent:1",
-      "targetHandle": "input-tools",
-      "type": "smoothstep"
-    },
-    {
-      "animated": true,
-      "id": "e-fsSearch-178419626422010-ff6b92-coding_agent-178419626422025-ff6b92-1784196264220-ff6b92",
-      "source": "321151185156422f965c63a299945da7:fsSearch:1",
-      "sourceHandle": "output-tool",
-      "target": "321151185156422f965c63a299945da7:coding_agent:1",
-      "targetHandle": "input-tools",
-      "type": "smoothstep"
-    },
-    {
-      "id": "memory-tool-simpleMemory-17841962642203-ff6b92-chatAgent-178419626422022-ff6b92",
-      "source": "321151185156422f965c63a299945da7:simpleMemory:1",
-      "sourceHandle": "output-tool",
-      "target": "321151185156422f965c63a299945da7:chatAgent:1",
+      "target": "2:social_agent:1",
       "targetHandle": "input-tools"
     },
     {
-      "id": "context-__context__-1-chatAgent-178419626422022-ff6b92-chatAgent-178419626422022-ff6b92",
-      "source": "321151185156422f965c63a299945da7:context:1",
-      "sourceHandle": "output-context",
-      "target": "321151185156422f965c63a299945da7:chatAgent:1",
-      "targetHandle": "input-context",
-      "data": {
-        "systemManaged": true
-      }
+      "id": "e-whatsappDb-178833775898219-e5e4b1-social_agent-178833775898228-e5e4b1-1788337758982-e5e4b1",
+      "source": "2:whatsappDb:1",
+      "sourceHandle": "output-tool",
+      "target": "2:social_agent:1",
+      "targetHandle": "input-tools"
     },
     {
-      "id": "context-__context__-2-coding_agent-178419626422025-ff6b92-coding_agent-178419626422025-ff6b92",
-      "source": "321151185156422f965c63a299945da7:context:2",
-      "sourceHandle": "output-context",
-      "target": "321151185156422f965c63a299945da7:coding_agent:1",
-      "targetHandle": "input-context",
-      "data": {
-        "systemManaged": true
-      }
+      "id": "e-twitterUser-178833775898218-e5e4b1-social_agent-178833775898228-e5e4b1-1788337758982-e5e4b1",
+      "source": "2:twitterUser:1",
+      "sourceHandle": "output-tool",
+      "target": "2:social_agent:1",
+      "targetHandle": "input-tools"
     },
     {
-      "id": "context-__context__-3-productivity_agent-178419626422026-ff6b92-productivity_agent-178419626422026-ff6b92",
-      "source": "321151185156422f965c63a299945da7:context:3",
-      "sourceHandle": "output-context",
-      "target": "321151185156422f965c63a299945da7:productivity_agent:1",
-      "targetHandle": "input-context",
-      "data": {
-        "systemManaged": true
-      }
+      "id": "e-twitterSearch-178833775898217-e5e4b1-social_agent-178833775898228-e5e4b1-1788337758982-e5e4b1",
+      "source": "2:twitterSearch:1",
+      "sourceHandle": "output-tool",
+      "target": "2:social_agent:1",
+      "targetHandle": "input-tools"
     },
     {
-      "id": "context-__context__-4-social_agent-178419626422029-ff6b92-social_agent-178419626422029-ff6b92",
-      "source": "321151185156422f965c63a299945da7:context:4",
-      "sourceHandle": "output-context",
-      "target": "321151185156422f965c63a299945da7:social_agent:1",
-      "targetHandle": "input-context",
-      "data": {
-        "systemManaged": true
-      }
+      "id": "e-googleGmail-178833775898237-e5e4b1-productivity_agent-178833775898225-e5e4b1-1788337758982-e5e4b1",
+      "source": "2:googleGmail:1",
+      "sourceHandle": "output-tool",
+      "target": "2:productivity_agent:1",
+      "targetHandle": "input-tools"
     },
     {
-      "id": "context-__context__-5-travel_agent-178419626422027-ff6b92-travel_agent-178419626422027-ff6b92",
-      "source": "321151185156422f965c63a299945da7:context:5",
-      "sourceHandle": "output-context",
-      "target": "321151185156422f965c63a299945da7:travel_agent:1",
-      "targetHandle": "input-context",
-      "data": {
-        "systemManaged": true
-      }
+      "id": "e-processManager-178833775898233-e5e4b1-productivity_agent-178833775898225-e5e4b1-1788337758982-e5e4b1",
+      "source": "2:processManager:3",
+      "sourceHandle": "output-tool",
+      "target": "2:productivity_agent:1",
+      "targetHandle": "input-tools"
     },
     {
-      "id": "context-__context__-6-web_agent-178419626422028-ff6b92-web_agent-178419626422028-ff6b92",
-      "source": "321151185156422f965c63a299945da7:context:6",
+      "id": "e-processManager-178833775898234-e5e4b1-web_agent-178833775898227-e5e4b1-1788337758982-e5e4b1",
+      "source": "2:processManager:4",
+      "sourceHandle": "output-tool",
+      "target": "2:web_agent:1",
+      "targetHandle": "input-tools"
+    },
+    {
+      "id": "e-perplexitySearch-17883377589820-e5e4b1-web_agent-178833775898227-e5e4b1-1788337758982-e5e4b1",
+      "source": "2:perplexitySearch:1",
+      "sourceHandle": "output-tool",
+      "target": "2:web_agent:1",
+      "targetHandle": "input-tools"
+    },
+    {
+      "id": "e-duckduckgoSearch-17883377589821-e5e4b1-web_agent-178833775898227-e5e4b1-1788337758982-e5e4b1",
+      "source": "2:duckduckgoSearch:1",
+      "sourceHandle": "output-tool",
+      "target": "2:web_agent:1",
+      "targetHandle": "input-tools"
+    },
+    {
+      "id": "e-browser-178833775898221-e5e4b1-web_agent-178833775898227-e5e4b1-1788337758982-e5e4b1",
+      "source": "2:browser:1",
+      "sourceHandle": "output-tool",
+      "target": "2:web_agent:1",
+      "targetHandle": "input-tools"
+    },
+    {
+      "id": "e-httpRequest-17883377589827-e5e4b1-web_agent-178833775898227-e5e4b1-1788337758982-e5e4b1",
+      "source": "2:httpRequest:1",
+      "sourceHandle": "output-tool",
+      "target": "2:web_agent:1",
+      "targetHandle": "input-tools"
+    },
+    {
+      "id": "e-writeTodos-178833775898238-e5e4b1-social_agent-178833775898228-e5e4b1-1788337758982-e5e4b1",
+      "source": "2:writeTodos:2",
+      "sourceHandle": "output-tool",
+      "target": "2:social_agent:1",
+      "targetHandle": "input-tools"
+    },
+    {
+      "id": "e-writeTodos-178833775898239-e5e4b1-productivity_agent-178833775898225-e5e4b1-1788337758982-e5e4b1",
+      "source": "2:writeTodos:3",
+      "sourceHandle": "output-tool",
+      "target": "2:productivity_agent:1",
+      "targetHandle": "input-tools"
+    },
+    {
+      "id": "e-googleCalendar-178833775898245-e5e4b1-productivity_agent-178833775898225-e5e4b1-1788337758982-e5e4b1",
+      "source": "2:googleCalendar:1",
+      "sourceHandle": "output-tool",
+      "target": "2:productivity_agent:1",
+      "targetHandle": "input-tools"
+    },
+    {
+      "id": "e-googleDrive-178833775898244-e5e4b1-productivity_agent-178833775898225-e5e4b1-1788337758982-e5e4b1",
+      "source": "2:googleDrive:1",
+      "sourceHandle": "output-tool",
+      "target": "2:productivity_agent:1",
+      "targetHandle": "input-tools"
+    },
+    {
+      "id": "e-googleSheets-178833775898243-e5e4b1-productivity_agent-178833775898225-e5e4b1-1788337758982-e5e4b1",
+      "source": "2:googleSheets:1",
+      "sourceHandle": "output-tool",
+      "target": "2:productivity_agent:1",
+      "targetHandle": "input-tools"
+    },
+    {
+      "id": "e-writeTodos-178833775898240-e5e4b1-web_agent-178833775898227-e5e4b1-1788337758982-e5e4b1",
+      "source": "2:writeTodos:4",
+      "sourceHandle": "output-tool",
+      "target": "2:web_agent:1",
+      "targetHandle": "input-tools"
+    },
+    {
+      "id": "e-writeTodos-178833775898241-e5e4b1-coding_agent-178833775898224-e5e4b1-1788337758982-e5e4b1",
+      "source": "2:writeTodos:5",
+      "sourceHandle": "output-tool",
+      "target": "2:coding_agent:1",
+      "targetHandle": "input-tools"
+    },
+    {
+      "id": "e-processManager-178833775898235-e5e4b1-coding_agent-178833775898224-e5e4b1-1788337758982-e5e4b1",
+      "source": "2:processManager:5",
+      "sourceHandle": "output-tool",
+      "target": "2:coding_agent:1",
+      "targetHandle": "input-tools"
+    },
+    {
+      "id": "e-pythonExecutor-178833775898214-e5e4b1-coding_agent-178833775898224-e5e4b1-1788337758982-e5e4b1",
+      "source": "2:pythonExecutor:1",
+      "sourceHandle": "output-tool",
+      "target": "2:coding_agent:1",
+      "targetHandle": "input-tools"
+    },
+    {
+      "id": "e-masterSkill-178833775898231-e5e4b1-coding_agent-178833775898224-e5e4b1-1788337758982-e5e4b1",
+      "source": "2:masterSkill:5",
+      "sourceHandle": "output-tool",
+      "target": "2:coding_agent:1",
+      "targetHandle": "input-skill"
+    },
+    {
+      "id": "e-social_agent-178833775898228-e5e4b1-console-178833775898247-e5e4b1-1788337758982-e5e4b1",
+      "source": "2:social_agent:1",
+      "sourceHandle": "output-main",
+      "target": "2:console:2",
+      "targetHandle": "input-main"
+    },
+    {
+      "id": "e-productivity_agent-178833775898225-e5e4b1-console-178833775898248-e5e4b1-1788337758982-e5e4b1",
+      "source": "2:productivity_agent:1",
+      "sourceHandle": "output-main",
+      "target": "2:console:3",
+      "targetHandle": "input-main"
+    },
+    {
+      "id": "e-web_agent-178833775898227-e5e4b1-console-178833775898249-e5e4b1-1788337758982-e5e4b1",
+      "source": "2:web_agent:1",
+      "sourceHandle": "output-main",
+      "target": "2:console:4",
+      "targetHandle": "input-main"
+    },
+    {
+      "id": "e-coding_agent-178833775898224-e5e4b1-console-178833775898250-e5e4b1-1788337758982-e5e4b1",
+      "source": "2:coding_agent:1",
+      "sourceHandle": "output-main",
+      "target": "2:console:5",
+      "targetHandle": "input-main"
+    },
+    {
+      "id": "e-shell-178833775898211-e5e4b1-coding_agent-178833775898224-e5e4b1-1788337758982-e5e4b1",
+      "source": "2:shell:1",
+      "sourceHandle": "output-tool",
+      "target": "2:coding_agent:1",
+      "targetHandle": "input-tools"
+    },
+    {
+      "id": "e-fileRead-17883377589829-e5e4b1-coding_agent-178833775898224-e5e4b1-1788337758982-e5e4b1",
+      "source": "2:fileRead:1",
+      "sourceHandle": "output-tool",
+      "target": "2:coding_agent:1",
+      "targetHandle": "input-tools"
+    },
+    {
+      "id": "e-fileModify-17883377589828-e5e4b1-coding_agent-178833775898224-e5e4b1-1788337758982-e5e4b1",
+      "source": "2:fileModify:1",
+      "sourceHandle": "output-tool",
+      "target": "2:coding_agent:1",
+      "targetHandle": "input-tools"
+    },
+    {
+      "id": "e-fsSearch-178833775898210-e5e4b1-coding_agent-178833775898224-e5e4b1-1788337758982-e5e4b1",
+      "source": "2:fsSearch:1",
+      "sourceHandle": "output-tool",
+      "target": "2:coding_agent:1",
+      "targetHandle": "input-tools"
+    },
+    {
+      "id": "reactflow__edge-2:masterSkill:6output-tool-2:tool_agent:1input-skill",
+      "source": "2:masterSkill:6",
+      "sourceHandle": "output-tool",
+      "target": "2:tool_agent:1",
+      "targetHandle": "input-skill"
+    },
+    {
+      "id": "reactflow__edge-2:writeTodos:6output-tool-2:tool_agent:1input-tools",
+      "source": "2:writeTodos:6",
+      "sourceHandle": "output-tool",
+      "target": "2:tool_agent:1",
+      "targetHandle": "input-tools"
+    },
+    {
+      "id": "reactflow__edge-2:processManager:6output-tool-2:tool_agent:1input-tools",
+      "source": "2:processManager:6",
+      "sourceHandle": "output-tool",
+      "target": "2:tool_agent:1",
+      "targetHandle": "input-tools"
+    },
+    {
+      "id": "reactflow__edge-2:vercelAction:1output-tool-2:tool_agent:1input-tools",
+      "source": "2:vercelAction:1",
+      "sourceHandle": "output-tool",
+      "target": "2:tool_agent:1",
+      "targetHandle": "input-tools"
+    },
+    {
+      "id": "reactflow__edge-2:gcloudAction:1output-tool-2:tool_agent:1input-tools",
+      "source": "2:gcloudAction:1",
+      "sourceHandle": "output-tool",
+      "target": "2:tool_agent:1",
+      "targetHandle": "input-tools"
+    },
+    {
+      "id": "reactflow__edge-2:tool_agent:1output-main-2:console:6input-main",
+      "source": "2:tool_agent:1",
+      "sourceHandle": "output-main",
+      "target": "2:console:6",
+      "targetHandle": "input-main"
+    },
+    {
+      "id": "reactflow__edge-2:chatTrigger:1output-main-2:ai_employee:1input-main",
+      "source": "2:chatTrigger:1",
+      "sourceHandle": "output-main",
+      "target": "2:ai_employee:1",
+      "targetHandle": "input-main"
+    },
+    {
+      "id": "reactflow__edge-2:telegramReceive:1output-main-2:ai_employee:1input-main",
+      "source": "2:telegramReceive:1",
+      "sourceHandle": "output-main",
+      "target": "2:ai_employee:1",
+      "targetHandle": "input-main"
+    },
+    {
+      "id": "reactflow__edge-2:taskTrigger:1output-main-2:ai_employee:1input-task",
+      "source": "2:taskTrigger:1",
+      "sourceHandle": "output-main",
+      "target": "2:ai_employee:1",
+      "targetHandle": "input-task"
+    },
+    {
+      "id": "reactflow__edge-2:productivity_agent:1output-top-2:ai_employee:1input-teammates",
+      "source": "2:productivity_agent:1",
+      "sourceHandle": "output-top",
+      "target": "2:ai_employee:1",
+      "targetHandle": "input-teammates"
+    },
+    {
+      "id": "reactflow__edge-2:web_agent:1output-top-2:ai_employee:1input-teammates",
+      "source": "2:web_agent:1",
+      "sourceHandle": "output-top",
+      "target": "2:ai_employee:1",
+      "targetHandle": "input-teammates"
+    },
+    {
+      "id": "reactflow__edge-2:coding_agent:1output-top-2:ai_employee:1input-teammates",
+      "source": "2:coding_agent:1",
+      "sourceHandle": "output-top",
+      "target": "2:ai_employee:1",
+      "targetHandle": "input-teammates"
+    },
+    {
+      "id": "reactflow__edge-2:tool_agent:1output-top-2:ai_employee:1input-teammates",
+      "source": "2:tool_agent:1",
+      "sourceHandle": "output-top",
+      "target": "2:ai_employee:1",
+      "targetHandle": "input-teammates"
+    },
+    {
+      "id": "reactflow__edge-2:social_agent:1output-top-2:ai_employee:1input-teammates",
+      "source": "2:social_agent:1",
+      "sourceHandle": "output-top",
+      "target": "2:ai_employee:1",
+      "targetHandle": "input-teammates"
+    },
+    {
+      "id": "reactflow__edge-2:masterSkill:1output-tool-2:ai_employee:1input-skill",
+      "source": "2:masterSkill:1",
+      "sourceHandle": "output-tool",
+      "target": "2:ai_employee:1",
+      "targetHandle": "input-skill"
+    },
+    {
+      "id": "reactflow__edge-2:simpleMemory:1output-tool-2:ai_employee:1input-tools",
+      "source": "2:simpleMemory:1",
+      "sourceHandle": "output-tool",
+      "target": "2:ai_employee:1",
+      "targetHandle": "input-tools"
+    },
+    {
+      "id": "reactflow__edge-2:writeTodos:1output-tool-2:ai_employee:1input-tools",
+      "source": "2:writeTodos:1",
+      "sourceHandle": "output-tool",
+      "target": "2:ai_employee:1",
+      "targetHandle": "input-tools"
+    },
+    {
+      "id": "reactflow__edge-2:ai_employee:1output-main-2:console:1input-main",
+      "source": "2:ai_employee:1",
+      "sourceHandle": "output-main",
+      "target": "2:console:1",
+      "targetHandle": "input-main"
+    },
+    {
+      "id": "reactflow__edge-2:msMail:1output-tool-2:productivity_agent:1input-tools",
+      "source": "2:msMail:1",
+      "sourceHandle": "output-tool",
+      "target": "2:productivity_agent:1",
+      "targetHandle": "input-tools"
+    },
+    {
+      "id": "context-2-context-7-2-ai_employee-1",
+      "source": "2:context:7",
       "sourceHandle": "output-context",
-      "target": "321151185156422f965c63a299945da7:web_agent:1",
-      "targetHandle": "input-context",
-      "data": {
-        "systemManaged": true
-      }
+      "target": "2:ai_employee:1",
+      "targetHandle": "input-context"
+    },
+    {
+      "id": "reactflow__edge-2:canvas:1output-tool-2:ai_employee:1input-tools",
+      "source": "2:canvas:1",
+      "sourceHandle": "output-tool",
+      "target": "2:ai_employee:1",
+      "targetHandle": "input-tools"
+    },
+    {
+      "id": "reactflow__edge-2:taskManager:1output-tool-2:ai_employee:1input-tools",
+      "source": "2:taskManager:1",
+      "sourceHandle": "output-tool",
+      "target": "2:ai_employee:1",
+      "targetHandle": "input-tools"
+    },
+    {
+      "id": "context-2-context-2-2-coding_agent-1",
+      "source": "2:context:2",
+      "sourceHandle": "output-context",
+      "target": "2:coding_agent:1",
+      "targetHandle": "input-context"
+    },
+    {
+      "id": "context-2-context-3-2-productivity_agent-1",
+      "source": "2:context:3",
+      "sourceHandle": "output-context",
+      "target": "2:productivity_agent:1",
+      "targetHandle": "input-context"
+    },
+    {
+      "id": "context-2-context-4-2-social_agent-1",
+      "source": "2:context:4",
+      "sourceHandle": "output-context",
+      "target": "2:social_agent:1",
+      "targetHandle": "input-context"
+    },
+    {
+      "id": "context-2-context-6-2-web_agent-1",
+      "source": "2:context:6",
+      "sourceHandle": "output-context",
+      "target": "2:web_agent:1",
+      "targetHandle": "input-context"
+    },
+    {
+      "id": "context-2-context-8-2-tool_agent-1",
+      "source": "2:context:8",
+      "sourceHandle": "output-context",
+      "target": "2:tool_agent:1",
+      "targetHandle": "input-context"
+    },
+    {
+      "animated": false,
+      "id": "reactflow__edge-2:cloudflareAction:1output-tool-2:tool_agent:1input-tools",
+      "source": "2:cloudflareAction:1",
+      "sourceHandle": "output-tool",
+      "target": "2:tool_agent:1",
+      "targetHandle": "input-tools",
+      "type": "step"
     }
   ],
-  "createdAt": "2026-07-16T04:34:24.274Z",
-  "lastModified": "2026-08-19T14:35:06.813Z",
-  "version": "0.1.0",
+  "createdAt": "2026-09-02T02:59:19.002Z",
+  "lastModified": "2026-09-03T15:51:57.090Z",
+  "version": "0.1.1",
   "nodeParameters": {
-    "321151185156422f965c63a299945da7:perplexitySearch:1": {
+    "2:perplexitySearch:1": {
       "tool_name": "perplexity_search",
       "tool_description": "AI-powered search using Perplexity Sonar. Returns a markdown-formatted answer with inline citation references and source URLs.",
       "model": "sonar",
@@ -1324,36 +1259,26 @@
       "return_related_questions": false,
       "label": "Perplexity Search"
     },
-    "321151185156422f965c63a299945da7:duckduckgoSearch:1": {
+    "2:duckduckgoSearch:1": {
       "max_results": 5,
       "label": "DuckDuckGo Search"
     },
-    "321151185156422f965c63a299945da7:simpleMemory:1": {
+    "2:simpleMemory:1": {
       "label": "Simple Memory"
     },
-    "321151185156422f965c63a299945da7:chatTrigger:1": {
+    "2:chatTrigger:1": {
       "session_id": "default",
       "placeholder": "Type a message...",
       "label": "Chat Trigger"
     },
-    "321151185156422f965c63a299945da7:console:1": {
+    "2:console:1": {
       "label": "Console",
       "log_mode": "field",
-      "field_path": "{{zeenie.response}}",
+      "field_path": "{{aiemployee.response}}",
       "expression": "",
       "format": "json"
     },
-    "321151185156422f965c63a299945da7:processManager:1": {
-      "operation": "list",
-      "name": "",
-      "command": "",
-      "cwd": "",
-      "input_text": "",
-      "stream": "stdout",
-      "tail": 100,
-      "label": "Process Manager"
-    },
-    "321151185156422f965c63a299945da7:httpRequest:1": {
+    "2:httpRequest:1": {
       "method": "GET",
       "body": null,
       "timeout": 30,
@@ -1364,7 +1289,7 @@
       "sticky_duration": 600,
       "label": "HTTP Request"
     },
-    "321151185156422f965c63a299945da7:fileModify:1": {
+    "2:fileModify:1": {
       "operation": "write",
       "content": "",
       "old_string": "",
@@ -1372,41 +1297,27 @@
       "replace_all": false,
       "label": "File Modify"
     },
-    "321151185156422f965c63a299945da7:fileRead:1": {
+    "2:fileRead:1": {
       "offset": 0,
       "limit": 2000,
       "label": "File Read"
     },
-    "321151185156422f965c63a299945da7:fsSearch:1": {
+    "2:fsSearch:1": {
       "mode": "ls",
       "path": ".",
       "pattern": "",
       "label": "FS Search"
     },
-    "321151185156422f965c63a299945da7:shell:1": {
+    "2:shell:1": {
       "cwd": "",
       "timeout": 30,
       "label": "Shell"
     },
-    "321151185156422f965c63a299945da7:gmaps_nearby_places:1": {
-      "radius": 1000,
-      "place_type": "",
-      "keyword": "",
-      "label": "Nearby Places"
-    },
-    "321151185156422f965c63a299945da7:gmaps_locations:1": {
-      "service_type": "geocode",
-      "address": "",
-      "region": "",
-      "lat": 0,
-      "lng": 0,
-      "label": "Geocoding"
-    },
-    "321151185156422f965c63a299945da7:pythonExecutor:1": {
+    "2:pythonExecutor:1": {
       "timeout": 30,
       "label": "Python Executor"
     },
-    "321151185156422f965c63a299945da7:telegramReceive:1": {
+    "2:telegramReceive:1": {
       "content_type_filter": "all",
       "sender_filter": "all",
       "chat_id": "",
@@ -1415,24 +1326,7 @@
       "ignore_bots": true,
       "label": "Telegram Receive"
     },
-    "321151185156422f965c63a299945da7:telegramSend:1": {
-      "recipient_type": "self",
-      "chat_id": "",
-      "message_type": "text",
-      "text": "{{zeenie.response}}",
-      "media_url": "",
-      "caption": "",
-      "latitude": null,
-      "longitude": null,
-      "phone_number": "",
-      "first_name": "",
-      "last_name": "",
-      "parse_mode": "Auto",
-      "silent": false,
-      "reply_to_message_id": 0,
-      "label": "Telegram Send"
-    },
-    "321151185156422f965c63a299945da7:twitterSearch:1": {
+    "2:twitterSearch:1": {
       "query": "",
       "max_results": 10,
       "sort_order": "recency",
@@ -1442,14 +1336,14 @@
       "include_author": true,
       "label": "Twitter Search"
     },
-    "321151185156422f965c63a299945da7:twitterUser:1": {
+    "2:twitterUser:1": {
       "operation": "me",
       "username": "",
       "user_id": "",
       "max_results": 100,
       "label": "Twitter User"
     },
-    "321151185156422f965c63a299945da7:whatsappDb:1": {
+    "2:whatsappDb:1": {
       "operation": "chat_history",
       "chat_type": "individual",
       "phone": "",
@@ -1484,8 +1378,7 @@
       "preview": false,
       "label": "WhatsApp DB"
     },
-    "321151185156422f965c63a299945da7:masterSkill:1": {
-      "skill_folder": "terminal",
+    "2:masterSkill:1": {
       "skills_config": {
         "assistant-personality": {
           "enabled": true,
@@ -1518,13 +1411,18 @@
           "isCustomized": false
         },
         "process-manager-skill": {
-          "enabled": true,
+          "enabled": false,
           "instructions": "# Process Manager Tool\n\nManage long-running processes with **full system PATH access**. Use this for anything that needs `npm`, `python`, `node`, or runs as a persistent server/watcher.\n\n## Security\n\nThe process manager **blocks destructive file commands** to prevent accidental deletion outside the agent's workspace. Use `shell_execute` for file operations instead (sandboxed, no PATH, confined to workspace).\n\n**Blocked commands:** `rm`, `rmdir`, `del`, `rd`, `Remove-Item`, `format`, `mkfs`, `dd`, `shred`, `chmod 777`\n\n**Allowed:** `npm`, `python`, `node`, `pip`, `cargo`, `go`, servers, build tools, installers\n\n## Operations\n\n### start\nLaunch a process. Output streams to the Terminal tab and is saved to log files.\n```json\n{\"operation\": \"start\", \"name\": \"dev-server\", \"command\": \"python -m http.server 8080\"}\n```\n\n### stop\nKill a process and its entire process tree.\n```json\n{\"operation\": \"stop\", \"name\": \"dev-server\"}\n```\n\n### restart\nStop then re-launch with the same command.\n```json\n{\"operation\": \"restart\", \"name\": \"dev-server\"}\n```\n\n### list\nShow all running processes for this workflow.\n```json\n{\"operation\": \"list\"}\n```\n\n### get_output\nRead output from a process's log file. Use `tail` to get last N lines, `stream` to choose stdout or stderr.\n```json\n{\"operation\": \"get_output\", \"name\": \"dev-server\", \"stream\": \"stdout\", \"tail\": 20}\n```\nReturns `{\"lines\": [...], \"total\": 150, \"file\": \"/path/to/stdout.log\"}`.\n\n### send_input\nWrite text to a process's stdin (newline appended automatically).\n```json\n{\"operation\": \"send_input\", \"name\": \"dev-server\", \"text\": \"quit\"}\n```\n\n## Shell vs Process Manager\n\n| Need | Tool | Why |\n|------|------|-----|\n| `ls`, `cat`, `find`, `grep` | **shell_execute** | Sandboxed, fast, no PATH |\n| `rm`, `mv`, `cp`, file ops | **shell_execute** | Sandboxed, confined to workspace |\n| `npm install`, `pip install` | **process_manager** | Needs PATH |\n| `python script.py` | **process_manager** | Needs PATH |\n| `npm run dev`, `flask run` | **process_manager** | Long-running, streams output |\n| Dev servers, watchers | **process_manager** | Persistent, log files |\n\n## Output Log Files\n\nEach process writes to its own log files in the agent's workspace:\n```\n{workspace}/{agent_node_id}/.processes/{process_name}/\n  stdout.log    # Standard output\n  stderr.log    # Error output\n```\n\nUse `get_output` to read them selectively. The agent can also read these files directly with the `file_read` tool.\n\n## OS-Specific Commands\n\nCommands differ by platform. Refer to:\n- **bash-skill** -- Linux/macOS (apt, brew, lsof, kill, curl)\n- **powershell-skill** -- Windows (Get-Process, Stop-Process, Invoke-WebRequest)\n- **wsl-skill** -- Running Linux tools on Windows (prefix with `wsl`)\n\nDetect the OS first:\n```json\n{\"operation\": \"start\", \"name\": \"os\", \"command\": \"python -c \\\"import platform; print(platform.system())\\\"\"}\n```\nReturns `Windows`, `Linux`, or `Darwin` (macOS).\n\n## Guidelines\n\n- Always give processes a meaningful **name** so you can stop/check them later\n- Use **get_output** after starting to verify the process launched correctly\n- Use **stop** to clean up processes when done -- don't leave servers running\n- **Do NOT use process_manager for file deletion** -- use shell_execute instead\n- Processes are automatically killed when the server shuts down\n- Max concurrent processes: configurable in Settings (default: 10)\n- Output streams to the Terminal tab in real-time\n",
+          "isCustomized": false
+        },
+        "task-manager": {
+          "enabled": true,
+          "instructions": "",
           "isCustomized": false
         }
       }
     },
-    "321151185156422f965c63a299945da7:browser:1": {
+    "2:browser:1": {
       "operation": "navigate",
       "url": "",
       "selector": "",
@@ -1551,14 +1449,7 @@
       "timeout": 30,
       "label": "Browser"
     },
-    "321151185156422f965c63a299945da7:chatAgent:1": {
-      "provider": "gemini",
-      "model": "gemini-3.5-flash",
-      "prompt": "{{chattrigger.message}} {{telegramreceive.text}}",
-      "system_message": "",
-      "label": "Zeenie"
-    },
-    "321151185156422f965c63a299945da7:masterSkill:2": {
+    "2:masterSkill:2": {
       "skill_folder": "terminal",
       "skills_config": {
         "compaction-skill": {
@@ -1608,43 +1499,35 @@
         }
       }
     },
-    "321151185156422f965c63a299945da7:coding_agent:1": {
+    "2:coding_agent:1": {
       "prompt": "",
       "provider": "gemini",
-      "model": "gemini-3.5-flash",
+      "model": "gemini-3.6-flash",
       "system_message": "You are a helpful assistant",
       "label": "Coding Agent"
     },
-    "321151185156422f965c63a299945da7:productivity_agent:1": {
+    "2:productivity_agent:1": {
       "prompt": "",
       "provider": "gemini",
-      "model": "gemini-3.5-flash",
+      "model": "gemini-3.6-flash",
       "system_message": "You are a helpful assistant",
       "label": "Productivity Agent"
     },
-    "321151185156422f965c63a299945da7:travel_agent:1": {
+    "2:web_agent:1": {
       "prompt": "",
       "provider": "gemini",
-      "model": "gemini-3.5-flash",
-      "system_message": "You are a helpful assistant",
-      "label": "Travel Agent"
-    },
-    "321151185156422f965c63a299945da7:web_agent:1": {
-      "prompt": "",
-      "provider": "gemini",
-      "model": "gemini-3.5-flash",
+      "model": "gemini-3.6-flash",
       "system_message": "You are a helpful assistant",
       "label": "Web Agent"
     },
-    "321151185156422f965c63a299945da7:social_agent:1": {
+    "2:social_agent:1": {
       "prompt": "",
       "provider": "gemini",
-      "model": "gemini-3.5-flash",
+      "model": "gemini-3.6-flash",
       "system_message": "You are a helpful assistant",
       "label": "Social Agent"
     },
-    "321151185156422f965c63a299945da7:masterSkill:3": {
-      "skill_folder": "productivity_agent",
+    "2:masterSkill:3": {
       "skills_config": {
         "assistant-personality": {
           "enabled": true,
@@ -1695,10 +1578,15 @@
           "enabled": true,
           "instructions": "# Google Sheets Skill\n\nRead and write data to Google Sheets spreadsheets.\n\n## Tool: google_sheets\n\nConsolidated Google Sheets tool with `operation` parameter.\n\n### Operations\n\n| Operation | Description | Required Fields |\n|-----------|-------------|-----------------|\n| `read` | Read data from a range | spreadsheet_id, range |\n| `write` | Write data to a range | spreadsheet_id, range, values |\n| `append` | Append rows to a table | spreadsheet_id, range, values |\n\n### read - Read spreadsheet data\n\n| Field | Type | Required | Description |\n|-------|------|----------|-------------|\n| operation | string | Yes | Must be `\"read\"` |\n| spreadsheet_id | string | Yes | Spreadsheet ID from URL |\n| range | string | Yes | A1 notation range (e.g., \"Sheet1!A1:D10\") |\n\n**How to find Spreadsheet ID:**\nFrom URL: `https://docs.google.com/spreadsheets/d/SPREADSHEET_ID/edit`\n\n**Range Notation (A1):**\n- `Sheet1!A1:D10` - Specific range on Sheet1\n- `Sheet1!A:D` - Entire columns A through D\n- `Sheet1!1:10` - Rows 1 through 10\n- `A1:D10` - Default sheet, specific range\n- `Sheet1` - Entire sheet\n\n**Example:**\n```json\n{\n  \"operation\": \"read\",\n  \"spreadsheet_id\": \"1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms\",\n  \"range\": \"Sheet1!A1:E10\"\n}\n```\n\n### write - Write data to a range\n\n| Field | Type | Required | Description |\n|-------|------|----------|-------------|\n| operation | string | Yes | Must be `\"write\"` |\n| spreadsheet_id | string | Yes | Spreadsheet ID |\n| range | string | Yes | A1 notation range |\n| values | array | Yes | 2D array of values |\n| value_input_option | string | No | `\"USER_ENTERED\"` or `\"RAW\"` (default: USER_ENTERED) |\n\n**Example - Write data:**\n```json\n{\n  \"operation\": \"write\",\n  \"spreadsheet_id\": \"1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms\",\n  \"range\": \"Sheet1!A1:C3\",\n  \"values\": [\n    [\"Name\", \"Score\", \"Grade\"],\n    [\"Alice\", 95, \"A\"],\n    [\"Bob\", 87, \"B\"]\n  ]\n}\n```\n\n**Example - Write formula:**\n```json\n{\n  \"operation\": \"write\",\n  \"spreadsheet_id\": \"1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms\",\n  \"range\": \"Sheet1!D2\",\n  \"values\": [[\"=SUM(B2:C2)\"]],\n  \"value_input_option\": \"USER_ENTERED\"\n}\n```\n\n### append - Append rows to a table\n\n| Field | Type | Required | Description |\n|-------|------|----------|-------------|\n| operation | string | Yes | Must be `\"append\"` |\n| spreadsheet_id | string | Yes | Spreadsheet ID |\n| range | string | Yes | Table range (e.g., \"Sheet1!A:E\") |\n| values | array | Yes | 2D array of rows to append |\n| value_input_option | string | No | `\"USER_ENTERED\"` or `\"RAW\"` (default: USER_ENTERED) |\n| insert_data_option | string | No | `\"INSERT_ROWS\"` or `\"OVERWRITE\"` (default: INSERT_ROWS) |\n\n**Example:**\n```json\n{\n  \"operation\": \"append\",\n  \"spreadsheet_id\": \"1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms\",\n  \"range\": \"Sheet1!A:E\",\n  \"values\": [\n    [\"Charlie\", \"charlie@example.com\", \"Sales\", \"2024-02-01\", \"Active\"],\n    [\"Diana\", \"diana@example.com\", \"HR\", \"2024-02-15\", \"Active\"]\n  ]\n}\n```\n\n## Common Formulas\n\n| Formula | Description |\n|---------|-------------|\n| `=SUM(A1:A10)` | Sum of range |\n| `=AVERAGE(B1:B10)` | Average of range |\n| `=COUNT(A:A)` | Count numbers in column |\n| `=COUNTA(A:A)` | Count non-empty cells |\n| `=VLOOKUP(E1,A:C,2,FALSE)` | Vertical lookup |\n| `=IF(A1>90,\"A\",\"B\")` | Conditional logic |\n| `=TODAY()` | Current date |\n| `=NOW()` | Current date and time |\n\n## Common Workflows\n\n1. **Import data**: Write headers, then append data rows\n2. **Update records**: Read to find row, write to specific cells\n3. **Generate reports**: Read data, process, write summary\n4. **Log entries**: Append new rows with timestamps\n\n## Tips\n\n- Always check spreadsheet exists before writing\n- Use `USER_ENTERED` for formulas to work\n- Range must match data dimensions\n- Append is safer than write for adding data\n\n## Setup Requirements\n\n1. Connect Sheets node to AI Agent's `input-tools` handle\n2. Authenticate with Google Workspace in Credentials Modal\n3. Ensure Sheets API scopes are authorized\n4. Spreadsheet must be accessible to authenticated account\n",
           "isCustomized": false
+        },
+        "ms-mail-skill": {
+          "enabled": true,
+          "instructions": "",
+          "isCustomized": false
         }
       }
     },
-    "321151185156422f965c63a299945da7:masterSkill:4": {
+    "2:masterSkill:4": {
       "skill_folder": "terminal",
       "skills_config": {
         "assistant-personality": {
@@ -1753,7 +1641,7 @@
         }
       }
     },
-    "321151185156422f965c63a299945da7:masterSkill:5": {
+    "2:masterSkill:5": {
       "skill_folder": "coding_agent",
       "skills_config": {
         "memory-skill": {
@@ -1808,22 +1696,22 @@
         }
       }
     },
-    "321151185156422f965c63a299945da7:processManager:2": {
+    "2:processManager:2": {
       "label": "Process Manager 1"
     },
-    "321151185156422f965c63a299945da7:processManager:3": {
+    "2:processManager:3": {
       "label": "Process Manager 2"
     },
-    "321151185156422f965c63a299945da7:processManager:4": {
+    "2:processManager:4": {
       "label": "Process Manager 3"
     },
-    "321151185156422f965c63a299945da7:processManager:5": {
+    "2:processManager:5": {
       "label": "Process Manager 4"
     },
-    "321151185156422f965c63a299945da7:processManager:6": {
+    "2:processManager:6": {
       "label": "Process Manager 6"
     },
-    "321151185156422f965c63a299945da7:googleGmail:1": {
+    "2:googleGmail:1": {
       "operation": "send",
       "to": "",
       "cc": "",
@@ -1838,22 +1726,22 @@
       "format": "full",
       "label": "Gmail"
     },
-    "321151185156422f965c63a299945da7:writeTodos:2": {
+    "2:writeTodos:2": {
       "label": "Write Todos 1"
     },
-    "321151185156422f965c63a299945da7:writeTodos:3": {
+    "2:writeTodos:3": {
       "label": "Write Todos 2"
     },
-    "321151185156422f965c63a299945da7:writeTodos:4": {
+    "2:writeTodos:4": {
       "label": "Write Todos 3"
     },
-    "321151185156422f965c63a299945da7:writeTodos:5": {
+    "2:writeTodos:5": {
       "label": "Write Todos 4"
     },
-    "321151185156422f965c63a299945da7:writeTodos:6": {
+    "2:writeTodos:6": {
       "label": "Write Todos 6"
     },
-    "321151185156422f965c63a299945da7:googleSheets:1": {
+    "2:googleSheets:1": {
       "operation": "read",
       "spreadsheet_id": "",
       "range": "A1:Z1000",
@@ -1863,7 +1751,7 @@
       "major_dimension": "ROWS",
       "label": "Sheets"
     },
-    "321151185156422f965c63a299945da7:googleDrive:1": {
+    "2:googleDrive:1": {
       "operation": "list",
       "file_id": null,
       "filename": null,
@@ -1883,7 +1771,7 @@
       "message": null,
       "label": "Drive"
     },
-    "321151185156422f965c63a299945da7:googleCalendar:1": {
+    "2:googleCalendar:1": {
       "operation": "list",
       "calendar_id": "primary",
       "event_id": null,
@@ -1908,8 +1796,7 @@
       "update_location": null,
       "label": "Calendar"
     },
-    "321151185156422f965c63a299945da7:masterSkill:6": {
-      "skill_folder": "terminal",
+    "2:masterSkill:6": {
       "skills_config": {
         "assistant-personality": {
           "enabled": true,
@@ -1950,59 +1837,196 @@
           "enabled": true,
           "instructions": "# Process Manager Tool\n\nManage long-running processes with **full system PATH access**. Use this for anything that needs `npm`, `python`, `node`, or runs as a persistent server/watcher.\n\n## Security\n\nThe process manager **blocks destructive file commands** to prevent accidental deletion outside the agent's workspace. Use `shell_execute` for file operations instead (sandboxed, no PATH, confined to workspace).\n\n**Blocked commands:** `rm`, `rmdir`, `del`, `rd`, `Remove-Item`, `format`, `mkfs`, `dd`, `shred`, `chmod 777`\n\n**Allowed:** `npm`, `python`, `node`, `pip`, `cargo`, `go`, servers, build tools, installers\n\n## Operations\n\n### start\nLaunch a process. Output streams to the Terminal tab and is saved to log files.\n```json\n{\"operation\": \"start\", \"name\": \"dev-server\", \"command\": \"python -m http.server 8080\"}\n```\n\n### stop\nKill a process and its entire process tree.\n```json\n{\"operation\": \"stop\", \"name\": \"dev-server\"}\n```\n\n### restart\nStop then re-launch with the same command.\n```json\n{\"operation\": \"restart\", \"name\": \"dev-server\"}\n```\n\n### list\nShow all running processes for this workflow.\n```json\n{\"operation\": \"list\"}\n```\n\n### get_output\nRead output from a process's log file. Use `tail` to get last N lines, `stream` to choose stdout or stderr.\n```json\n{\"operation\": \"get_output\", \"name\": \"dev-server\", \"stream\": \"stdout\", \"tail\": 20}\n```\nReturns `{\"lines\": [...], \"total\": 150, \"file\": \"/path/to/stdout.log\"}`.\n\n### send_input\nWrite text to a process's stdin (newline appended automatically).\n```json\n{\"operation\": \"send_input\", \"name\": \"dev-server\", \"text\": \"quit\"}\n```\n\n## Shell vs Process Manager\n\n| Need | Tool | Why |\n|------|------|-----|\n| `ls`, `cat`, `find`, `grep` | **shell_execute** | Sandboxed, fast, no PATH |\n| `rm`, `mv`, `cp`, file ops | **shell_execute** | Sandboxed, confined to workspace |\n| `npm install`, `pip install` | **process_manager** | Needs PATH |\n| `python script.py` | **process_manager** | Needs PATH |\n| `npm run dev`, `flask run` | **process_manager** | Long-running, streams output |\n| Dev servers, watchers | **process_manager** | Persistent, log files |\n\n## Output Log Files\n\nEach process writes to its own log files in the agent's workspace:\n```\n{workspace}/{agent_node_id}/.processes/{process_name}/\n  stdout.log    # Standard output\n  stderr.log    # Error output\n```\n\nUse `get_output` to read them selectively. The agent can also read these files directly with the `file_read` tool.\n\n## OS-Specific Commands\n\nCommands differ by platform. Refer to:\n- **bash-skill** -- Linux/macOS (apt, brew, lsof, kill, curl)\n- **powershell-skill** -- Windows (Get-Process, Stop-Process, Invoke-WebRequest)\n- **wsl-skill** -- Running Linux tools on Windows (prefix with `wsl`)\n\nDetect the OS first:\n```json\n{\"operation\": \"start\", \"name\": \"os\", \"command\": \"python -c \\\"import platform; print(platform.system())\\\"\"}\n```\nReturns `Windows`, `Linux`, or `Darwin` (macOS).\n\n## Guidelines\n\n- Always give processes a meaningful **name** so you can stop/check them later\n- Use **get_output** after starting to verify the process launched correctly\n- Use **stop** to clean up processes when done -- don't leave servers running\n- **Do NOT use process_manager for file deletion** -- use shell_execute instead\n- Processes are automatically killed when the server shuts down\n- Max concurrent processes: configurable in Settings (default: 10)\n- Output streams to the Terminal tab in real-time\n",
           "isCustomized": false
+        },
+        "vercel-skill": {
+          "enabled": true,
+          "instructions": "",
+          "isCustomized": false
+        },
+        "gcloud-skill": {
+          "enabled": true,
+          "instructions": "",
+          "isCustomized": false
+        },
+        "cloudflare-skill": {
+          "enabled": true,
+          "instructions": "",
+          "isCustomized": false
         }
       }
     },
-    "321151185156422f965c63a299945da7:console:2": {
+    "2:console:2": {
       "label": "Console 1",
       "log_mode": "field",
       "field_path": "{{socialagent.response}}",
       "expression": "",
       "format": "json"
     },
-    "321151185156422f965c63a299945da7:console:3": {
+    "2:console:3": {
       "label": "Console 2",
       "log_mode": "field",
       "field_path": "{{productivityagent.response}}",
       "expression": "",
       "format": "json"
     },
-    "321151185156422f965c63a299945da7:console:4": {
+    "2:console:4": {
       "label": "Console 3",
       "log_mode": "field",
       "field_path": "{{webagent.response}}",
       "expression": "",
       "format": "json"
     },
-    "321151185156422f965c63a299945da7:console:5": {
+    "2:console:5": {
       "label": "Console 4",
       "log_mode": "field",
       "field_path": "{{codingagent.response}}",
       "expression": "",
       "format": "json"
     },
-    "321151185156422f965c63a299945da7:console:6": {
+    "2:console:6": {
       "label": "Console 6",
       "log_mode": "field",
       "field_path": "{{travelagent.response}}",
       "expression": "",
       "format": "json"
     },
-    "321151185156422f965c63a299945da7:taskTrigger:1": {
+    "2:taskTrigger:1": {
       "task_id": "",
       "agent_name": "",
       "status_filter": "all",
       "parent_node_id": "",
       "label": "Task Completed"
+    },
+    "2:tool_agent:1": {
+      "prompt": "",
+      "provider": "gemini",
+      "model": "gemini-3.6-flash",
+      "system_message": "You are a helpful assistant",
+      "label": "Tool Agent"
+    },
+    "2:canvas:1": {
+      "title": null,
+      "paths": null,
+      "url": null,
+      "content": null,
+      "language": null,
+      "mode": "append",
+      "label": "Canvas"
+    },
+    "2:cloudflareAction:1": {
+      "operation": "whoami",
+      "zone": "",
+      "name_filter": "",
+      "account_id": "",
+      "record_body": "",
+      "record_id": "",
+      "graphql_query": "",
+      "graphql_variables": "",
+      "command": "",
+      "label": "Cloudflare"
+    },
+    "2:gcloudAction:1": {
+      "operation": "config_list",
+      "project": "",
+      "project_id": "",
+      "zone": "",
+      "instance": "",
+      "region": "",
+      "service": "",
+      "source": "",
+      "image": "",
+      "allow_unauthenticated": false,
+      "url": "",
+      "src": "",
+      "dst": "",
+      "recursive": false,
+      "limit": 50,
+      "path": "",
+      "command": "",
+      "label": "Google Cloud"
+    },
+    "2:vercelAction:1": {
+      "operation": "deploy",
+      "path": "",
+      "prod": false,
+      "prebuilt": false,
+      "archive": false,
+      "scope": "",
+      "extra_args": "",
+      "project": "",
+      "deployment": "",
+      "logs": false,
+      "wait": false,
+      "timeout": "3m",
+      "status": "",
+      "command": "",
+      "label": "Vercel"
+    },
+    "2:gallery:1": {
+      "path": "",
+      "pattern": "",
+      "include_dirs": false,
+      "limit": 200,
+      "label": "Gallery"
+    },
+    "2:msMail:1": {
+      "operation": "send",
+      "mailbox": "",
+      "to": "",
+      "cc": "",
+      "bcc": "",
+      "subject": "",
+      "body": "",
+      "body_type": "text",
+      "message_id": "",
+      "max_results": 10,
+      "query": "",
+      "search_max_results": 10,
+      "reply_message_id": "",
+      "comment": "",
+      "reply_all": false,
+      "attachment_id": "",
+      "include_inline": false,
+      "label": "Outlook Mail"
+    },
+    "2:ai_employee:1": {
+      "prompt": "{{chattrigger.message}} {{telegramreceive.text}}",
+      "provider": "gemini",
+      "model": "gemini-3.6-flash",
+      "system_message": "You are a helpful assistant",
+      "label": "AI Employee"
+    },
+    "2:taskManager:1": {
+      "operation": "list_tasks",
+      "task_id": null,
+      "title": null,
+      "mission": null,
+      "context": null,
+      "acceptance_criteria": null,
+      "depends_on": null,
+      "assignee_node_id": null,
+      "delegate_name": null,
+      "expected_revision": null,
+      "reason": null,
+      "status_filter": null,
+      "include_history": false,
+      "attempt": null,
+      "cursor": null,
+      "limit": 50,
+      "detail": "summary",
+      "query": null,
+      "search_mode": "literal",
+      "case_sensitive": false,
+      "context_lines": 2,
+      "scan_limit": 250,
+      "categories": null,
+      "label": "Task Manager"
     }
   },
   "requirements": {
     "credentials": [
       {
         "provider_id": "perplexity"
-      },
-      {
-        "provider_id": "google_maps"
       },
       {
         "provider_id": "telegram"
@@ -2012,6 +2036,18 @@
       },
       {
         "provider_id": "google"
+      },
+      {
+        "provider_id": "cloudflare"
+      },
+      {
+        "provider_id": "gcloud"
+      },
+      {
+        "provider_id": "vercel"
+      },
+      {
+        "provider_id": "microsoft"
       }
     ],
     "nodes": [
@@ -2040,10 +2076,6 @@
         "version": 1
       },
       {
-        "type": "processManager",
-        "version": 1
-      },
-      {
         "type": "httpRequest",
         "version": 1
       },
@@ -2064,23 +2096,11 @@
         "version": 1
       },
       {
-        "type": "gmaps_nearby_places",
-        "version": 1
-      },
-      {
-        "type": "gmaps_locations",
-        "version": 1
-      },
-      {
         "type": "pythonExecutor",
         "version": 1
       },
       {
         "type": "telegramReceive",
-        "version": 1
-      },
-      {
-        "type": "telegramSend",
         "version": 1
       },
       {
@@ -2104,10 +2124,6 @@
         "version": 1
       },
       {
-        "type": "chatAgent",
-        "version": 1
-      },
-      {
         "type": "masterSkill",
         "version": 1
       },
@@ -2117,10 +2133,6 @@
       },
       {
         "type": "productivity_agent",
-        "version": 1
-      },
-      {
-        "type": "travel_agent",
         "version": 1
       },
       {
@@ -2228,8 +2240,44 @@
         "version": 1
       },
       {
+        "type": "tool_agent",
+        "version": 1
+      },
+      {
+        "type": "canvas",
+        "version": 1
+      },
+      {
+        "type": "cloudflareAction",
+        "version": 1
+      },
+      {
+        "type": "gcloudAction",
+        "version": 1
+      },
+      {
+        "type": "vercelAction",
+        "version": 1
+      },
+      {
+        "type": "gallery",
+        "version": 1
+      },
+      {
+        "type": "msMail",
+        "version": 1
+      },
+      {
+        "type": "ai_employee",
+        "version": 1
+      },
+      {
         "type": "context",
         "version": 2
+      },
+      {
+        "type": "taskManager",
+        "version": 1
       },
       {
         "type": "context",

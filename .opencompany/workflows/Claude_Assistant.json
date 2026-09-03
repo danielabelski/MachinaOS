@@ -1,10 +1,10 @@
 {
-  "id": "9cf6613149824411ae8e57b559bf5aa9",
+  "id": "3",
   "name": "Claude Assistant",
-  "slug": "Claude_Assistant_2",
+  "slug": "Claude_Assistant_1",
   "nodes": [
     {
-      "id": "9cf6613149824411ae8e57b559bf5aa9:chatTrigger:1",
+      "id": "3:chatTrigger:1",
       "position": {
         "x": 920,
         "y": 480
@@ -17,7 +17,7 @@
       "height": 86
     },
     {
-      "id": "9cf6613149824411ae8e57b559bf5aa9:console:1",
+      "id": "3:console:1",
       "position": {
         "x": 1760,
         "y": 520
@@ -30,7 +30,7 @@
       "height": 86
     },
     {
-      "id": "9cf6613149824411ae8e57b559bf5aa9:simpleMemory:1",
+      "id": "3:simpleMemory:1",
       "position": {
         "x": 1380,
         "y": 720
@@ -39,11 +39,11 @@
       "data": {
         "label": "Memory"
       },
-      "width": 88,
+      "width": 64,
       "height": 86
     },
     {
-      "id": "9cf6613149824411ae8e57b559bf5aa9:writeTodos:1",
+      "id": "3:writeTodos:1",
       "position": {
         "x": 1480,
         "y": 720
@@ -56,7 +56,7 @@
       "height": 86
     },
     {
-      "id": "9cf6613149824411ae8e57b559bf5aa9:telegramReceive:1",
+      "id": "3:telegramReceive:1",
       "position": {
         "x": 920,
         "y": 340
@@ -69,7 +69,7 @@
       "height": 86
     },
     {
-      "id": "9cf6613149824411ae8e57b559bf5aa9:telegramSend:1",
+      "id": "3:telegramSend:1",
       "position": {
         "x": 1720,
         "y": 380
@@ -82,9 +82,9 @@
       "height": 86
     },
     {
-      "id": "9cf6613149824411ae8e57b559bf5aa9:masterSkill:1",
+      "id": "3:masterSkill:1",
       "position": {
-        "x": 1280,
+        "x": 1260,
         "y": 720
       },
       "type": "masterSkill",
@@ -95,7 +95,7 @@
       "height": 86
     },
     {
-      "id": "9cf6613149824411ae8e57b559bf5aa9:claude_code_agent:1",
+      "id": "3:claude_code_agent:1",
       "position": {
         "x": 1300,
         "y": 380
@@ -108,7 +108,7 @@
       "height": 200
     },
     {
-      "id": "9cf6613149824411ae8e57b559bf5aa9:duckduckgoSearch:1",
+      "id": "3:duckduckgoSearch:1",
       "position": {
         "x": 1680,
         "y": 720
@@ -121,7 +121,7 @@
       "height": 86
     },
     {
-      "id": "9cf6613149824411ae8e57b559bf5aa9:processManager:1",
+      "id": "3:processManager:1",
       "position": {
         "x": 1580,
         "y": 720
@@ -134,7 +134,7 @@
       "height": 86
     },
     {
-      "id": "9cf6613149824411ae8e57b559bf5aa9:browser:1",
+      "id": "3:browser:1",
       "position": {
         "x": 1820,
         "y": 720
@@ -147,7 +147,7 @@
       "height": 86
     },
     {
-      "id": "9cf6613149824411ae8e57b559bf5aa9:fileModify:1",
+      "id": "3:fileModify:1",
       "position": {
         "x": 1920,
         "y": 720
@@ -160,7 +160,7 @@
       "height": 86
     },
     {
-      "id": "9cf6613149824411ae8e57b559bf5aa9:fileRead:1",
+      "id": "3:fileRead:1",
       "position": {
         "x": 2040,
         "y": 720
@@ -173,7 +173,7 @@
       "height": 86
     },
     {
-      "id": "9cf6613149824411ae8e57b559bf5aa9:fsSearch:1",
+      "id": "3:fsSearch:1",
       "position": {
         "x": 2140,
         "y": 720
@@ -186,9 +186,9 @@
       "height": 86
     },
     {
-      "id": "9cf6613149824411ae8e57b559bf5aa9:shell:1",
+      "id": "3:shell:1",
       "position": {
-        "x": 2240,
+        "x": 2260,
         "y": 720
       },
       "type": "shell",
@@ -199,14 +199,14 @@
       "height": 86
     },
     {
-      "id": "9cf6613149824411ae8e57b559bf5aa9:context:1",
+      "id": "3:context:1",
       "position": {
-        "x": 1180,
+        "x": 1160,
         "y": 720
       },
       "type": "context",
       "data": {
-        "agentNodeId": "9cf6613149824411ae8e57b559bf5aa9:claude_code_agent:1",
+        "agentNodeId": "3:claude_code_agent:1",
         "label": "Context",
         "systemManaged": true
       },
@@ -217,154 +217,154 @@
   "edges": [
     {
       "animated": true,
-      "id": "e-telegramReceive-17841962656474-fd584a-claude_code_agent-17841962656477-fd584a-1784196265647-fd584a",
-      "source": "9cf6613149824411ae8e57b559bf5aa9:telegramReceive:1",
+      "id": "e-telegramReceive-17883377602504-49d18b-claude_code_agent-17883377602507-49d18b-1788337760250-49d18b",
+      "source": "3:telegramReceive:1",
       "sourceHandle": "output-main",
-      "target": "9cf6613149824411ae8e57b559bf5aa9:claude_code_agent:1",
+      "target": "3:claude_code_agent:1",
       "targetHandle": "input-main",
       "type": "smoothstep"
     },
     {
       "animated": true,
-      "id": "e-chatTrigger-17841962656470-fd584a-claude_code_agent-17841962656477-fd584a-1784196265647-fd584a",
-      "source": "9cf6613149824411ae8e57b559bf5aa9:chatTrigger:1",
+      "id": "e-chatTrigger-17883377602500-49d18b-claude_code_agent-17883377602507-49d18b-1788337760250-49d18b",
+      "source": "3:chatTrigger:1",
       "sourceHandle": "output-main",
-      "target": "9cf6613149824411ae8e57b559bf5aa9:claude_code_agent:1",
+      "target": "3:claude_code_agent:1",
       "targetHandle": "input-main",
       "type": "smoothstep"
     },
     {
       "animated": true,
-      "id": "e-claude_code_agent-17841962656477-fd584a-telegramSend-17841962656475-fd584a-1784196265647-fd584a",
-      "source": "9cf6613149824411ae8e57b559bf5aa9:claude_code_agent:1",
+      "id": "e-claude_code_agent-17883377602507-49d18b-telegramSend-17883377602505-49d18b-1788337760250-49d18b",
+      "source": "3:claude_code_agent:1",
       "sourceHandle": "output-main",
-      "target": "9cf6613149824411ae8e57b559bf5aa9:telegramSend:1",
+      "target": "3:telegramSend:1",
       "targetHandle": "input-main",
       "type": "smoothstep"
     },
     {
       "animated": true,
-      "id": "e-claude_code_agent-17841962656477-fd584a-console-17841962656471-fd584a-1784196265647-fd584a",
-      "source": "9cf6613149824411ae8e57b559bf5aa9:claude_code_agent:1",
+      "id": "e-claude_code_agent-17883377602507-49d18b-console-17883377602501-49d18b-1788337760250-49d18b",
+      "source": "3:claude_code_agent:1",
       "sourceHandle": "output-main",
-      "target": "9cf6613149824411ae8e57b559bf5aa9:console:1",
+      "target": "3:console:1",
       "targetHandle": "input-main",
       "type": "smoothstep"
     },
     {
       "animated": true,
-      "id": "e-masterSkill-17841962656476-fd584a-claude_code_agent-17841962656477-fd584a-1784196265647-fd584a",
-      "source": "9cf6613149824411ae8e57b559bf5aa9:masterSkill:1",
+      "id": "e-masterSkill-17883377602506-49d18b-claude_code_agent-17883377602507-49d18b-1788337760250-49d18b",
+      "source": "3:masterSkill:1",
       "sourceHandle": "output-tool",
-      "target": "9cf6613149824411ae8e57b559bf5aa9:claude_code_agent:1",
+      "target": "3:claude_code_agent:1",
       "targetHandle": "input-skill",
       "type": "smoothstep"
     },
     {
       "animated": true,
-      "id": "e-writeTodos-17841962656473-fd584a-claude_code_agent-17841962656477-fd584a-1784196265647-fd584a",
-      "source": "9cf6613149824411ae8e57b559bf5aa9:writeTodos:1",
+      "id": "e-writeTodos-17883377602503-49d18b-claude_code_agent-17883377602507-49d18b-1788337760250-49d18b",
+      "source": "3:writeTodos:1",
       "sourceHandle": "output-tool",
-      "target": "9cf6613149824411ae8e57b559bf5aa9:claude_code_agent:1",
+      "target": "3:claude_code_agent:1",
       "targetHandle": "input-tools",
       "type": "smoothstep"
     },
     {
       "animated": true,
-      "id": "e-browser-178419626564710-fd584a-claude_code_agent-17841962656477-fd584a-1784196265647-fd584a",
-      "source": "9cf6613149824411ae8e57b559bf5aa9:browser:1",
+      "id": "e-browser-178833776025010-49d18b-claude_code_agent-17883377602507-49d18b-1788337760250-49d18b",
+      "source": "3:browser:1",
       "sourceHandle": "output-tool",
-      "target": "9cf6613149824411ae8e57b559bf5aa9:claude_code_agent:1",
+      "target": "3:claude_code_agent:1",
       "targetHandle": "input-tools",
       "type": "smoothstep"
     },
     {
       "animated": true,
-      "id": "e-processManager-17841962656479-fd584a-claude_code_agent-17841962656477-fd584a-1784196265647-fd584a",
-      "source": "9cf6613149824411ae8e57b559bf5aa9:processManager:1",
+      "id": "e-processManager-17883377602509-49d18b-claude_code_agent-17883377602507-49d18b-1788337760250-49d18b",
+      "source": "3:processManager:1",
       "sourceHandle": "output-tool",
-      "target": "9cf6613149824411ae8e57b559bf5aa9:claude_code_agent:1",
+      "target": "3:claude_code_agent:1",
       "targetHandle": "input-tools",
       "type": "smoothstep"
     },
     {
       "animated": true,
-      "id": "e-duckduckgoSearch-17841962656478-fd584a-claude_code_agent-17841962656477-fd584a-1784196265647-fd584a",
-      "source": "9cf6613149824411ae8e57b559bf5aa9:duckduckgoSearch:1",
+      "id": "e-duckduckgoSearch-17883377602508-49d18b-claude_code_agent-17883377602507-49d18b-1788337760250-49d18b",
+      "source": "3:duckduckgoSearch:1",
       "sourceHandle": "output-tool",
-      "target": "9cf6613149824411ae8e57b559bf5aa9:claude_code_agent:1",
+      "target": "3:claude_code_agent:1",
       "targetHandle": "input-tools",
       "type": "smoothstep"
     },
     {
       "animated": true,
-      "id": "e-fileModify-178419626564711-fd584a-claude_code_agent-17841962656477-fd584a-1784196265647-fd584a",
-      "source": "9cf6613149824411ae8e57b559bf5aa9:fileModify:1",
+      "id": "e-fileModify-178833776025011-49d18b-claude_code_agent-17883377602507-49d18b-1788337760250-49d18b",
+      "source": "3:fileModify:1",
       "sourceHandle": "output-tool",
-      "target": "9cf6613149824411ae8e57b559bf5aa9:claude_code_agent:1",
+      "target": "3:claude_code_agent:1",
       "targetHandle": "input-tools",
       "type": "smoothstep"
     },
     {
       "animated": true,
-      "id": "e-fileRead-178419626564712-fd584a-claude_code_agent-17841962656477-fd584a-1784196265647-fd584a",
-      "source": "9cf6613149824411ae8e57b559bf5aa9:fileRead:1",
+      "id": "e-fileRead-178833776025012-49d18b-claude_code_agent-17883377602507-49d18b-1788337760250-49d18b",
+      "source": "3:fileRead:1",
       "sourceHandle": "output-tool",
-      "target": "9cf6613149824411ae8e57b559bf5aa9:claude_code_agent:1",
+      "target": "3:claude_code_agent:1",
       "targetHandle": "input-tools",
       "type": "smoothstep"
     },
     {
       "animated": true,
-      "id": "e-fsSearch-178419626564713-fd584a-claude_code_agent-17841962656477-fd584a-1784196265647-fd584a",
-      "source": "9cf6613149824411ae8e57b559bf5aa9:fsSearch:1",
+      "id": "e-fsSearch-178833776025013-49d18b-claude_code_agent-17883377602507-49d18b-1788337760250-49d18b",
+      "source": "3:fsSearch:1",
       "sourceHandle": "output-tool",
-      "target": "9cf6613149824411ae8e57b559bf5aa9:claude_code_agent:1",
+      "target": "3:claude_code_agent:1",
       "targetHandle": "input-tools",
       "type": "smoothstep"
     },
     {
       "animated": true,
-      "id": "e-shell-178419626564714-fd584a-claude_code_agent-17841962656477-fd584a-1784196265647-fd584a",
-      "source": "9cf6613149824411ae8e57b559bf5aa9:shell:1",
+      "id": "e-shell-178833776025014-49d18b-claude_code_agent-17883377602507-49d18b-1788337760250-49d18b",
+      "source": "3:shell:1",
       "sourceHandle": "output-tool",
-      "target": "9cf6613149824411ae8e57b559bf5aa9:claude_code_agent:1",
+      "target": "3:claude_code_agent:1",
       "targetHandle": "input-tools",
       "type": "smoothstep"
     },
     {
-      "id": "memory-tool-simpleMemory-17841962656472-fd584a-claude_code_agent-17841962656477-fd584a",
-      "source": "9cf6613149824411ae8e57b559bf5aa9:simpleMemory:1",
+      "id": "e-simpleMemory-17883377602502-49d18b-claude_code_agent-17883377602507-49d18b-1788337760250-49d18b",
+      "source": "3:simpleMemory:1",
       "sourceHandle": "output-tool",
-      "target": "9cf6613149824411ae8e57b559bf5aa9:claude_code_agent:1",
+      "target": "3:claude_code_agent:1",
       "targetHandle": "input-tools"
     },
     {
-      "id": "context-__context__-1-claude_code_agent-17841962656477-fd584a-claude_code_agent-17841962656477-fd584a",
-      "source": "9cf6613149824411ae8e57b559bf5aa9:context:1",
+      "id": "context-__context__-1-claude_code_agent-17883377602507-49d18b-claude_code_agent-17883377602507-49d18b",
+      "source": "3:context:1",
       "sourceHandle": "output-context",
-      "target": "9cf6613149824411ae8e57b559bf5aa9:claude_code_agent:1",
+      "target": "3:claude_code_agent:1",
       "targetHandle": "input-context",
       "data": {
         "systemManaged": true
       }
     }
   ],
-  "createdAt": "2026-07-16T04:34:25.658Z",
-  "lastModified": "2026-08-19T14:34:03.411Z",
-  "version": "0.1.0",
+  "createdAt": "2026-09-02T02:59:20.274Z",
+  "lastModified": "2026-09-03T15:52:09.248Z",
+  "version": "0.1.1",
   "nodeParameters": {
-    "9cf6613149824411ae8e57b559bf5aa9:console:1": {
+    "3:console:1": {
       "label": "Console",
       "log_mode": "field",
       "field_path": "{{claudecode.response}}",
       "expression": "",
       "format": "json"
     },
-    "9cf6613149824411ae8e57b559bf5aa9:simpleMemory:1": {
+    "3:simpleMemory:1": {
       "label": "Memory"
     },
-    "9cf6613149824411ae8e57b559bf5aa9:telegramReceive:1": {
+    "3:telegramReceive:1": {
       "content_type_filter": "text",
       "sender_filter": "self",
       "chat_id": "",
@@ -373,7 +373,7 @@
       "ignore_bots": true,
       "label": "Telegram Receive"
     },
-    "9cf6613149824411ae8e57b559bf5aa9:telegramSend:1": {
+    "3:telegramSend:1": {
       "recipient_type": "self",
       "chat_id": "",
       "message_type": "text",
@@ -390,7 +390,7 @@
       "reply_to_message_id": 0,
       "label": "Telegram Send"
     },
-    "9cf6613149824411ae8e57b559bf5aa9:masterSkill:1": {
+    "3:masterSkill:1": {
       "skills_config": {
         "perplexity-search-skill": {
           "enabled": true,
@@ -484,7 +484,7 @@
         }
       }
     },
-    "9cf6613149824411ae8e57b559bf5aa9:claude_code_agent:1": {
+    "3:claude_code_agent:1": {
       "tasks": null,
       "prompt": "{{telegramreceive.text}}",
       "model": "claude-sonnet-4-6",
@@ -494,11 +494,11 @@
       "allowed_credentials": null,
       "label": "Claude Code"
     },
-    "9cf6613149824411ae8e57b559bf5aa9:duckduckgoSearch:1": {
+    "3:duckduckgoSearch:1": {
       "max_results": 5,
       "label": "DuckDuckGo Search"
     },
-    "9cf6613149824411ae8e57b559bf5aa9:processManager:1": {
+    "3:processManager:1": {
       "operation": "list",
       "name": "",
       "command": "",
@@ -508,7 +508,7 @@
       "tail": 100,
       "label": "Process Manager"
     },
-    "9cf6613149824411ae8e57b559bf5aa9:browser:1": {
+    "3:browser:1": {
       "operation": "navigate",
       "url": "",
       "selector": "",
@@ -535,7 +535,7 @@
       "timeout": 30,
       "label": "Browser"
     },
-    "9cf6613149824411ae8e57b559bf5aa9:fileModify:1": {
+    "3:fileModify:1": {
       "operation": "write",
       "content": "",
       "old_string": "",
@@ -543,18 +543,18 @@
       "replace_all": false,
       "label": "File Modify"
     },
-    "9cf6613149824411ae8e57b559bf5aa9:fileRead:1": {
+    "3:fileRead:1": {
       "offset": 0,
       "limit": 2000,
       "label": "File Read"
     },
-    "9cf6613149824411ae8e57b559bf5aa9:fsSearch:1": {
+    "3:fsSearch:1": {
       "mode": "ls",
       "path": ".",
       "pattern": "",
       "label": "FS Search"
     },
-    "9cf6613149824411ae8e57b559bf5aa9:shell:1": {
+    "3:shell:1": {
       "cwd": "",
       "timeout": 30,
       "label": "Shell"
