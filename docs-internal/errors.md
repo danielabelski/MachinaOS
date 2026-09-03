@@ -357,3 +357,11 @@ The "auth successful" line fires even when you only *initiated* the login and ne
 So an incomplete login against a config left over from a previous session was reported as success.
 
 **Fix** (landed at tag v0.0.88): `nodes/stripe/_handlers.py` snapshots `config.toml`'s mtime at step 1 (`pre_mtime`), threads it into `_complete_login(binary, next_step, pre_mtime)`, and requires `post_mtime > pre_mtime AND is_logged_in()` to declare success. The mtime advance is ground truth for "*this* attempt wrote fresh credentials". The `exceeded max attempts` stderr is forgiven only when the mtime actually advanced.
+
+## 11. `bun install` Copies Every Package / 2-Minute First Vite Build (Windows)
+
+**Symptom**: After a fresh install, `company build` step `[1/6]` takes ~70 s and step `[2/6]` (Vite) takes ~2 min, while a second Vite build on the same tree takes ~35 s. The same `build.log` shows uv complaining `Failed to hardlink files; falling back to full copy ... different filesystems`. Under pnpm the same cycle was ~15 s + ~16 s.
+
+**Root cause**: installs that *write* files instead of linking them. pnpm keeps its store per drive on the project's drive (`D:\.pnpm-store`) and hardlinks from it, so a fresh install wrote no new bytes and Windows Defender's real-time first-touch scan had nothing new to scan on the next build. bun's cache lives under the user profile on `C:`; with the project on `D:` NTFS cannot hardlink across volumes, and bun 1.4.0 was also observed to copy on Windows even from a same-drive cache unless `--backend=hardlink` is forced. Every install therefore re-writes ~600 MB into `node_modules/.bun/`, and the first build pays the Defender scan on all of it (measured: 626 MB store, one hardlink path per file). uv has the identical cross-drive problem (`%LOCALAPPDATA%\uv\cache` on `C:`).
+
+**Fix**: `company build` passes `--backend=hardlink` on Linux/Windows. That only helps when the cache is on the project's drive, which is a per-machine setting — set user environment variables `BUN_INSTALL_CACHE_DIR` (e.g. `D:\startup\projects\.bun-cache`) and `UV_CACHE_DIR` on the same drive as the checkout. Measured after both: purge → `bun install` 15 s (files show two hardlink paths: cache + store) → first Vite build 41 s. A Defender exclusion for the checkout removes the first-touch tax for whatever still gets written.

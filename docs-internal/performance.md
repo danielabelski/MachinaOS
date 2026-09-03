@@ -46,13 +46,32 @@ timestamped console output right after the switch to bun@1.4.0:
 | `company dev` — Vite `ready in` | — | 8.4 s |
 | `company dev` — backend Application startup complete | — | 12.4 s |
 
-No change attributable to bun: it only installs the workspace and
-launches the `company` CLI; everything after spawn (uvicorn imports,
-lifespan, Vite on Node 22) is byte-identical. The sub-second prod delta
-is machine-load variance, and the dev-mode rows were never benchmarked
-before (Vite and uvicorn compete for I/O during a dev boot, so they are
-not comparable to the prod numbers). The headline baselines above still
-stand.
+None of the boot delta is attributable to bun: it only installs the
+workspace and launches the `company` CLI; everything after spawn
+(uvicorn imports, lifespan, Vite on Node 22) is byte-identical. The
+extra ~0.7 s sits entirely in the import phase — "all imports complete"
+at 3.29 s vs 1.98 s in the May timeline, and the routers + plugin-walker
+segment at 1.83 s vs 0.84 s — because the walker now loads **184**
+plugin modules against the **137** it walked in May. Lifespan cost is
+unchanged. The dev-mode rows were never benchmarked before (Vite and
+uvicorn compete for I/O during a dev boot, so they are not comparable
+to the prod numbers), and the first dev boot after a reinstall also
+rebuilds Vite's dep cache.
+
+**Build time is a different story.** A fresh `company build` after the
+migration measured `bun install` **74 s** and the Vite client build
+**124 s** (vs `~16 s` in the table above, recorded 2026-05-06). Neither
+is bun's resolver or layout: the same tree rebuilt warm in **32–37 s**
+under both the isolated and hoisted linkers, and CI on Linux got faster
+(install 10 s → 7 s, full build 45 s → 28 s). The 16 → 35 s warm gap is
+codebase growth since May (main bundle 234 → 288 KB gz, 16 chunks). The
+rest is Windows Defender first-touch scanning of freshly *written*
+package files: pnpm hardlinked from a per-drive store and wrote nothing,
+bun copied ~600 MB per install (cache on `C:`, checkout on `D:`; copies
+even from a same-drive cache unless `--backend=hardlink`). With the
+cache on the checkout's drive and the hardlink backend, purge → install
+→ first build measures **15 s + 41 s**. Details and the per-machine
+fix in [errors.md §11](errors.md#11-bun-install-copies-every-package--2-minute-first-vite-build-windows).
 
 ## Optimisation history
 

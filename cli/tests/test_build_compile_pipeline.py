@@ -114,6 +114,26 @@ def test_source_dirs_constant_covers_runtime_modules():
 
 
 # ---------------------------------------------------------------------------
+# Install step ([1/6])
+# ---------------------------------------------------------------------------
+
+
+def test_install_uses_hardlink_backend_off_macos(tmp_path: Path):
+    """Copies re-write ~600 MB per install and get first-touch-scanned on
+    the next build; hardlinks don't. macOS keeps bun's clonefile default."""
+    import sys
+
+    captured = _run_build_capture_invocations(tmp_path)
+    match = _find_call(captured, lambda c: c[:2] == ["bun", "install"])
+    assert match is not None, "expected a `bun install` invocation"
+    argv = match[1]["argv"]
+    if sys.platform == "darwin":
+        assert "--backend=hardlink" not in argv
+    else:
+        assert "--backend=hardlink" in argv
+
+
+# ---------------------------------------------------------------------------
 # Sidecar bundle step ([3/6])
 # ---------------------------------------------------------------------------
 

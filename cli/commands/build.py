@@ -228,7 +228,14 @@ def build_command() -> None:
 
     if not is_postinstall:
         console.log("[1/6] Installing dependencies...")
-        run(["bun", "install"], cwd=root)
+        # Hardlink from the cache instead of copying (bun's documented
+        # default on Linux/Windows, but observed to fall back to copies on
+        # Windows). Copies re-write ~600 MB per install, which Defender
+        # then first-touch-scans on the next Vite build. macOS keeps its
+        # faster clonefile default. Cross-drive caches still copy — see
+        # errors.md "bun install copies / slow first build".
+        backend = [] if sys.platform == "darwin" else ["--backend=hardlink"]
+        run(["bun", "install", *backend], cwd=root)
     else:
         console.log("[1/6] Dependencies already installed by package manager")
 
