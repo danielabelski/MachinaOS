@@ -358,6 +358,23 @@ So an incomplete login against a config left over from a previous session was re
 
 **Fix** (landed at tag v0.0.88): `nodes/stripe/_handlers.py` snapshots `config.toml`'s mtime at step 1 (`pre_mtime`), threads it into `_complete_login(binary, next_step, pre_mtime)`, and requires `post_mtime > pre_mtime AND is_logged_in()` to declare success. The mtime advance is ground truth for "*this* attempt wrote fresh credentials". The `exceeded max attempts` stderr is forgiven only when the mtime actually advanced.
 
+---
+
+## 11. processManager Rejects Every `start`: `Working directory must be inside workspace` (Windows)
+
+**Symptom**: A delegated agent's `process_manager` tool call fails on every `start` and the agent loops re-issuing the same call:
+```
+dispatch op NodeUserError: Working directory must be inside workspace (D:\...\.opencompany\workspaces) or daemons (D:\...\.opencompany\daemons). node_id=2:processManager:4
+```
+A downstream `httpRequest` probe of the dev server the agent tried to launch then fails with `httpx.ConnectError: All connection attempts failed` and a double full traceback.
+
+**Root cause**: Canvas node ids are colon-namespaced (`2:processManager:4`; fresh seeds use `<uuid>:processManager:4`). `processManager` defaulted its cwd to `os.path.join(workspace_dir, ctx.node_id)`, and `ntpath.join` parses a leading `2:` as a drive letter — discarding `workspace_dir` entirely. `.resolve()` keeps the drive-relative garbage, so the `ProcessService.start` containment guardrail correctly rejected it. `WindowsPath / node_id` has the same drive-reset behaviour (the `cli_agent` one-shot worktree path). Latent since the April 2026 guardrail; surfaced when `4f35db97` made the Task_Completed re-delegation flow actually run tool work. Reproduce on any OS:
+```
+python -c "import ntpath; print(ntpath.join(r'D:\ws\AI_Employee_1', '2:processManager:4'))"   # -> 2:processManager:4
+```
+
+**Fix** (`21fb1a9a`): `core.paths.safe_path_component` sanitizes a wire identifier before it becomes a path component; `processManager` and `cli_agent/session.py` route the node id through it. The guardrail error now names the rejected resolved path and says to omit `cwd` (the designed happy path — the process-manager skill never passes one), and `httpRequest` maps `ConnectError` / `TimeoutException` to `NodeUserError`. Rule: never join a node id, model-supplied name, or any other wire identifier into a path raw — go through `safe_path_component`. Locked by `tests/nodes/test_process_manager_cwd.py`.
+
 ## 11. `bun install` Copies Every Package / 2-Minute First Vite Build (Windows)
 
 **Symptom**: After a fresh install, `company build` step `[1/6]` takes ~70 s and step `[2/6]` (Vite) takes ~2 min, while a second Vite build on the same tree takes ~35 s. The same `build.log` shows uv complaining `Failed to hardlink files; falling back to full copy ... different filesystems`. Under pnpm the same cycle was ~15 s + ~16 s.
