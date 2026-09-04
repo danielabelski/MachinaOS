@@ -1,5 +1,13 @@
 # Claude Code Agent Architecture
 
+> **ARCHIVED 2026-09-04 — Superseded.** LangGraph-era design material. Its one current-tense claim was wrong: the claude path is a plain subprocess over stdio pipes, not a PTY (`nodes/agent/claude_code_agent/_pool.py`); PTY is used only by the non-pooled `AICliSession` for codex and gemini.
+>
+> For current state see:
+>
+> - [claude_code_interactive_mode.md](../claude_code_interactive_mode.md) — the shipped stdio protocol
+> - [cli_agent_framework.md](../cli_agent_framework.md) — the generic runtime
+> - [claude_code_agent.md](../claude_code_agent.md) — documentation hub
+
 > **Current implementation note:** The production `claude_code_agent` is an
 > interactive Claude Code CLI/PTY integration implemented under
 > `server/nodes/agent/claude_code_agent/`. It does not use LangGraph or

@@ -62,7 +62,7 @@ Restart-Service SysMain
 
 **Fix** (if admin is unavailable): **Reboot**. This is what clears the stuck kernel cache reliably.
 
-**Prevention** (`scripts/start.js`): A preflight probe times `import sqlalchemy`. If it exceeds 8 seconds, it fails fast with actionable remediation steps instead of letting uvicorn hang silently.
+**Prevention** (`cli/commands/start.py`, `_sqlalchemy_preflight`): a preflight probe times `import sqlalchemy` in the server venv. If it exceeds 8 seconds, it fails fast with actionable remediation steps instead of letting uvicorn hang silently.
 
 ---
 
@@ -231,7 +231,7 @@ WhatsApp RPC timeout - Go service not responding at ws://localhost:5683/ws/rpc
 
 WhatsApp service health check (`/health`) returns 200 OK, but the WebSocket RPC connection fails.
 
-**Root cause**: The RPCClient WebSocket connect timeout was set to 2.0 seconds (`routers/whatsapp.py`). The Go whatsmeow service's WebSocket handshake can take 2-3 seconds on Windows, especially on cold start or when Defender is scanning the binary. A 2.1s handshake exceeds the 2.0s deadline.
+**Root cause**: The RPCClient WebSocket connect timeout was set to 2.0 seconds (in the WhatsApp RPC client, today `server/nodes/whatsapp/_service.py`). The Go whatsmeow service's WebSocket handshake can take 2-3 seconds on Windows, especially on cold start or when Defender is scanning the binary. A 2.1s handshake exceeds the 2.0s deadline.
 
 **Fix**: Increased the connect timeout from 2.0s to 5.0s in `RPCClient.connect()`:
 

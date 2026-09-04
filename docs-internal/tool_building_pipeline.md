@@ -41,8 +41,11 @@ Replaces the partial explanations previously scattered across
 [`collect_agent_connections(node_id, context, database)`](../server/services/plugin/edge_walker.py) walks the workflow edges and returns a 5-tuple per agent:
 
 ```
-(memory_data, skill_data, tool_data, input_data, task_data)
+(context_data, skill_data, tool_data, input_data, task_data)
 ```
+
+(`edge_walker.py:181-199` — the first element is the Context descriptor from
+`input-context`, or the legacy Memory descriptor on immutable V1 snapshots.)
 
 - **`tool_data`** is a list of dicts. Each entry: `{node_id, node_type, parameters, label}`. (The `connected_services` extra belonged to the retired `androidTool` gateway tool — see §7.)
 - **MasterSkill expansion** runs at discovery time: a single `masterSkill` connection with `skillsConfig` expands into N individual skill entries, one per enabled skill key.
@@ -158,7 +161,7 @@ tool or crashing.
 
 ## 6. Stage 5 — Dispatch (handlers/tools.py)
 
-[`execute_tool(tool_name, tool_args, config)`](../server/services/handlers/tools.py#L73) at line 73:
+[`execute_tool(tool_name, tool_args, config)`](../server/services/handlers/tools.py#L75) at line 75:
 
 ```python
 1. broadcaster.update_node_status(node_id, "executing", ...)
@@ -170,13 +173,13 @@ tool or crashing.
 4. Return result. Exceptions trigger an "error" broadcast and re-raise.
 ```
 
-[`_dispatch_tool`](../server/services/handlers/tools.py#L138) at line 138 is pure routing — no broadcasting. Routes by `config["node_type"]`:
+[`_dispatch_tool`](../server/services/handlers/tools.py#L146) at line 146 is pure routing — no broadcasting. Routes by `config["node_type"]`:
 
 | Pattern | Handler |
 |---|---|
 | `aiAgent` / `chatAgent` / `<specialized>_agent` | `_execute_delegated_agent` (fire-and-forget background task) |
 | `_builtin_check_delegated_tasks` | `_execute_check_delegated_tasks` |
-| `batteryMonitor` / `wifiAutomation` / ... (16 service types) | `_execute_android_service` (snake_case service ID via SERVICE_ID_MAP) |
+| `batteryMonitor` / `wifiAutomation` / ... (16 service types) | `nodes/android/_base.py::execute_android_service_tool` (line 248; imported at `tools.py:227` — snake_case service ID via `SERVICE_ID_MAP` at `_base.py:25`) |
 | `whatsappSend` / `whatsappDb` / `pythonExecutor` / ... | Per-plugin `usable_as_tool=True` handler (the plugin's own `execute()` method) |
 | `calculatorTool` / `currentTimeTool` / `taskManager` / `writeTodos` | `_execute_<name>` direct implementations |
 | `braveSearch` / `serperSearch` / `perplexitySearch` | `handle_<provider>_search` (httpx async, credential resolution, usage tracking) |
@@ -191,8 +194,8 @@ Android service plugins expose their own `tool_name` class variables and
 connect directly to `input-tools`. Legacy
 `service -> androidTool -> agent` graphs are rewritten on load by
 `services/workflow_migrations.normalize_legacy_android_toolkit`, and sub-node
-exclusion keys solely on the AI-agent config handles (`input-memory` /
-`input-tools` / `input-skill` / `input-teammates`) — the
+exclusion keys solely on the AI-agent config handles (`input-context` /
+`input-tools` / `input-skill` / `input-teammates`; `execution/models.py:351-359`) — the
 `TOOLKIT_NODE_TYPES` constant is gone.
 
 ## 8. Internal delegation identities (`delegate_to_*`)
@@ -210,7 +213,7 @@ class DelegateToAgentSchema(BaseModel):
     context: Optional[str] = None
 ```
 
-[`_execute_delegated_agent`](../server/services/handlers/tools.py#L317) at line 317:
+[`_execute_delegated_agent`](../server/services/handlers/tools.py#L314) at line 314:
 
 1. Generate a `task_id` (`uuid4().hex`).
 2. Spawn `asyncio.create_task(<child agent execute>)` — fire and forget.
@@ -224,10 +227,10 @@ Parent agents see results via three paths — see [agent_delegation.md](./agent_
 
 When `TEMPORAL_PER_TYPE_DISPATCH=true` and the run is happening inside a Temporal workflow, tool calls do NOT go through `execute_tool` directly. Instead:
 
-1. `agent.prepare_payload.v1` records `llm_engine="native"` and
+1. `agent.prepare_payload` records `llm_engine="native"` and
    `message_wire_version=2` for new executions.
 2. `AgentWorkflow` (the F4.B child workflow) gets the LLM's tool-calls list
-   back from `agent.execute_llm_step.v1`, whose native branch sends `ToolDef`
+   back from `agent.execute_llm_step`, whose native branch sends `ToolDef`
    declarations through `ChatUnifier`.
 3. For each tool call, the workflow schedules
    `f"node.{node_type}.v{version}"` as a Temporal activity on the plugin's
@@ -257,7 +260,7 @@ Some tools bundle a default skill — `writeTodos` ships with `write-todos-skill
 ```
 server/tests/
 ├── test_status_broadcasts.py          # locks execute_tool's lifecycle broadcast contract
-├── test_credential_broadcasts.py      # auth tools' CloudEvents envelope
+├── credentials/test_credential_broadcasts.py   # auth tools' CloudEvents envelope
 ├── nodes/test_ai_agents.py            # end-to-end agent + tool exercise
 └── temporal/test_dispatch.py          # F4.A per-type activity dispatch (when flag on)
 ```

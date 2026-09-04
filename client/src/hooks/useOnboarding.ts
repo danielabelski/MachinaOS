@@ -12,7 +12,7 @@ export interface OnboardingState {
   hasChecked: boolean;
 }
 
-const DEFAULT_TOTAL_STEPS = 5;
+const DEFAULT_TOTAL_STEPS = 4;
 
 /**
  * Onboarding wizard state hook.
@@ -20,8 +20,8 @@ const DEFAULT_TOTAL_STEPS = 5;
  * @param reopenTrigger - bump from SettingsPanel to replay the wizard.
  * @param totalSteps - number of steps the wizard will render. Caller
  *   owns the step list (`STEPS.length` in OnboardingWizard); the hook
- *   uses this only to detect last-step completion. Defaults to 5 for
- *   backwards compatibility.
+ *   uses this only to detect last-step completion. The default matches
+ *   the shipped wizard so a caller that omits it still completes.
  */
 export const useOnboarding = (
   reopenTrigger?: number,

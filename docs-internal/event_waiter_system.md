@@ -1,7 +1,6 @@
 # Event Waiter System
 
-> **⚠️ Pre-Wave-11 — historical reference only.**
-> Node authoring now happens on the backend: each node is a Python plugin under `server/nodes/<category>/<node>.py` that emits a `NodeSpec`. The frontend reads specs via [client/src/lib/nodeSpec.ts](../client/src/lib/nodeSpec.ts) + [adapters/nodeSpecToDescription.ts](../client/src/adapters/nodeSpecToDescription.ts). See [plugin_system.md](./plugin_system.md) and [server/nodes/README.md](../server/nodes/README.md) for the current model. The snippets below that reference `client/src/nodeDefinitions/*` are kept for historical context.
+> **Scope note.** This document describes the live in-memory waiter that backs the canvas-Run path. Node authoring happens on the backend: each node is a Python plugin folder under `server/nodes/<category>/<node>/__init__.py` that emits a `NodeSpec`. The frontend reads specs via [client/src/lib/nodeSpec.ts](../client/src/lib/nodeSpec.ts) + [adapters/nodeSpecToDescription.ts](../client/src/adapters/nodeSpecToDescription.ts). See [plugin_system.md](./plugin_system.md) and [server/nodes/README.md](../server/nodes/README.md) for the authoring model.
 
 Trigger nodes in OpenCompany suspend workflow execution until an external event arrives (WhatsApp message, webhook request, Telegram message, chat input, delegated task completion, etc.). The Event Waiter system is the in-memory (`asyncio.Future`) primitive that backs push-based triggers on the canvas-Run path. In a controlled deployment, trigger definitions, push Signals, polling activities, pause state, and queued events live in `WorkflowControlWorkflow`; only a real graph invocation starts `MachinaWorkflow`. `TriggerListenerWorkflow` / `PollingTriggerWorkflow` are legacy replay/compatibility paths. The Redis-Streams backend that previously offered cross-restart waiter persistence was retired because Temporal owns deployed-trigger durability.
 
@@ -38,40 +37,36 @@ class Waiter:
 
 ### Trigger Registry
 
-Every event-based trigger node type is registered with the event name it listens for:
+Every event-based trigger node type is registered with the event name it listens for. Only the four framework-level triggers (not owned by any plugin domain) are hardcoded in `event_waiter.py`:
 
 ```python
 TRIGGER_REGISTRY: Dict[str, TriggerConfig] = {
-    'start':            TriggerConfig('start',            'deploy_triggered',         'Deploy Start'),
-    'whatsappReceive':  TriggerConfig('whatsappReceive',  'whatsapp_message_received','WhatsApp Message'),
-    'webhookTrigger':   TriggerConfig('webhookTrigger',   'webhook_received',         'Webhook Request'),
-    'chatTrigger':      TriggerConfig('chatTrigger',      'chat_message_received',    'Chat Message'),
-    'taskTrigger':      TriggerConfig('taskTrigger',      'task_completed',           'Task Completed'),
-    'twitterReceive':   TriggerConfig('twitterReceive',   'twitter_event_received',   'Twitter Event'),
-    'googleGmailReceive':     TriggerConfig('googleGmailReceive',     'gmail_email_received',     'Gmail Email'),
-    'telegramReceive':  TriggerConfig('telegramReceive',  'telegram_message_received','Telegram Message'),
+    'start':          TriggerConfig('start',          'deploy_triggered',      'Deploy Start'),
+    'webhookTrigger': TriggerConfig('webhookTrigger', 'webhook_received',      'Webhook Request'),
+    'chatTrigger':    TriggerConfig('chatTrigger',    'chat_message_received', 'Chat Message'),
+    'taskTrigger':    TriggerConfig('taskTrigger',    'task_completed',        'Task Completed'),
 }
 ```
+
+Plugin-owned triggers (`whatsappReceive`, `twitterReceive`, `telegramReceive`, `emailReceive`, `googleGmailReceive`, `discordReceive`, `whatsappBusinessReceive`, ...) are **backfilled** into the same dict by `_auto_populate_from_plugins()` (`event_waiter.py`), which walks every registered `TriggerNode` subclass and reads its `event_type` ClassVar + `display_name`. The backfill runs lazily on first `get_trigger_config` / `build_filter` access (importing the plugin registry at module load would be circular). Hardcoded entries always win, so a plugin upgrade never silently replaces hand-maintained behaviour.
 
 `cronScheduler` is **not** in this registry: it is a Temporal Schedule (created by the deployment manager via `services/temporal/schedules.py`) and does not wait for events.
 
 ### Filter Builders
 
-Each trigger type has a filter builder that reads the node's parameters once and returns a closure evaluated per event:
+Each trigger type has a filter builder that reads the node's parameters once and returns a closure evaluated per event. Like the registry, only the framework-level builders are hardcoded:
 
 ```python
 FILTER_BUILDERS = {
-    'whatsappReceive':  build_whatsapp_filter,
-    'webhookTrigger':   build_webhook_filter,
-    'chatTrigger':      build_chat_filter,
-    'taskTrigger':      build_task_completed_filter,
-    'twitterReceive':   build_twitter_filter,
-    'googleGmailReceive':     build_gmail_filter,
-    'telegramReceive':  build_telegram_filter,
+    'webhookTrigger': build_webhook_filter,
+    'chatTrigger':    build_chat_filter,
+    'taskTrigger':    build_task_completed_filter,
 }
 ```
 
-Filter closures capture parameter values at registration time. For example, `build_whatsapp_filter` captures `messageTypeFilter`, `sender_filter`, `contact_phone`, `group_id`, `keywords`, `ignore_own`, and `forwarded_filter`, then returns a function that checks each incoming WhatsApp message against those constraints.
+Plugin builders arrive two ways: `_auto_populate_from_plugins()` wraps each `TriggerNode` subclass's `build_filter(params)` method (validated through the plugin's `Params` model), and rich plugin folders register an explicit builder from their `__init__.py` via `event_waiter.register_filter_builder(node_type, fn)` (telegram's `_filters.py:build_telegram_filter`, whatsapp's `_filters.py:build_whatsapp_filter`, ...). `FILTER_BUILDERS` is backed by an `IdempotentRegistry`, so a same-callable re-registration is a no-op and a conflicting one raises.
+
+Filter closures capture parameter values at registration time. For example, `build_whatsapp_filter` (`nodes/whatsapp/_filters.py`) captures `messageTypeFilter`, `sender_filter`, `contact_phone`, `group_id`, `keywords`, `ignore_own`, and `forwarded_filter`, then returns a function that checks each incoming WhatsApp message against those constraints.
 
 ## Execution Flow
 
@@ -158,13 +153,19 @@ Users can cancel a waiting trigger from the UI (Cancel button on the trigger nod
 
 ## Adding a New Trigger Type
 
-1. **Register it** in `TRIGGER_REGISTRY`:
+1. **Declare the plugin** as a `TriggerNode` subclass in its own folder, `server/nodes/<group>/mqtt_trigger/__init__.py`, with `group = ('mqtt', 'trigger')` and an `event_type` ClassVar. `_auto_populate_from_plugins()` backfills `TRIGGER_REGISTRY` from that ClassVar — do not hand-edit `event_waiter.py` (only the four framework-level triggers live there).
 
    ```python
-   'mqttTrigger': TriggerConfig('mqttTrigger', 'mqtt_message_received', 'MQTT Message'),
+   class MqttTriggerNode(TriggerNode):
+       type = "mqttTrigger"
+       display_name = "MQTT Message"
+       group = ("mqtt", "trigger")
+       event_type = "mqtt_message_received"
+       Params = MqttTriggerParams
+       Output = MqttTriggerOutput
    ```
 
-2. **Build a filter** closure from node params and add it to `FILTER_BUILDERS`:
+2. **Build a filter** closure from the validated `Params`. Either implement `build_filter` on the class (auto-registered) or, for a self-contained plugin folder, put it in `_filters.py` and register it from `__init__.py`:
 
    ```python
    def build_mqtt_filter(params: Dict) -> Callable[[Dict], bool]:
@@ -179,21 +180,23 @@ Users can cancel a waiting trigger from the UI (Cancel button on the trigger nod
            return True
        return matches
 
-   FILTER_BUILDERS['mqttTrigger'] = build_mqtt_filter
+   # nodes/mqtt/__init__.py
+   from services.event_waiter import register_filter_builder
+   register_filter_builder('mqttTrigger', build_mqtt_filter)
    ```
 
-3. **Dispatch events** from the external service:
+3. **Dispatch events** from the external service. For a canary (Temporal-routed) trigger, register the CloudEvents type with `register_canary_trigger_type(node_type, cloudevent_type)` and emit through `services.events.dispatch.emit(envelope, wire_routing_key=...)`; the canvas-Run path also accepts the legacy shape:
 
    ```python
    from services import event_waiter
    event_waiter.dispatch('mqtt_message_received', {'topic': ..., 'payload': ...})
    ```
 
-4. **Add the node definition** in `client/src/nodeDefinitions/` with `group: ['..., trigger']`.
+4. **Add the trigger to `WORKFLOW_TRIGGER_TYPES`** in `server/constants.py`. Omitting it is a silent failure — `find_trigger_nodes` filters on that set, so deploy ignores the node with no warning.
 
-5. **Add output schema** in `client/src/components/parameterPanel/InputSection.tsx` so downstream nodes can drag fields.
+5. **Declare the output shape** as the plugin's `Output` Pydantic model (auto-registered into `NODE_OUTPUT_SCHEMAS`), or call `services.node_output_schemas.register_output_schema(node_type, Model)` from `__init__.py` when the shape is not auto-derivable. The frontend reads it from `GET /api/schemas/nodes/<type>/spec.json` — there is no frontend file to edit.
 
-No changes are needed in the execution engine, cancel path, or deployment manager.
+No changes are needed in the execution engine, cancel path, deployment manager, or any frontend file.
 
 ## Related Docs
 

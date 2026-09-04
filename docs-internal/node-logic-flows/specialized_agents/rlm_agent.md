@@ -115,6 +115,6 @@ flowchart TD
 
 ## Related
 
-- **Dedicated-path siblings**: [`claudeCodeAgent`](./claudeCodeAgent.md)
+- **Dedicated-path siblings**: [`claudeCodeAgent`](./claude_code_agent.md)
 - **Generic pattern**: [`_pattern.md`](./_pattern.md)
 - **Architecture**: [RLM Service](../../rlm_service.md)

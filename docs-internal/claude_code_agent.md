@@ -3,7 +3,9 @@
 `claude_code_agent` is a OpenCompany agent node that drives the real `claude` CLI as a
 long-lived **interactive** subprocess (stdio pipes, no PTY) over the VSCode-extension
 stream-json protocol — not the `claude -p` headless path. A warm `ClaudeSessionPool`
-(keyed by the connected `simpleMemory.node_id`) preserves the session across turns;
+(keyed by the RFC-0002 conversation key when a Context node is connected, or by the
+legacy `simpleMemory.node_id` on immutable V1 graphs — `services/cli_agent/service.py:354-358`)
+preserves the session across turns;
 memory continuity is claude-native via `--continue` / `--resume <UUID>` on a stable
 `cwd=repo_root`. Connected tools and skills reach claude through an MCP bridge; the spawn
 runs under `--permission-mode dontAsk` with a strict `--allowedTools` allowlist and stays
@@ -25,7 +27,7 @@ This page is a **router**. The detail lives in the documents below — start her
 | Headless / print mode (`claude -p`, `--output-format`, stream-json event schema) — the schema the pool parses off stdout | [claude_code_headless_reference.md](./claude_code_headless_reference.md) (snapshot) |
 | SKILL.md frontmatter spec, discovery paths, `context: fork` — what we materialise skills against | [claude_code_skills_reference.md](./claude_code_skills_reference.md) (snapshot) |
 
-The four `cli-reference` / `env-vars` / `permission-modes` / `headless` / `skills`
+The five `cli-reference` / `env-vars` / `permission-modes` / `headless` / `skills`
 documents are **verbatim snapshots** of code.claude.com docs (fetched 2026-05-11), kept so
 the contract the pool parses is pinned even if upstream changes.
 
@@ -36,12 +38,12 @@ All claude-specific code is self-contained here; the generic framework at
 
 | File | Responsibility |
 |---|---|
-| `__init__.py` | `ClaudeCodeAgentNode(SpecializedAgentBase)` + `Params`/`Output`; self-registers via `factory.py` (`register_provider` / `register_session_pool` / `register_skill_materialiser`) + `register_ws_handlers`. |
+| `__init__.py` | `ClaudeCodeAgentNode(ActionNode)` (line 238 — it does not go through `SpecializedAgentBase` / the native loop) + `Params`/`Output`; self-registers via `factory.py` (`register_provider` / `register_session_pool` / `register_skill_materialiser`) + `register_ws_handlers`. |
 | `_provider.py` | Builds the spawn argv (`--output-format stream-json --input-format stream-json --verbose --ide`, `--permission-mode dontAsk`, `--allowedTools`, `--continue`/`--resume`). |
 | `_pool.py` | `ClaudeSessionPool` — warm subprocess keyed by `simpleMemory.node_id`; stdout reader, session-UUID capture, crash-recovery respawn. |
 | `_skills.py` | `materialise_skills` — writes connected SKILL.md trees under `<workspace>/.claude/skills/`, diff-based on warm reuse. |
 | `_oauth.py` | Isolated `CLAUDE_CONFIG_DIR` (`<DATA_DIR>/claude/`), browser-OAuth bridge, binary install. |
-| `_handlers.py` | WebSocket handlers (`cli_login` / `cli_auth_status`). |
+| `_handlers.py` | WebSocket handlers `claude_code_login` (line 103) / `claude_code_logout` (line 140), exported through `WS_HANDLERS`. |
 
 ## See also
 

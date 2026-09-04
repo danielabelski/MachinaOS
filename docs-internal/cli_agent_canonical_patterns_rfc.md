@@ -202,7 +202,7 @@ Source: [mcp#output-size](https://code.claude.com/docs/en/mcp).
   500,000 chars).
 - Server name `workspace` is reserved.
 
-## 3. The four invariants (revised)
+## 3. The six invariants (revised)
 
 Across the official documentation:
 
@@ -289,9 +289,12 @@ stream-json`, `--verbose`, `--ide`, `--model`, `--permission-mode`,
 
 **Conditional:** `--mcp-config <json>` + `--strict-mcp-config` (when
 `mcp_endpoint_url` and `mcp_bearer_token` set), `--continue`/`--resume`
-(memory-bound runs, mutually exclusive), `--max-budget-usd`,
-`--append-system-prompt`, `--effort`, `--fallback-model`, `--add-dir`,
-`--disallowedTools`, `--agent`.
+(memory-bound runs, mutually exclusive), `--append-system-prompt`,
+`--effort`, `--add-dir`, `--disallowedTools`, `--agent`.
+
+**Never emitted** (`_provider.py:316-320`): `--max-turns`,
+`--max-budget-usd`, `--fallback-model` — all `-p`-only. `ClaudeTaskSpec`
+keeps the fields for back-compat and `interactive_argv` silently drops them.
 
 ### 4.2 `--mcp-config` JSON shape
 
@@ -328,9 +331,13 @@ Skill                              # only when >=1 skill is wired
 mcp__opencompany__getWorkspaceFiles,
 mcp__opencompany__listSkills,
 mcp__opencompany__getSkill,
+mcp__opencompany__readSkillResource,
+mcp__opencompany__searchSkillResource,
 mcp__opencompany__getCredential,
 mcp__opencompany__broadcastLog
 ```
+
+(`_provider.py:275-283`.)
 
 **Post-cutover: strict MCP-only allowlist (gated by `--permission-mode
 dontAsk`).** Claude's built-in escape hatches (`Read`, `Edit`, `Bash`,
@@ -351,7 +358,7 @@ built-in fallbacks. Locked by
 
 ### 4.4 IDE lockfile
 
-[`lockfile.py:64-82`](../server/services/cli_agent/lockfile.py): writes
+[`lockfile.py:64-79`](../server/services/cli_agent/lockfile.py): writes
 
 ```json
 {"port": <int>,
@@ -379,8 +386,12 @@ path today.
 [`mcp_server.py`](../server/services/cli_agent/mcp_server.py),
 [`workflow_tools.py`](../server/services/cli_agent/workflow_tools.py):
 
-5 built-in: `getWorkspaceFiles`, `listSkills`, `getSkill`,
-`getCredential`, `broadcastLog`.
+7 built-in (`mcp_server.py:359-560`): `getWorkspaceFiles`, `listSkills`,
+`getSkill`, `readSkillResource`, `searchSkillResource`, `getCredential`,
+`broadcastLog`. The three skill tools dispatch through
+`skill_runtime.execute_skill_tool` (`load` / `read_resource` /
+`search_resource`) so the CLI agent gets the same progressive-disclosure
+contract as the native `Skill` tool.
 Plus dynamic per-batch: one `mcp__opencompany__<node_type>` per connected
 workflow tool (refcount-tracked, schema inferred from plugin's Pydantic
 `Params` field-for-field).
@@ -486,7 +497,7 @@ documented project-instruction surface.
 | **I-2** MCP transport | **Aligned.** Streamable-HTTP via `--mcp-config`. | None. |
 | **I-3** `list_changed` notification | **DONE (`b40011e`).** [`workflow_tools._schedule_list_changed_notify`](../server/services/cli_agent/workflow_tools.py) fires after each `add_tool` / `remove_tool` since FastMCP doesn't emit it automatically. | Optional: unit test asserting `session.send_tool_list_changed` is called. |
 | **I-4** Tool-search deferral | **DONE.** `"alwaysLoad": true` set on the `opencompany` server entry in [`claude_code_agent/_provider.py::interactive_argv`](../server/nodes/agent/claude_code_agent/_provider.py). | None. |
-| **I-5** Visible-tool filtering | **Gap.** All 5 built-in OpenCompany MCP tools (including `getCredential`, `broadcastLog`) are visible to the model. | Mark internal-only tools `_meta["anthropic/alwaysLoad"]: false` or filter via FastMCP middleware. **Defer** — not breaking today. |
+| **I-5** Visible-tool filtering | **Gap.** All 7 built-in OpenCompany MCP tools (including `getCredential`, `broadcastLog`) are visible to the model. | Mark internal-only tools `_meta["anthropic/alwaysLoad"]: false` or filter via FastMCP middleware. **Defer** — not breaking today. |
 | **I-6** Native session continuity | **DONE.** [`session.py`](../server/services/cli_agent/session.py) keeps a stable cwd for memory-bound spawns; the warm-subprocess pool at [`claude_code_agent/_pool.py`](../server/nodes/agent/claude_code_agent/_pool.py) preserves the session across turns. [`claude_code_agent/__init__.py`](../server/nodes/agent/claude_code_agent/__init__.py) sets `continue_session = bool(memory_data)` → argv emits `--continue` (first cold spawn) with `--resume <UUID>` reserved for crash recovery. [`service.py:_persist_memory`](../server/services/cli_agent/service.py) appends turns to `memory_content`, saves `last_session_id` (display-only), broadcasts `node_parameters_updated`, and auto-clears stale UUIDs via `_clear_stale_session_id`. See §4.8. | Markdown `memory_content` remains the UI mirror, not the resume channel. |
 | **System-prompt directive** (Cursor / `CLAUDE.md` pattern) | **DONE (`b40011e`).** Second `--append-system-prompt` listing connected `mcp__opencompany__*` tools. | None. |
 | `--allowedTools` strict MCP-only allowlist | **DONE (superseded R3).** Built-in escape hatches (`Read`/`Edit`/`Bash`/`Glob`/`Grep`/`Write`/`WebSearch`/`WebFetch`) are NOT in the default allowlist; `Skill` is added conditionally (only when a skill is wired). `default_allowed_tools: ""` in [`ai_cli_providers.json`](../server/config/ai_cli_providers.json); allowlist assembled in [`_provider.py::interactive_argv`](../server/nodes/agent/claude_code_agent/_provider.py). Gated by `--permission-mode dontAsk`. | None. |
@@ -514,7 +525,7 @@ The current design instead ships a strict **MCP-only** allowlist:
 `default_allowed_tools: ""` in
 [`ai_cli_providers.json`](../server/config/ai_cli_providers.json), and
 [`_provider.py::interactive_argv`](../server/nodes/agent/claude_code_agent/_provider.py)
-assembles `mcp__opencompany__<node_type>` per wired tool + the 5 infra MCP
+assembles `mcp__opencompany__<node_type>` per wired tool + the 7 infra MCP
 tools + the built-in `Skill` (conditionally, when a skill is wired),
 gated by `--permission-mode dontAsk`. `WebSearch`/`WebFetch`/`Bash`/etc.
 are intentionally excluded — equivalent capability is wired explicitly

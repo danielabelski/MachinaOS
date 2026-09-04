@@ -104,12 +104,12 @@ branches in shared code; this is how we avoid needing any.
 ### D5 — First multi-credential node in the repo
 
 `credentials = (OpenAICredential, ElevenLabsCredential, …)` with `ctx.connection(params.provider)`.
-Already supported: `_make_connection_factory` ([`base.py:870`](../server/services/plugin/base.py))
+Already supported: `_make_connection_factory` ([`base.py:1134`](../server/services/plugin/base.py))
 builds a dict over **all** declared credentials and raises only for undeclared ids. No node uses
 this today.
 
 Consequence: the node must use imperative `@Operation` bodies — the declarative `routing=` path
-hardcodes `self.credentials[0]` ([`base.py:566`](../server/services/plugin/base.py)).
+hardcodes `self.credentials[0]` ([`base.py:769`](../server/services/plugin/base.py)).
 
 ### D6 — Extract the generic registry rather than copy it
 
@@ -118,11 +118,11 @@ provider-agnostic. Copying it into `services/speech/` would fork the boot-time-i
 logic that exists specifically to keep ~7 s (warm) / ~45 s (cold) of SDK imports off startup.
 
 `services/provider_registry.py`; `services/llm/registry.py` becomes a shim.
-**Success criterion: `server/tests/llm/` passes untouched.** Met — 168 tests, no edits. `_REGISTRY`
+**Success criterion: `server/tests/llm/` passes untouched.** Met — 168 tests at the time, no edits (the suite has since grown; `pytest tests/llm --collect-only -q` is the live count). `_REGISTRY`
 survives as an alias bound to the *same dict object* the registry mutates, because several tests
 swap provider factories in place through it.
 
-A companion `services/provider_clients.py` (the lease-counted client cache) was scoped here and
+A companion `provider_clients.py` service (the lease-counted client cache) was scoped here and
 deliberately **not** built. See §4: speech makes one HTTP call per node execution, so the cache has
 no second consumer and would have earned only a shutdown hook in `main.py`.
 
@@ -204,8 +204,9 @@ have been the next entry on it.
 **Layering rule.** The speech layer takes credential **id strings**, never `Credential` classes.
 `nodes/speech/_config.credential_id(provider)` reads the id from JSON, and a test asserts every
 registered provider's id resolves in `CREDENTIAL_REGISTRY`. Cross-plugin *credential* imports are
-fine and idiomatic (`from ..model._credentials import OpenAICredential`, exactly what `nodes/sarvam/`
-already does); what stays out is any `services/` module knowing a vendor name.
+fine and idiomatic (`from ..model._credentials import OpenAICredential`, exactly what
+`nodes/translate/` does today and the since-retired `nodes/sarvam/` did before it); what stays
+out is any `services/` module knowing a vendor name.
 
 **No client cache.** `ChatUnifier` keeps a lease-counted LRU because an agent loop makes many model
 calls inside one node execution. Speech is the opposite shape -- one HTTP request per execution,

@@ -7,11 +7,13 @@ npm install -g @zeenie-ai/opencompany
 company start
 ```
 
-Open http://localhost:5678
+Open the app URL — `http://localhost:${PYTHON_BACKEND_PORT}` (the port
+is declared once in `.env.template`; see [SETUP.md](./SETUP.md) for the
+default).
 
 ## CLI Commands (`company`, Python Typer app under `cli/`)
 
-The CLI is the single orchestration surface — every `npm run <verb>` at
+The CLI is the single orchestration surface — every `bun run <verb>` at
 the root is a thin wrapper over `python -m cli <verb>`. The old
 `scripts/{start,stop,build,clean,docker}.js` orchestrators were retired
 (each `cli/commands/<verb>.py` docstring records what it replaced).
@@ -20,7 +22,7 @@ deprecation warning; kept for upgrade compatibility).
 
 | Command | Description |
 |---------|-------------|
-| `company start` | Production mode, single port: uvicorn serves API + WS + built SPA on :5678. Optional daemons (Temporal dev server, WhatsApp) are backend-owned, started from the lifespan when enabled |
+| `company start` | Production mode, single port: uvicorn serves API + WS + built SPA on `PYTHON_BACKEND_PORT`. Optional daemons (Temporal dev server, WhatsApp) are backend-owned, started from the lifespan when enabled |
 | `company dev` | Start in dev mode (Vite HMR + uvicorn). `--force` re-bundles Vite deps (recovers "Outdated Optimize Dep"); `--daemon` binds backend to 0.0.0.0 |
 | `company serve` | Single-port production runtime (uvicorn serves API + WS + built SPA; optional daemons incl. the Node.js executor are backend-spawned on demand) — the systemd `ExecStart` on deployed VMs |
 | `company stop` | Stop all services and free configured ports |
@@ -30,7 +32,9 @@ deprecation warning; kept for upgrade compatibility).
 | `company daemon start/stop/status/restart` | Detached backend management (PID file under user data dir) |
 | `company version sync` | Propagate the root package.json version |
 | `company docs nodes [--check]` | Regenerate (or verify) the `docs-internal/node-logic-flows/` index |
-| `company help` | Show help |
+
+There is no `help` verb: `company` with no arguments, `company --help`, and
+`company <verb> --help` print Typer's help (`no_args_is_help=True` in `cli/cli.py`).
 
 ### Dependency checks
 
@@ -39,10 +43,15 @@ running.
 
 ---
 
-## npm Scripts
+## package.json scripts (run with bun)
 
-Run with `npm run <script>` from the project root (`package.json` is
-the source of truth).
+Run with `bun run <script>` from the project root (`package.json` is
+the source of truth). The dev package manager is bun@1.4.0 —
+`scripts/preinstall.js` rejects `npm install` in a source checkout.
+The commands below are quoted verbatim from `package.json`; two of them
+(`client:start`, `test:frontend`) still spell `npm run` internally
+because they invoke another package's script, which bun executes on
+Node either way (recorded follow-up).
 
 ### CLI wrappers
 
@@ -59,8 +68,8 @@ the source of truth).
 | Script | Command | Description |
 |--------|---------|-------------|
 | `client:start` | `cd client && npm run start` | React frontend (Vite dev server) |
-| `python:start` | `cd server && uv run uvicorn main:app --host 127.0.0.1 --port 5678 ...` | Backend only |
-| `python:daemon` | same, bound to `0.0.0.0` | Backend only, LAN-reachable |
+| `python:start` | `cd server && uv run python main.py` | Backend only (`main.py` reads `HOST` / `PYTHON_BACKEND_PORT` from the env) |
+| `python:daemon` | `cd server && cross-env HOST=0.0.0.0 uv run python main.py` | Backend only, LAN-reachable |
 | `temporal:worker` | `cd server && uv run python -m services.temporal.worker` | Standalone Temporal worker |
 
 The Temporal dev server is backend-owned: the FastAPI lifespan starts it via `TemporalServerRuntime.ensure_started()` when `TEMPORAL_ENABLED` (see [Temporal Architecture](./TEMPORAL_ARCHITECTURE.md)). The official `temporal` CLI is downloaded by `pooch` to `<DATA_DIR>/packages/temporal/` (= `~/.opencompany/packages/temporal/` by default) during `company build`.
@@ -87,7 +96,7 @@ The Temporal dev server is backend-owned: the FastAPI lifespan starts it via `Te
 
 | File | Purpose |
 |------|---------|
-| `install.js` | npm-tarball install pipeline (npm/uv install for end users — dev workspaces use bun; client + sidecar build, bytecode compile, temporal binary fetch) — mirrors `company build`; the compileall command shape is locked in sync by `cli/tests/test_release_pipeline_config.py` |
+| `install.js` | npm-tarball install pipeline (npm/uv install for end users — dev workspaces use bun; client build only when `client/dist` is missing from the tarball, `uv sync`, bytecode compile, CLI runtime venv, non-fatal Temporal binary fetch; the Node.js sidecar `dist/index.js` ships pre-built in the tarball) — mirrors `company build`; the compileall command shape is locked in sync by `cli/tests/test_release_pipeline_config.py` |
 | `preinstall.js` | Legacy-package/temp cleanup (also runs on uninstall) |
 | `postinstall.js` | npm lifecycle entry that guards recursion and invokes install.js |
 | `migrate_icons.py`, `migrate_skill_icons.py` | One-off icon-migration utilities (historical) |
@@ -109,11 +118,14 @@ Key variables in `.env` (see `.env.template` for the full list):
 ### Ports
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `VITE_CLIENT_PORT` | 5678 | App port (Vite dev server; proxies backend prefixes) |
-| `PYTHON_BACKEND_PORT` | 5678 | Backend port (5679 in dev via `.env.dev`, behind the Vite proxy) |
-| `WHATSAPP_RPC_PORT` | 5683 | WhatsApp API port |
-| `NODEJS_EXECUTOR_PORT` | 5682 | Node.js code-executor sidecar |
-| — | 5681 / 5680 | Temporal gRPC / Temporal Web UI |
+| `VITE_CLIENT_PORT` | `.env.template` | App port (Vite dev server; proxies backend prefixes). Equal to `PYTHON_BACKEND_PORT` in production |
+| `PYTHON_BACKEND_PORT` | `.env.template` | Backend port (`.env.dev` moves it one up in dev, behind the Vite proxy) |
+| `WHATSAPP_RPC_PORT` | `.env.template` | WhatsApp API port (plugin-owned) |
+| `NODEJS_EXECUTOR_PORT` | `.env.template` | Node.js code-executor sidecar (plugin-owned) |
+| `TEMPORAL_FRONTEND_GRPC_PORT` / `TEMPORAL_UI_PORT` | `.env.template` | Temporal gRPC / Temporal Web UI |
+
+All values live in the serial block declared at the top of `.env.template`; no
+code or doc should carry the numerals.
 
 ### Features
 | Variable | Default | Description |
@@ -138,9 +150,9 @@ Key variables in `.env` (see `.env.template` for the full list):
 
 ```bash
 # Development
-company dev            # app at :5678 (Vite HMR; backend :5679 behind the proxy)
+company dev            # app at PYTHON_BACKEND_PORT (Vite HMR; backend one port up via .env.dev, behind the proxy)
 company dev --force    # ...forcing a Vite dependency re-bundle
-company start          # Production mode (single port :5678)
+company start          # Production mode (single port: PYTHON_BACKEND_PORT)
 company stop           # Stop all services
 
 # Build / clean

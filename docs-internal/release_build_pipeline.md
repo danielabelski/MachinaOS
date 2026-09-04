@@ -94,11 +94,11 @@ named `tsgo` — stopped publishing the day before and must not come back.
 
 - `client/vite.config.js` → extend `build` block:
   - `target: 'es2022'`
-  - `chunkSizeWarningLimit: 600` (down from 1500)
+  - `chunkSizeWarningLimit: 850` (down from 1500; the plan said 600, but `vendor-icons` — lucide + lobehub brand SVGs — is ~830 KB on its own, so the ceiling sits just above it and other chunks still trip it)
   - `rollupOptions.output.manualChunks` mapping:
     - `vendor-react`: `react`, `react-dom`, `react-hook-form`, `@hookform/resolvers`
     - `vendor-flow`: `reactflow`
-    - `vendor-radix`: `@radix-ui/*`, `radix-ui`
+    - `vendor-radix`: `radix-ui` (the single umbrella package; no `@radix-ui/*` scoped entries)
     - `vendor-icons`: `lucide-react`, `@lobehub/icons`
     - `vendor-query`: `@tanstack/react-query`, `@tanstack/query-sync-storage-persister`, `@tanstack/react-query-persist-client`, `@lukemorales/query-key-factory`
     - `vendor-markdown`: `react-markdown`, `remark-gfm`, `remark-breaks`, `prismjs`, `react-simple-code-editor`, `@uiw/react-json-view`
@@ -149,11 +149,11 @@ The npm tarball still excludes `__pycache__/` per `package.json` `files` (cross-
 - **`company build` layers `.env.dev` first.** `build_command()` calls `cli.config.load_dev_overrides(root)` before the install steps, so the build's `DATA_DIR` matches what the runtime sees. Without it, a repo checkout's `company build` read `DATA_DIR=~/.opencompany` from `.env.template` and installed Temporal under user home, but `company dev` then read `DATA_DIR=.opencompany` from `.env.dev` and re-downloaded into `<repo>/.opencompany/` — a redundant ~114 MB fetch on every fresh clone.
 - **Safe for global installs.** `.env.dev` is git-committed for contributors but is NOT in the npm `files` list, so an npm-distributed copy has no `.env.dev` — `load_dev_overrides` is a no-op and everything falls through to the `.env.template` default (`DATA_DIR=~/.opencompany`), matching `company start` / `company daemon`.
 
-### 5. Wire bundle + compileall into install.js
+### 5. Wire compileall into install.js (the sidecar bundle ships pre-built)
 
 - `scripts/install.js` → after `uv sync`:
-  1. `npm --prefix server/nodejs run build` — produce `dist/index.js`
-  2. `python -m compileall -q -j 0 <COMPILEALL_SOURCE_DIRS>` — same shape as build.py (no `-O`; locked in sync by `cli/tests/test_release_pipeline_config.py`)
+  1. `uv run python -m compileall -q -j 0 <COMPILEALL_SOURCE_DIRS>` — same shape as build.py (no `-O`; locked in sync by `cli/tests/test_release_pipeline_config.py`)
+- The sidecar is **not** rebuilt at install time: `company build` step `[3/6]` runs `bun run --filter opencompany-nodejs-executor build` before `npm pack`, and `server/nodejs/dist/index.js` rides inside the tarball (the `server/` entry in the root `files` list covers it). Likewise the client is only built by install.js when `client/dist/index.html` is missing.
 
 Idempotent on re-runs (compileall only rewrites stale pyc; esbuild is deterministic).
 
@@ -171,19 +171,19 @@ Idempotent on re-runs (compileall only rewrites stale pyc; esbuild is determinis
 | `server/nodejs/package.json` | + esbuild devDep, build script, change start |
 | `server/nodejs/.gitignore` | new — ignore `dist/` |
 | `cli/commands/build.py` | + compileall step (`[5/6]`, plain `.pyc` — no `-O`), `COMPILEALL_SOURCE_DIRS` constant |
-| `scripts/install.js` | + sidecar bundle + compileall calls |
+| `scripts/install.js` | + compileall call (sidecar bundle arrives pre-built in the tarball) |
 | `server/pyproject.toml` | `[tool.uv] compile-bytecode = true` — `uv sync` compiles `.venv/` site-packages |
 | `.github/workflows/predeploy.yml` | + typecheck gate in `build-and-lint`; + `tsc --version` in the cross-OS matrix |
 
 ## Verification
 
 1. `bun run --filter react-flow-client typecheck` → <5s, zero errors.
-2. `ANALYZE=1 bun run --filter react-flow-client build` → open `client/dist/stats.html`. Expect: no chunk above 600 KB gz, main < 200 KB gz, `vendor-flow` split.
-3. `cd server/nodejs && npm run build && node dist/index.js` → starts on :5682 in <100ms.
+2. `ANALYZE=1 bun run --filter react-flow-client build` → open `client/dist/stats.html`. Expect: no chunk trips the 850 KB `chunkSizeWarningLimit` (`vendor-icons` is the ~830 KB outlier it is sized for), main < 200 KB gz, `vendor-flow` split.
+3. `cd server/nodejs && bun run build && NODEJS_EXECUTOR_PORT=<port> node dist/index.js` → starts on `NODEJS_EXECUTOR_PORT` (required env; no fallback literal) in <100ms.
 4. `cd server && uv run python -m compileall -q -j 0 services` → plain `__pycache__/*.pyc` present (no `.opt-1.pyc` — nothing loads those).
 5. Cold-start: clean install + `company start > start.log 2>&1` → `Application startup complete` at ≤+50s (was +66.9s).
 6. `npm pack --dry-run` → `server/nodejs/dist/index.js` included; no `__pycache__/`; tarball size ≤ v0.0.76.
-7. Smoke: `company start` → load http://localhost:5678 → run "AI Assistant" example → agent responds.
+7. Smoke: `company start` → load the app URL (`http://localhost:${PYTHON_BACKEND_PORT}`) → run "AI Assistant" example → agent responds.
 
 ## Out of scope (future work)
 

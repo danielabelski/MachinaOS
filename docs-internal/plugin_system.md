@@ -21,7 +21,7 @@ pitfalls).
 
 The full single-file recipe code block lives in the cookbook — see
 [`server/nodes/README.md` → Five-minute recipe](../server/nodes/README.md#five-minute-recipe).
-A single file (`server/nodes/search/acme_search.py`, class
+A single folder (`server/nodes/search/acme_search/__init__.py`, class
 `AcmeSearchNode`) declares `type` /
 `display_name` / `group` / `component_kind` / `handles` /
 `credentials` / `task_queue` / `usable_as_tool` / `Params` / `Output`
@@ -75,7 +75,7 @@ class SpecializedAgentBase(ActionNode, abstract=True):
 | `credentials` | Sequence of `Credential` subclasses the node uses. More than one is supported — see [Multi-credential nodes](#multi-credential-nodes). |
 | `Params` | Pydantic `BaseModel` — user-facing parameters. Used for both UI rendering and AI tool schemas. |
 | `Output` | Pydantic `BaseModel` — runtime output shape. |
-| `usable_as_tool` | `ActionNode` flag — mints a ToolNode adapter for AI invocation. Combined with `component_kind != "model"`, makes the plugin visible to `agentBuilder.add_tool` (catalogue + rebind paths). **Side effect:** setting it auto-sets `hide_input_handle` / `hide_output_handle` to `True` unless the class declares them ([base.py:215](../server/services/plugin/base.py#L215)), so a dual-purpose node that must remain wirable on the canvas has to declare both `False` explicitly. |
+| `usable_as_tool` | `ActionNode` flag — mints a ToolNode adapter for AI invocation. Combined with `component_kind != "model"`, makes the plugin visible to `agentBuilder.add_tool` (catalogue + rebind paths). **Side effect:** setting it auto-sets `hide_input_handle` / `hide_output_handle` to `True` unless the class declares them ([base.py:243-246](../server/services/plugin/base.py#L243)), so a dual-purpose node that must remain wirable on the canvas has to declare both `False` explicitly. |
 | `needs_canvas` | `ClassVar[bool]` — when `True`, the F4.B `AgentWorkflow` tool-dispatch forwards the parent workflow's `nodes`/`edges` into the per-tool activity payload. Today only `AgentBuilderNode` opts in (walks edges to resolve its calling agent). |
 | `task_queue` | Temporal worker pool. See `TaskQueue` constants. |
 | `retry_policy` | `RetryPolicy` dataclass (mirrors `temporalio.common.RetryPolicy`). |
@@ -288,7 +288,7 @@ provider.
 
 **A multi-credential node MUST use imperative operations.** The declarative
 `routing=` path resolves `self.credentials[0]`
-([base.py:571](../server/services/plugin/base.py#L571)), so a routed op would
+([base.py:769](../server/services/plugin/base.py#L769)), so a routed op would
 authenticate every provider with the first key in the tuple regardless of what
 the user picked. `test_plugin_contract.py` only asserts the tuple is non-empty,
 so nothing else catches it. `nodes/speech/` has a test asserting neither of its
@@ -397,8 +397,10 @@ on a plugin resolves to a registered class.
 | `nodes/twitter/_credentials.py` | `TwitterCredential` | oauth2 | twitterSend / twitterSearch / twitterUser / twitterReceive |
 | `nodes/telegram/_credentials.py` | `TelegramCredential` | api_key | telegramSend / telegramReceive |
 | `nodes/scraper/_credentials.py` | `ApifyCredential` | api_key (bearer) | apifyActor |
-| `nodes/model/_credentials.py` | `OpenAI / Anthropic / Gemini / OpenRouter / Groq / Cerebras / DeepSeek / Kimi / Mistral / Xai / Ollama / LMStudio` | api_key | 12 native providers and 11 standalone chat-model nodes. Ollama / LM Studio store a local server URL; xAI is agent-selectable but has no standalone node. |
-| `nodes/search/*.py` (inline) | `BraveSearch / Serper / Perplexity` | api_key | single-use search nodes |
+| `nodes/model/_credentials.py` | `OpenAI / Anthropic / Gemini / OpenRouter / Groq / Cerebras / DeepSeek / Kimi / Mistral / Xai / Sarvam / Ollama / LMStudio` | api_key | 13 credential classes covering the 13 agent-selectable providers and the 12 standalone chat-model nodes (`ls server/nodes/model/*_chat_model`). Ollama / LM Studio store a local server URL; xAI is agent-selectable but has no standalone node; `SarvamCredential` also serves the speech / translate plugins. |
+| `nodes/search/<name>/__init__.py` (inline) | `BraveSearch / Serper / Perplexity` | api_key | single-use search nodes |
+
+This table is the Wave 11.E snapshot, not an inventory — later plugins (Stripe, Vercel, GitHub, Cloudflare, gcloud, WhatsApp, WhatsApp Business, Discord, Microsoft, ElevenLabs, Deepgram, DeepL, ...) each ship their own `_credentials.py`. Read the live set from `len(services.plugin.credential.CREDENTIAL_REGISTRY)` (34 at the time of writing).
 
 `GoogleCredential` exposes a `build_credentials()` classmethod that
 returns a `google.oauth2.credentials.Credentials` — hand-off to
@@ -485,7 +487,7 @@ AgentWorkflow.run(payload):
     2. if kind == "tool_calls":
          for each call: execute_activity(f"node.{tool_type}.v{version}")
     3. execute_activity("agent.persist_turn")   # append memory per turn
-    4. if compaction threshold: execute_activity("agent.compact_memory")
+    4. if compaction threshold: execute_activity("agent.compact_context")
 ```
 
 The worker registers the `agent.*` activities alongside the per-type
@@ -634,11 +636,10 @@ if precheck_error:
     return error_envelope(precheck_error)
 waiter = await event_waiter.register(node_type, node_id, parameters)
 
-# services/status_broadcaster.py — WS-connect refresh
+# services/status_broadcaster.py — refresh_all_services (runs once at
+# lifespan startup, Wave 11.I; no per-plugin knowledge remains here)
 async with asyncio.TaskGroup() as tg:
-    tg.create_task(self._refresh_whatsapp_status())  # legacy hardcoded
-    # ... future migrations move into the registry too:
-    for callback in _SERVICE_REFRESH_CALLBACKS:
+    for callback in list(_SERVICE_REFRESH_CALLBACKS):
         tg.create_task(callback(self))
 ```
 
@@ -656,9 +657,9 @@ plugin owns one of:
 - A duplicate `Output` Pydantic class that the central
   `node_output_schemas.NODE_OUTPUT_SCHEMAS` would otherwise pin.
 
-If none of those apply: a single `<name>.py` in the right folder is
-the whole node. Don't create `_service.py` / `_handlers.py` / etc.
-just because telegram has them.
+If none of those apply: a single `<name>/__init__.py` folder under the
+right group is the whole node. Don't create `_service.py` /
+`_handlers.py` / etc. just because telegram has them.
 
 ### Wire format is the contract — not module paths
 
@@ -669,12 +670,12 @@ long as the registered keys stay the same. The
 `server/config/credential_providers.json` declarative config — served
 to the frontend via `handle_get_credential_catalogue` and consumed by
 `useCatalogueQuery` — is likewise stable across backend reorganisations.
-(The pre-Wave-13 `client/src/components/credentials/providers.tsx`
-static fallback no longer exists; the server catalogue is the single
+(The pre-Wave-13 `providers.tsx` static fallback in the credentials
+component folder no longer exists; the server catalogue is the single
 source of truth for the credentials panel.)
 
 This is why the telegram refactor changed zero frontend code despite
-moving 754 lines out of `services/telegram_service.py`.
+moving 754 lines out of the old `telegram_service.py` service module.
 
 ## Folder layout
 
@@ -683,10 +684,12 @@ server/
 ├── nodes/                        # One self-contained folder per plugin (Wave 11.H)
 │   ├── __init__.py              # pkgutil.walk_packages discovery
 │   ├── groups.py                # Palette group metadata
-│   ├── agent/                   # AI agents (aiAgent, chatAgent + 16 specialized/variant)
+│   ├── agent/                   # AI agents — 22 folders (aiAgent, chatAgent, 13 SpecializedAgentBase
+│   │   │                        # subclasses, rlm / claude_code / codex, vertex_* variants)
 │   │   ├── _handles.py          # Shared handle topology helpers
 │   │   ├── _inline.py           # prepare_agent_call()
 │   │   ├── _specialized.py      # SpecializedAgentBase
+│   │   ├── _vertex.py           # Shared Vertex Agent Engine helpers
 │   │   └── <agent>/__init__.py  # one folder per agent
 │   ├── model/                   # AI chat models (12 providers; all agent-capable)
 │   │   ├── _base.py             # ChatModelBase + ChatModelParams/Output
@@ -698,18 +701,17 @@ server/
 │   │   ├── _base.py             # CodeExecutorBase
 │   │   ├── _nodejs.py           # Shared NodeJSClient singleton
 │   │   └── <lang>_executor/__init__.py
-│   ├── filesystem/              # file_read / file_modify / shell / fs_search
+│   ├── filesystem/              # file_read / file_modify / shell / fs_search / gallery
 │   │   ├── _backend.py          # Native workspace-contained filesystem helper
 │   │   └── <op>/__init__.py
-│   ├── document/                # http_scraper / parser / chunker / embedding / vector
-│   │   ├── _helpers.py          # delegate() wrapper
+│   ├── document/                # http_scraper / parser / chunker / embedding / vector / file_downloader
 │   │   └── <stage>/__init__.py
 │   ├── google/                  # gmail / calendar / drive / sheets / tasks / contacts
 │   ├── proxy/                   # proxy_request / proxy_config / proxy_status
 │   │   └── _usage.py            # Shared track_proxy_usage
 │   ├── search/                  # brave / serper / perplexity / duckduckgo
 │   ├── scraper/                 # apify / crawlee
-│   ├── tool/                    # calculator / currentTime / taskManager / writeTodos
+│   ├── tool/                    # calculator / currentTime / taskManager / writeTodos / agent_builder / canvas / data_source / simple_memory
 │   ├── trigger/                 # webhookTrigger / chatTrigger / taskTrigger
 │   ├── workflow/                # start
 │   ├── scheduler/               # cronScheduler / timer
@@ -719,14 +721,16 @@ server/
 │   ├── email/                   # emailSend / emailRead / emailReceive
 │   ├── chat/                    # chatSend / chatHistory
 │   ├── social/                  # socialSend / socialReceive
-│   ├── browser/                 # browser (agent-browser CLI)
+│   ├── browser/                 # browser (agent-browser CLI) / browser_harness (browser-use CDP)
 │   ├── utility/                 # httpRequest / webhookResponse / console / team_monitor / process_manager
 │   ├── text/                    # textGenerator / fileHandler
 │   ├── location/                # gmaps_create / gmaps_locations / gmaps_nearby_places
-│   └── skill/                   # simpleMemory / masterSkill
-│                                # Each group folder owns its own
-│                                # _credentials.py (Wave 11.E.1) —
-│                                # no central credentials package.
+│   ├── skill/                   # masterSkill (+ _expander.py; skill/simple_memory is an import shim —
+│   │                            # the canonical simpleMemory plugin is nodes/tool/simple_memory/)
+│   └── ...                      # context / speech / translate / vision / discord / microsoft /
+│                                # whatsapp_business / stripe / vercel / github / cloudflare / gcloud —
+│                                # `ls server/nodes` is the inventory; each group folder owns its
+│                                # own _credentials.py (Wave 11.E.1), no central credentials package.
 └── services/
     ├── plugin/                  # Plugin runtime
     │   ├── base.py              # BaseNode
@@ -809,8 +813,9 @@ All Wave 10 invariants in `test_node_spec.py` still run; Wave 11 invariants in `
   `nodes/twitter/_base.py` for client + XDK helpers.
 - Wave 11.D.9 — WhatsApp + Social inlined into `nodes/whatsapp/_base.py`
   and `nodes/social/_base.py` (full bodies, RPC dispatch via
-  `services.whatsapp_service`; renamed from `routers/whatsapp.py` in
-  Wave 11.E.2 since it was never an APIRouter).
+  `services.whatsapp_service`; renamed from the misnamed `whatsapp.py` router in
+  Wave 11.E.2 since it was never an APIRouter, and moved again into
+  `nodes/whatsapp/_service.py` in Wave 11.I).
 - Wave 11.D.10 — `utility.py` split across 12 plugin files (maps,
   text, workflow start, timer, cron, console, team monitor, chat).
 - Wave 11.D.11 — Auto-populate trigger registries.
@@ -824,19 +829,21 @@ All Wave 10 invariants in `test_node_spec.py` still run; Wave 11 invariants in `
 - F4.B — `AgentWorkflow` child workflow + 3 agent activities behind
   `TEMPORAL_AGENT_WORKFLOW_ENABLED` flag (commit `a4d009e`). Tool
   calls inside AI agents become per-type activities.
-- Wave 11.E — Declarative credentials: 25 `Credential` subclasses
-  (GoogleCredential + GoogleMapsCredential + TwitterCredential +
+- Wave 11.E — Declarative credentials: 25 `Credential` subclasses at
+  the time (GoogleCredential + GoogleMapsCredential + TwitterCredential +
   TelegramCredential + ApifyCredential + 12 LLM providers + 3 inline
   search credentials + Stripe / Vercel / GitHub / Cloudflare /
-  WhatsApp). 29 plugins now declare `credentials = (...)`.
-  Agents stay poly-provider (empty tuple).
+  WhatsApp); 29 plugins declared `credentials = (...)`. Today the live
+  numbers are `len(CREDENTIAL_REGISTRY)` (34) and 53 plugin files with a
+  non-empty `credentials` tuple. Agents stay poly-provider (empty tuple).
 - Wave 11.E.1 — Modularised credentials into per-domain
   `nodes/<group>/_credentials.py` files. `server/credentials/`
   directory deleted; auto-discovery rides on node-package import.
 - Wave 11.E.2 — Dead-code sweep: fixed 2 broken agent imports,
   stripped 13 dead dispatch branches in `tools.py`, deleted duplicate
-  `handlers/proxy.py`, moved misnamed `routers/whatsapp.py` →
-  `services/whatsapp_service.py`, dedup'd `TRIGGER_NODE_TYPES`.
+  `handlers/proxy.py`, moved the misnamed `whatsapp.py` router →
+  `whatsapp_service.py` under services (now `nodes/whatsapp/_service.py`
+  since Wave 11.I), dedup'd `TRIGGER_NODE_TYPES`.
 - Wave 11.E.3 — Inlined the last per-domain handler bodies into
   plugins. Deleted 8 fully-orphan handler files (search, code,
   telegram, http, filesystem, email, process, todo) and 4
@@ -899,7 +906,7 @@ All Wave 10 invariants in `test_node_spec.py` still run; Wave 11 invariants in `
   Phase 2-4 migrate the existing polling and daemon triggers onto
   the framework. Telegram is the reference implementation:
   ~870 lines of telegram-specific code moved out of
-  `services/telegram_service.py` (deleted), `routers/websocket.py`
+  the old `telegram_service.py` service module (deleted), `routers/websocket.py`
   (7 inline handlers removed), `services/event_waiter.py`
   (`build_telegram_filter` + hardcoded registry entry removed),
   `services/status_broadcaster.py` (`_refresh_telegram_status`
@@ -911,16 +918,16 @@ All Wave 10 invariants in `test_node_spec.py` still run; Wave 11 invariants in `
   changes. Frontend identifies plugin commands by WebSocket message
   type strings, not Python module paths.
 
-`services/handlers/` is now **4 files / ~970 LOC** (down from 16
+`services/handlers/` is now **4 files / ~1,240 LOC** (down from 16
 files / 12,800 LOC; `google_auth.py` moved to `nodes/google/_auth_helper.py`
-in Wave 11.I commit D):
+in Wave 11.I commit D; `wc -l server/services/handlers/*.py` for the live figure):
 
 | File | LOC | Purpose |
 |---|---|---|
-| `tools.py` | 821 | AI-tool dispatcher, plugin fast-path, agent delegation infrastructure (shared `_delegated_tasks` / `_delegation_results` state). |
-| `triggers.py` | 126 | Generic event-trigger handler for polling triggers (gmailReceive, twitterReceive, etc.). |
-| `todo.py` | 65 | TaskManager / writeTodos invocation surface for AI tool nodes. |
-| `__init__.py` | 23 | Package docstring; nothing imports from `services.handlers` at package level. |
+| `tools.py` | ~1,024 | AI-tool dispatcher, plugin fast-path, agent delegation infrastructure (shared `_delegated_tasks` / `_delegation_results` state). |
+| `triggers.py` | ~123 | Generic event-trigger handler for polling triggers (gmailReceive, twitterReceive, etc.). |
+| `todo.py` | ~75 | TaskManager / writeTodos invocation surface for AI tool nodes. |
+| `__init__.py` | ~19 | Package docstring; nothing imports from `services.handlers` at package level. |
 
 Every domain owns its own code under `nodes/<group>/` — plugin file +
 optional `_base.py` / `_inline.py` / `_credentials.py` siblings. No
@@ -1270,7 +1277,7 @@ without any node-specific code in the frontend or in core services:
    emits this event after every state change. The frontend's
    existing handler in
    [`WebSocketContext.tsx`](../client/src/contexts/WebSocketContext.tsx)
-   (line 671) invalidates the catalogue query; the modal refetches
+   (`case 'credential_catalogue_updated'`, line 1007) invalidates the catalogue query; the modal refetches
    and re-renders. **No new broadcast type, no Zustand entry, no
    `case '<provider>_status'`.** Frontend has zero references to any
    CLI-managed plugin's name.
@@ -1337,7 +1344,7 @@ the skill icon resolver to find their target:
 | Place | Form | Example |
 |---|---|---|
 | Plugin node `type` | camelCase | `stripeAction` |
-| `visuals.json` key | matches node `type` (camelCase) | `"stripeAction": { "icon": "asset:stripe", ... }` |
+| `visuals.json` key | matches node `type` (camelCase) | `"stripeAction": { "skill": "stripe-skill" }` (icon + color come from the plugin folder's `icon.svg` / `meta.json`; `visuals.json` carries zero `asset:` values post-F1/F7) |
 | Plugin `tool_name` ClassVar (snapshot: `tests/fixtures/tool_names_snapshot.json`) | snake_case of node type | `tool_name = "stripe_action"` |
 | Skill `allowed-tools` token | matches the LLM tool name above | `allowed-tools: "stripe_action"` |
 

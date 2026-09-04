@@ -54,7 +54,7 @@ API_KEY_ENCRYPTION_KEY (from .env)
 
 The derived Fernet key lives only in `EncryptionService._fernet` in process memory. It is never written to disk or to Redis.
 
-`EncryptionService` (`server/core/encryption.py`) exposes exactly five methods: `initialize(password, salt)` (derive + store the Fernet cipher), `encrypt(plaintext) -> str` (base64 ciphertext), `decrypt(ciphertext) -> str`, `clear()` (drop the in-memory key), and `is_initialized() -> bool`. `CredentialsDatabase` (`server/core/credentials_database.py`) backs both systems with `initialize() -> bytes` (creates tables, returns the salt), `save_api_key` / `get_api_key` / `delete_api_key`, and `save_oauth_tokens` / `get_oauth_tokens` / `delete_oauth_tokens(provider, customer_id="owner")`.
+`EncryptionService` (`server/core/encryption.py`) exposes `initialize(password, salt)` (derive + store the Fernet cipher), `encrypt(plaintext) -> str` (base64 ciphertext), `decrypt(ciphertext) -> str`, `clear()` (drop the in-memory key), `is_initialized() -> bool`, the lower-level `derive_key_from_password(password, salt) -> bytes` that `initialize` calls, and a static `generate_salt() -> bytes`. `CredentialsDatabase` (`server/core/credentials_database.py`) backs both systems with `initialize() -> bytes` (creates tables, returns the salt), `save_api_key` / `get_api_key` / `delete_api_key`, and `save_oauth_tokens` / `get_oauth_tokens` / `delete_oauth_tokens(provider, customer_id="owner")`.
 
 ## Lifecycle
 
@@ -89,7 +89,7 @@ For secrets the user enters manually in the Credentials modal (OpenAI API key, A
 
 - Table: `EncryptedAPIKey`
 - Access: `AuthService.store_api_key(provider, key, models=[...], session_id=..., model_params=...)` and `AuthService.get_api_key(provider)`
-- Cache: `AuthService._api_key_cache: Dict[str, str]`
+- Cache: `AuthService._api_key_cache: Dict[str, ApiKeyCacheEntry]` keyed `{session}_{provider}` (see "Source of Truth" below)
 - **Per-model parameters** (Ollama / LM Studio): the `models` JSON column carries an optional `model_params` subkey alongside the model list — `{"models": [...], "model_params": {model_id: {context_length, vision, supports_tools, ...}}}`. Populated by [`nodes/model/_local_validator.py`](../server/nodes/model/_local_validator.py) from the official SDK probes (`ollama.AsyncClient.ps()` / `lmstudio.AsyncClient.llm.list_loaded()`) so the runtime knows the user's actual loaded n_ctx instead of guessing from `llm_defaults.json`. Read back via `AuthService.get_model_params(provider)` or `CredentialsDatabase.get_api_key_model_params(provider)`. Cloud providers leave this empty — their per-model params live in `model_registry.json` (refreshed from OpenRouter).
 
 ### 2. OAuth Token System
@@ -102,7 +102,7 @@ For tokens obtained via OAuth 2.0 flows (Google Workspace, Twitter/X, Claude.ai)
 
 ### The Mistake to Avoid
 
-Google access tokens live in the OAuth system, not the API key system. Reading them via `get_api_key("google_access_token")` returns None even if the user is fully logged in. All Google Workspace handlers must use `get_google_credentials()` from `server/nodes/google/_auth_helper.py` (post-Wave-11.I, this replaced the retired `server/services/handlers/google_auth.py`), which calls `get_oauth_tokens("google")` internally.
+Google access tokens live in the OAuth system, not the API key system. Reading them via `get_api_key("google_access_token")` returns None even if the user is fully logged in. All Google Workspace handlers must use `get_google_credentials()` from `server/nodes/google/_auth_helper.py` (post-Wave-11.I, this replaced the retired `google_auth.py` handler module), which calls `get_oauth_tokens("google")` internally.
 
 Twitter has the same split: `twitter_client_id` and `twitter_client_secret` are in the API key system, but `twitter_access_token` is in the OAuth system.
 
@@ -165,7 +165,7 @@ aws = ["boto3>=1.34.0"]        # AWS Secrets Manager
 ## Configuration
 
 ```env
-# server/.env
+# .env at the repo root (scaffolded from .env.template; there is no server/.env)
 
 # Required for Fernet backend
 API_KEY_ENCRYPTION_KEY=<any string, at least 32 chars for good entropy>
@@ -227,7 +227,7 @@ Pytest invariant `server/tests/credentials/test_credential_broadcasts.py` locks 
 
 ## No Hand-Maintained Frontend Provider Lists
 
-All credential providers come from the backend `get_credential_catalogue` handler (which reads `server/config/credential_providers.json`). The retired `client/src/components/credentials/providers.tsx` static fallback is gone — adding a new provider is a backend-only change. On cold-boot the `CredentialsModal` renders a `<Skeleton>` palette while the WS catalogue arrives; on server-unreachable it shows an explicit error state, never stale fallback data.
+All credential providers come from the backend `get_credential_catalogue` handler (which reads `server/config/credential_providers.json`). The retired `providers.tsx` static fallback is gone — adding a new provider is a backend-only change. On cold-boot the `CredentialsModal` renders a `<Skeleton>` palette while the WS catalogue arrives; on server-unreachable it shows an explicit error state, never stale fallback data.
 
 ## Related Docs
 

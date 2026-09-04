@@ -1,6 +1,6 @@
 # Frontend Test Suite
 
-Locks in the user-facing invariants from [docs-internal/credentials_panel.md §5](../../../docs-internal/credentials_panel.md).
+Locks in the user-facing invariants from [docs-internal/ARCHIVE/credentials_panel.md §5](../../../docs-internal/ARCHIVE/credentials_panel.md).
 
 ## Run
 

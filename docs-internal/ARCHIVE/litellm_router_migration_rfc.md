@@ -1,5 +1,11 @@
 # LiteLLM Router Migration RFC
 
+> **ARCHIVED 2026-09-04 — Superseded.** The LiteLLM migration never happened; the native SDK layer replaced LangChain instead. `litellm` appears nowhere in first-party code or dependencies.
+>
+> For current state see:
+>
+> - [native_llm_sdk.md](../native_llm_sdk.md) — the layer that shipped
+
 **Status:** Superseded by [Native LLM SDK](native_llm_sdk.md) · **Owner:** trohitg · **Created:** 2026-07-02 · **Target:** `server/services/llm/` + the chat/agent LLM paths in `server/services/ai.py`
 
 > Historical RFC only. The adopted implementation uses provider-native SDKs,

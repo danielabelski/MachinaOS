@@ -37,6 +37,7 @@ server/services/llm/
 |-- schema.py             Provider-aware tool JSON-schema compilation
 |-- vertex.py             Vertex / Agent-Platform key handling
 |-- messages.py           filter_empty_messages, is_valid_message_content
+|-- media.py              hydrate_image_blocks / provider_supports_vision (see "Multimodal image input")
 `-- providers/
     |-- __init__.py
     |-- anthropic.py      AnthropicProvider (anthropic SDK)
@@ -58,16 +59,16 @@ The native layer currently supports **13 providers**, grouped by implementation:
 
 | Provider | Implementation | SDK | Notes |
 |---|---|---|---|
-| `anthropic` | `providers/anthropic.py` | `anthropic` | Extended thinking via `budget_tokens` |
-| `openai` | `providers/openai.py` | `openai` | Reasoning models (o1/o3) and GPT-5 hybrid thinking |
+| `anthropic` | `providers/anthropic.py` | `anthropic` | Extended thinking: `{"type":"adaptive"}` on the 4.7+ flagships, `budget_tokens` on Sonnet 4.6 / Haiku 4.5 (JSON-driven `_model_policy`) |
+| `openai` | `providers/openai.py` | `openai` | Reasoning-only o-series (`o3`, `o4-mini`) and GPT-5.x hybrid `reasoning_effort` |
 | `gemini` | `providers/gemini.py` | `google-genai` | Direct SDK (Windows hang fix) |
 | `openrouter` | `providers/openrouter.py` | `openai` | Sets `HTTP-Referer` + `X-Title` headers |
-| `xai` | `providers/openai.py` + base_url | `openai` | OpenAI-compatible at `api.x.ai/v1` |
-| `deepseek` | `providers/openai.py` + base_url | `openai` | OpenAI-compatible at `api.deepseek.com` |
-| `kimi` | `providers/openai.py` + base_url | `openai` | Moonshot AI, OpenAI-compatible |
-| `mistral` | `providers/openai.py` + base_url | `openai` | OpenAI-compatible |
-| `ollama` | `providers/openai.py` + `{provider}_proxy` URL | `openai` (chat) + `ollama` (probe) | Local server. Validator probes via `ollama.AsyncClient.ps()` for typed `context_length` per loaded model. Runtime uses `OpenAIProvider` with `base_url={user URL}` so traffic stays on `localhost`. |
-| `lmstudio` | `providers/openai.py` + `{provider}_proxy` URL | `openai` (chat) + `lmstudio` (probe) | Local server. Validator probes via `lmstudio.AsyncClient.llm.list_loaded()` for typed `LlmInstanceInfo.context_length`. Same OpenAI-compat runtime path as Ollama. |
+| `xai` | `providers/_compat.py` + base_url | `openai` | OpenAI-compatible at `api.x.ai/v1` |
+| `deepseek` | `providers/_compat.py` + base_url | `openai` | OpenAI-compatible at `api.deepseek.com` (root-mounted, no `/v1`) |
+| `kimi` | `providers/_compat.py` + base_url | `openai` | Moonshot AI, OpenAI-compatible |
+| `mistral` | `providers/_compat.py` + base_url | `openai` | OpenAI-compatible |
+| `ollama` | `providers/_compat.py` + `{provider}_proxy` URL | `openai` (chat) + `ollama` (probe) | Local server. Validator probes via `ollama.AsyncClient.ps()` for typed `context_length` per loaded model. Runtime uses `OpenAIProvider` with `base_url={user URL}` so traffic stays on `localhost`. |
+| `lmstudio` | `providers/_compat.py` + `{provider}_proxy` URL | `openai` (chat) + `lmstudio` (probe) | Local server. Validator probes via `lmstudio.AsyncClient.llm.list_loaded()` for typed `LlmInstanceInfo.context_length`. Same OpenAI-compat runtime path as Ollama. |
 | `groq` | `providers/_compat.py` + base_url | `openai` | OpenAI-compatible |
 | `cerebras` | `providers/_compat.py` + base_url | `openai` | OpenAI-compatible |
 | `sarvam` | `providers/_compat.py` + base_url | `openai` | Indic-first (`sarvam-105b` 128K, `sarvam-30b` 64K) at `api.sarvam.ai/v1`. Ships **no model-list route**, so it sets `supports_model_listing: false` — see below. Reasoning is on by default and returns in `reasoning_content`, which `OpenAIProvider._normalize` already reads. |
@@ -92,20 +93,20 @@ Source of truth for this list: `server/config/llm_defaults.json` (the `providers
 
 | Provider | Key Models | Context | Max Output | Thinking | Temp Range |
 |----------|-----------|---------|-----------|----------|------------|
-| **OpenAI** | GPT-5.6 Sol/Terra/Luna, GPT-5.5/5.4 | 1.05M | 128K | effort | omitted for reasoning models |
+| **OpenAI** | GPT-5.6 Sol/Terra/Luna (+ `-pro`; default `gpt-5.6-sol`), GPT-5.5/5.4 | 1.05M | 128K | effort | omitted for reasoning models |
 | **OpenAI** | GPT-4.1 | ~1.05M | 32K | none | 0-2 |
-| **Anthropic** | Claude Fable 5 | 1M | 128K | budget | 0-1 |
-| **Anthropic** | Claude Opus 4.8/4.7 | 1M | 128K | budget | 0-1 |
-| **Anthropic** | Claude Sonnet 4.6 | 1M | 64K | budget | 0-1 |
+| **Anthropic** | Claude Opus 5 (default `claude-opus-5`), Fable 5.1 / 5, Sonnet 5 | 1M | 128K | adaptive | omitted (`temperature` / `top_p` / `top_k` rejected — `sampling_params_removed`) |
+| **Anthropic** | Claude Opus 4.8/4.7 | 1M | 128K | adaptive | omitted (`sampling_params_removed`) |
+| **Anthropic** | Claude Sonnet 4.6 | 1M | 128K | budget | 0-1 |
 | **Anthropic** | Claude Haiku 4.5 | 200K | 64K | budget | 0-1 |
-| **Google** | Gemini 3.5-flash, 3.1-pro/flash-lite, 3-flash, 2.5-pro/flash/flash-lite | 1M | 64K | budget | 0-2 |
+| **Google** | Gemini 3.8-flash (default), 3.7/3.6/3.5-flash, 3.5-flash-lite, 3.1-pro-preview/flash-lite, 3-flash-preview, 2.5-pro/flash/flash-lite | 1M | 64K | budget (`thinking_level` on 3.x when set explicitly) | 0-2 |
 | **xAI** | Grok 4.20/4.20-multi-agent, 4.5, 4.3, 3 | 131K-2M | 131K | model/provider dependent | 0-2 |
 | **DeepSeek** | deepseek-v4-flash, deepseek-v4-pro (deepseek-chat/reasoner legacy) | 1M | 64K | thinking modes | 0-2 |
 | **Kimi** | kimi-k3 (default), kimi-k2.6, kimi-k2.5, kimi-k2.7-code | 1M (K3); 256K (K2) | 131K (K3); 32K/96K (K2) | K2 provider default explicitly disabled unless requested | K2 fixed 0.6; K3 0-1 |
 | **Mistral** | mistral-large/medium/small-latest, codestral-latest | 256K | 131K | none | 0-1.5 |
 | **Groq** | GPT-OSS-120b/20b, Qwen3-32b, legacy Llama 3.x tiers | 131K | 32K-131K | effort (GPT-OSS), format (Qwen3) | 0-2 |
 | **OpenRouter** | 200+ models from multiple providers | varies | varies | varies | 0-2 |
-| **Cerebras** | GPT-OSS-120b, Z.ai GLM 4.7, Gemma 4 31B | 131K | 40K | budget (GLM preview) | 0-1.5 |
+| **Cerebras** | GPT-OSS-120b (default; only production model), zai-glm-4.7 + gemma-4-31b (preview) | 131K | 40K | budget (`zai-glm-4.7` only — `thinking_models`) | 0-1.5 |
 | **Ollama** | Whatever the user has pulled (qwen2.5, llama3.x, phi-3, deepseek-r1, ...) | per-loaded-model (typed via `ps()`) | ctx ÷ 4 (capped 4096) | none (per-model) | 0-2 |
 | **LM Studio** | Whatever the user has loaded in the LM Studio UI | per-loaded-model (typed via `LlmInstanceInfo.context_length`) | ctx ÷ 4 (capped 4096) | none (per-model) | 0-2 |
 
@@ -133,7 +134,7 @@ user's URL and uses the documented placeholder key for unauthenticated local
 servers. The OpenAI SDK then sends to the configured local endpoint — traffic
 never reaches api.openai.com.
 
-**Provider detection** ([`server/constants.py:detect_ai_provider`](../server/constants.py)) MUST list `ollama` / `lmstudio` substrings, and the agent dropdown's `provider` Literal in [`ai_agent.py`](../server/nodes/agent/ai_agent/__init__.py) / [`chat_agent.py`](../server/nodes/agent/chat_agent/__init__.py) / [`_specialized.py`](../server/nodes/agent/_specialized.py) MUST include `"ollama"` / `"lmstudio"` — otherwise the chat-model node silently falls through to `'openai'` and the runtime calls the OpenAI cloud with the local-server placeholder key.
+**Provider detection** ([`server/constants.py:detect_ai_provider`](../server/constants.py)) MUST list `ollama` / `lmstudio` substrings, and the agent dropdown's `provider` Literal in [`ai_agent/__init__.py`](../server/nodes/agent/ai_agent/__init__.py) / [`chat_agent/__init__.py`](../server/nodes/agent/chat_agent/__init__.py) / [`_specialized.py`](../server/nodes/agent/_specialized.py) MUST include `"ollama"` / `"lmstudio"` — otherwise the chat-model node silently falls through to `'openai'` and the runtime calls the OpenAI cloud with the local-server placeholder key.
 
 **Open-world skip in `is_model_valid_for_provider`** — local model names like `qwen/qwen3.6-27b` don't contain provider substrings, so the cloud-style pattern check would always reject them. The function returns `True` for `openrouter` / `ollama` / `lmstudio` without consulting `detection_patterns`. The upstream server still rejects genuinely missing models with a clear 404.
 
@@ -291,14 +292,15 @@ Each provider's `chat()` method reads only the fields it supports. The extracted
 
 | Provider | Models | Parameter | Thinking Type | Notes |
 |----------|--------|-----------|---------------|-------|
-| **Claude** | All Claude 4.x/3.5 | `thinkingBudget` (1024-16000 tokens) | budget | Requires `max_tokens > budget_tokens`. Temperature auto-set to 1. |
-| **Gemini** | gemini-3.x, gemini-2.5-pro/flash | `thinkingBudget` (token count) | budget | Uses `thinking_budget` API parameter |
-| **OpenAI** | o1, o3, o3-mini, o4-mini | `reasoningEffort` (low/medium/high) | effort | Reasoning-only models. Temperature fixed at 1.0. |
-| **OpenAI** | GPT-5.2/5.1/5/5-mini/5-nano | `reasoningEffort` (low/medium/high/xhigh) | effort | Hybrid reasoning: can operate with or without thinking. |
-| **Groq** | qwen3-32b | `reasoningFormat` ('parsed' or 'hidden') | format | 'parsed' returns reasoning, 'hidden' returns only final answer |
-| **Cerebras** | qwen-3-235b | `reasoningFormat` ('parsed' or 'hidden') | format | Same format-based reasoning as Groq Qwen |
+| **Claude** (adaptive) | `claude-opus-5`, `claude-fable-5*`, `claude-mythos-5`, `claude-sonnet-5`, `claude-opus-4-8`, `claude-opus-4-7` (`adaptive_thinking_models`, prefix-matched) | `thinkingEnabled` only — the budget is ignored | adaptive | Sends `{"type":"adaptive","display":"summarized"}` when enabled; when disabled the field is omitted (`disabled` is itself rejected on Fable/Mythos). `budget_tokens` is a 400 on these generations. No `temperature` / `top_p` / `top_k` is sent at all (`sampling_params_removed`). `anthropic.py:72-92`. |
+| **Claude** (budget) | `claude-sonnet-4-6`, `claude-haiku-4-5` and older 4.x/3.5 | `thinkingBudget` (1024-16000 tokens) | budget | `{"type":"enabled","budget_tokens":N}`; provider bumps `max_tokens` to `budget + 1024` if it is not already larger. Temperature auto-set to 1. |
+| **Gemini** | gemini-3.x, gemini-2.5-pro/flash | `thinkingBudget` (token count); `thinkingLevel` on 3.x when set explicitly | budget | Uses `thinking_budget` API parameter (`thinking_level` only when the user set it — Vertex rejects an unsolicited level on 2.5-era models) |
+| **OpenAI** | `o3`, `o4-mini` (reasoning-only; both on the API-shutdown path per `_models_note`, `o1`/`o3`/`o4` prefixes still detected) | `reasoningEffort` (low/medium/high) | effort | Reasoning-only models. Temperature omitted. |
+| **OpenAI** | GPT-5.6 sol/terra/luna (+ `-pro`), GPT-5.5, GPT-5.4 (`thinking_models: ["gpt-5"]`) | `reasoningEffort` (low/medium/high/xhigh) | effort | Hybrid reasoning: can operate with or without thinking. |
+| **Groq** | qwen3-32b (`thinking_models: ["qwen3"]`) | `reasoningFormat` ('parsed' or 'hidden') | format | 'parsed' returns reasoning, 'hidden' returns only final answer. GPT-OSS models on Groq use `reasoning_effort` instead (`openai.py:671-675`). |
+| **Cerebras** | zai-glm-4.7 (`thinking_models`) | `thinkingBudget` | budget | Sent as `extra_body.thinking_budget` (`openai.py:111-114`). The qwen-3-235b variants are shut down upstream. |
 
-The thinking/reasoning fields (`thinkingEnabled`, `thinkingBudget`, `reasoningEffort`, `reasoningFormat`) live in the backend NodeSpec for each chat model (`server/nodes/model/<provider>_chat_model/`) and are surfaced through `AIChatModelParams` in `server/models/nodes.py`. The frontend renders them automatically via the universal parameter panel.
+The thinking/reasoning fields (`thinkingEnabled`, `thinkingBudget`, `reasoningEffort`, `reasoningFormat`) live in the backend NodeSpec for each chat model (`server/nodes/model/<provider>_chat_model/`) and are declared once on the shared `ChatModelParams` model in `server/nodes/model/_base.py:24`. The frontend renders them automatically via the universal parameter panel.
 
 ### Thinking extraction (legacy replay path)
 
@@ -331,14 +333,15 @@ The agent/chat result envelope carries `thinking` alongside the answer:
 }
 ```
 
-The `thinking` field is exposed to downstream nodes via the backend output schema (`AIAgentOutput` in `server/services/node_output_schemas.py`, shared across every LLM-backed agent + chat model) and rendered in a collapsible `ThinkingBlock` (`client/src/components/ui/NodeOutputPanel.tsx`, default-expanded, provider-aware label).
+The `thinking` field is exposed to downstream nodes via the backend output schema (`AIAgentOutput` in `server/services/node_output_schemas.py`, shared across every LLM-backed agent + chat model) and rendered as a `Thinking` section by the active output renderer (`client/src/components/output/OutputPanel.tsx:196-200`; the earlier `ThinkingBlock` / `NodeOutputPanel.tsx` no longer exist).
 
 ### Thinking limitations
 
 - **OpenAI o-series**: Reasoning summaries are only available to organizations that have completed verification at platform.openai.com. Without verification, `thinking` is `null`.
-- **Claude**: `max_tokens` must be greater than `thinkingBudget`. Temperature is automatically set to 1 when thinking is enabled.
-- **Groq**: Only Qwen3-32b supports reasoning (QwQ removed from Groq). Format `hidden` suppresses reasoning output.
-- **Cerebras**: Qwen-3-235b supports format-based reasoning (same as Groq Qwen).
+- **Claude (budget models)**: `max_tokens` must be greater than `thinkingBudget`; the provider raises `max_tokens` to `budget + 1024` when it is not. Temperature is automatically set to 1 when thinking is enabled.
+- **Claude (adaptive models)**: `thinkingBudget` is ignored — the model picks its own depth. No sampling parameters are sent; a user-set temperature is silently dropped for these models rather than rejected.
+- **Groq**: Only Qwen3-32b supports format-based reasoning (QwQ removed from Groq). Format `hidden` suppresses reasoning output. GPT-OSS models take `reasoning_effort`.
+- **Cerebras**: Only `zai-glm-4.7` (preview) is a thinking model, via `thinking_budget`.
 
 See [memory_compaction.md](memory_compaction.md) for how thinking token counts are tracked separately from output tokens.
 
@@ -350,7 +353,7 @@ See [memory_compaction.md](memory_compaction.md) for how thinking token counts a
 def resolve_max_tokens(params: dict, model: str, provider: str) -> int:
     registry = get_model_registry()
     model_max = registry.get_max_output_tokens(model, provider)
-    user_val = params.get("max_tokens") or params.get("maxTokens")
+    user_val = params.get("max_tokens")   # snake_case only; the camelCase fallback is gone
     if user_val:
         user_int = int(user_val)
         if user_int > model_max:
@@ -390,10 +393,10 @@ cached native provider factory.
 Users configure default parameter values per LLM provider in the Credentials Modal; defaults apply to new AI nodes using that provider.
 
 **Configurable parameters:**
-- `temperature` — range varies by provider (Anthropic 0-1, Cerebras 0-1.5, others 0-2; o-series fixed 1.0)
+- `temperature` — range varies by provider (Anthropic 0-1 on budget-era models, omitted entirely for the adaptive flagships; Cerebras 0-1.5; others 0-2; o-series omitted)
 - `max_tokens` (1-200000) — clamped to the model's actual limit by `_resolve_max_tokens()`
 - `thinking_enabled` — extended thinking toggle
-- `thinking_budget` (1024-16000) — token budget for thinking (Claude, Gemini)
+- `thinking_budget` (1024-16000) — token budget for thinking (Claude budget-era models, Gemini, Cerebras GLM; ignored by adaptive Claude models)
 - `reasoning_effort` (low/medium/high) — OpenAI o-series and GPT-5 hybrid reasoning
 - `reasoning_format` (parsed/hidden) — Groq Qwen3 models
 
@@ -401,6 +404,7 @@ Users configure default parameter values per LLM provider in the Credentials Mod
 # server/models/database.py
 class ProviderDefaults(SQLModel, table=True):
     provider: str           # openai, anthropic, gemini, groq, openrouter, cerebras
+    default_model: str      # per-provider default model ("" = use llm_defaults.json)
     temperature: float
     max_tokens: int
     thinking_enabled: bool
@@ -413,9 +417,9 @@ class ProviderDefaults(SQLModel, table=True):
 |------|-------------|
 | `server/models/database.py` | `ProviderDefaults` SQLModel |
 | `server/core/database.py` | `get_provider_defaults()`, `save_provider_defaults()` CRUD |
-| `server/routers/websocket.py` | `get_provider_defaults`, `save_provider_defaults` handlers |
+| `server/services/settings/handlers.py` | `handle_get_provider_defaults` (line 73), `handle_save_provider_defaults` (line 108) — registered into `MESSAGE_HANDLERS` by `routers/websocket.py` |
 | `client/src/hooks/useApiKeys.ts` | `getProviderDefaults()`, `saveProviderDefaults()` methods |
-| `client/src/components/CredentialsModal.tsx` | Default Parameters UI section |
+| `client/src/components/credentials/sections/ProviderDefaultsSection.tsx` | Default Parameters UI section (the root `CredentialsModal.tsx` is a one-line re-export of `credentials/CredentialsModal.tsx`) |
 
 ## Adding a New Provider
 
@@ -456,7 +460,7 @@ the plugin folder or add a `visuals.json` entry (`"openrouterChatModel":
 
 3. **Credentials + agent exposure:**
    - Add a `Credential` subclass in `server/nodes/model/_credentials.py` — surfaces in the Credentials Modal automatically.
-   - To expose the provider in the **agent dropdown**, add its name to the `provider` Literal in `nodes/agent/ai_agent/__init__.py`, `chat_agent.py`, AND `_specialized.py`, and add the substring to `detect_ai_provider` in `server/constants.py` — otherwise an agent using it silently falls back to `'openai'`.
+   - To expose the provider in the **agent dropdown**, add its name to the `provider` Literal in `nodes/agent/ai_agent/__init__.py`, `nodes/agent/chat_agent/__init__.py`, AND `nodes/agent/_specialized.py`, and add the substring to `detect_ai_provider` in `server/constants.py` — otherwise an agent using it silently falls back to `'openai'`.
 
 ### Key implementation files
 
@@ -469,7 +473,7 @@ the plugin folder or add a `visuals.json` entry (`"openrouterChatModel":
 | `server/services/llm/registry.py` | `ProviderSpec` / `register_provider` — the provider registration contract |
 | `server/services/llm/unifier.py` | `ChatUnifier` — chat dispatch facade + typed-error translation |
 | `server/services/agent_runtime.py` | Shared native agent step/loop and `AgentToolSpec` |
-| `server/services/ai.py` | Node orchestration; legacy factory retained only for recorded Temporal histories |
+| `server/services/ai.py` | Node orchestration (`execute_chat` / `execute_agent` / `execute_chat_agent`); every provider call goes through `ChatUnifier` — the legacy factory is gone (see "Registry, Unifier, and Lazy SDK Clients") |
 | `client/src/Dashboard.tsx` | Generic `COMPONENT_BY_KIND` dispatch — no per-provider entry needed |
 
 ## Related Docs
@@ -481,7 +485,7 @@ the plugin folder or add a `visuals.json` entry (`"openrouterChatModel":
 
 ## Temporal migration and dependency lifecycle
 
-`agent.prepare_payload.v1` records `llm_engine` and `message_wire_version`.
+`agent.prepare_payload` records `llm_engine` and `message_wire_version`.
 The marker is a discriminator, not a switch: there is one engine.
 
 A history recorded before the native cutover carries neither field, and its

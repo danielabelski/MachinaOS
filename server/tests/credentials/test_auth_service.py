@@ -1,6 +1,6 @@
 """Tests for AuthService (single point of access for credentials).
 
-Locks in invariants 7 and 8 from docs-internal/credentials_panel.md:
+Locks in invariants 7 and 8 from docs-internal/ARCHIVE/credentials_panel.md:
   - store_api_key requires models=[]
   - Memory cache hit path does not query DB on every call
   - clear_cache wipes _api_key_cache, _oauth_cache (one merged cache

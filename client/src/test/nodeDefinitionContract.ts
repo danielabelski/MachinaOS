@@ -30,7 +30,7 @@ export interface ContractIssue {
 // services/node_spec.get_node_spec). The frontend type declares it as
 // ``icon?: string`` — do NOT add ``icon`` back to this required list;
 // the source of truth is the backend. See
-// docs-internal/schema_source_of_truth_rfc.md.
+// docs-internal/ARCHIVE/schema_source_of_truth_rfc.md.
 const REQUIRED_TOP_LEVEL: (keyof INodeTypeDescription)[] = [
   'displayName',
   'name',

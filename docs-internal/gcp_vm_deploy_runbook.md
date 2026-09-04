@@ -162,8 +162,11 @@ AUTH_MODE=single
 # true ONLY behind Cloudflare/TLS (step 4). IP-only deploy: false (pitfall 11).
 JWT_COOKIE_SECURE=true
 JWT_COOKIE_SAMESITE=lax
-# true works on >= 0.0.95 (dev server ships in-package; backend connects to
-# localhost:7233 after restart). false = in-process sequential execution.
+# true works on >= 0.0.95 (dev server ships in-package; the backend spawns it
+# and connects on TEMPORAL_FRONTEND_GRPC_PORT — Temporal's stock 7233 on the
+# 0.0.95-era releases this runbook was validated against, the serial-block
+# value from that release's .env.template afterwards).
+# false = in-process sequential execution.
 TEMPORAL_ENABLED=false
 REDIS_ENABLED=false
 LOG_FORMAT=text
@@ -362,7 +365,8 @@ curl -s https://<DOMAIN>/ | grep -o "<title>[^<]*</title>"   # <title>OpenCompan
 # 3. auth gate on, registration closed:
 curl -s https://<DOMAIN>/api/auth/status
 # expect: {"auth_enabled":true,"auth_mode":"single","can_register":false,...}
-# 4. login works (200 + HttpOnly machina_token cookie):
+# 4. login works (200 + HttpOnly cookie named by JWT_COOKIE_NAME — `opencompany_token`
+#    today; `machina_token` on pre-rebrand releases):
 curl -s -i -X POST https://<DOMAIN>/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{"email":"<OWNER_EMAIL>","password":"<OWNER_PASSWORD>"}' | head -12
@@ -410,12 +414,15 @@ gcloud compute ssh <VM_NAME> --zone=<ZONE> --quiet --command="sudo systemctl res
 gcloud compute ssh <VM_NAME> --zone=<ZONE> --quiet --command="sudo npm install -g @zeenie-ai/opencompany@latest && sudo systemctl restart opencompany"
 # flip an env toggle (sudo on EVERY command touching the 600 env file - pitfall 13c):
 gcloud compute ssh <VM_NAME> --zone=<ZONE> --quiet --command="sudo sed -i 's/TEMPORAL_ENABLED=false/TEMPORAL_ENABLED=true/' /etc/opencompany/opencompany.env; sudo systemctl restart opencompany"
-# Temporal Web UI (localhost-bound on the VM; gRPC :7233, UI :8080 on
-# releases <= 0.0.95; :5681/:5680 after the serial-port change):
+# Temporal Web UI (localhost-bound on the VM; gRPC :7233 / UI :8080 are the
+# release-pinned values for <= 0.0.95; later releases bind
+# TEMPORAL_FRONTEND_GRPC_PORT / TEMPORAL_UI_PORT from that release's
+# .env.template — substitute the UI port below accordingly):
 gcloud compute ssh <VM_NAME> --zone=<ZONE> --tunnel-through-iap -- -L 8080:localhost:8080
-#   then open http://localhost:8080. Note: `company start` runs the Temporal dev
-#   server regardless of TEMPORAL_ENABLED; the flag only controls whether the
-#   backend connects to it (health shows temporal.enabled/connected).
+#   then open http://localhost:8080. Note: the Temporal dev server is spawned by
+#   the backend lifespan ONLY when TEMPORAL_ENABLED=true (`main.py` gates
+#   `run_temporal_lifecycle` on `settings.temporal_enabled`); with the flag false
+#   nothing listens on those ports and /health reports temporal.enabled=false.
 # env (secrets live here):
 #   /etc/opencompany/opencompany.env   (chmod 600; service reads it via EnvironmentFile)
 # data:

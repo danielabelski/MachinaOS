@@ -1,5 +1,12 @@
 # Autonomous Agent Creation: A Comprehensive Guide
 
+> **ARCHIVED 2026-09-04 — Superseded.** External research notes (Symbolica, Cloudflare Code Mode, Anthropic, BoundaryML). Contains no OpenCompany file paths or symbols and never described this repo's `autonomous_agent` plugin.
+>
+> For current state see:
+>
+> - [server/nodes/agent/autonomous_agent/](../../server/nodes/agent/autonomous_agent/) — the real plugin
+> - [node-logic-flows/specialized_agents/autonomous_agent.md](../node-logic-flows/specialized_agents/autonomous_agent.md) — its card
+
 ## Introduction
 
 This document synthesizes insights from leading AI research organizations on building autonomous agents. The approaches discussed represent a paradigm shift from traditional tool-calling patterns toward **code-centric agent architectures** that dramatically improve efficiency, composability, and capabilities.

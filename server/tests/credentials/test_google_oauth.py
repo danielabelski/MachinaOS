@@ -1,6 +1,6 @@
 """Tests for GoogleOAuth (Workspace OAuth 2.0 with offline access).
 
-Locks in invariant 11 from docs-internal/credentials_panel.md:
+Locks in invariant 11 from docs-internal/ARCHIVE/credentials_panel.md:
   - Authorization URL contains access_type=offline AND prompt=consent
   - State store consumed exactly once
 """

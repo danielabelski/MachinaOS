@@ -17,7 +17,7 @@ assumptions that make that activation safe:
    queue — a missing entry silently falls back to ``default_pool_size``
    which defeats per-queue sizing.
 
-See docs-internal/TEMPORAL_CLEANUP_AND_RESILIENCE_PLAN.md §5.
+See docs-internal/ARCHIVE/TEMPORAL_CLEANUP_AND_RESILIENCE_PLAN.md §5.
 """
 
 import pytest
@@ -84,7 +84,7 @@ class TestTaskQueueCoverage:
         assert TaskQueue.DEFAULT in TaskQueue.ALL
         assert len(TaskQueue.ALL) >= 9, (
             "TaskQueue.ALL shrank below the 9 queues Wave 16 verified — "
-            "update docs-internal/TEMPORAL_CLEANUP_AND_RESILIENCE_PLAN.md "
+            "update docs-internal/ARCHIVE/TEMPORAL_CLEANUP_AND_RESILIENCE_PLAN.md "
             "if a queue was deliberately removed."
         )
 

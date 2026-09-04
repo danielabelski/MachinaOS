@@ -5,7 +5,7 @@ Detailed architecture reference for how AI Agent (`aiAgent`) and Chat Agent (`ch
 > **Related Documentation:**
 > - [Node Creation Guide](./node_creation.md) - Canonical plugin recipe (covers tool nodes, dual-purpose nodes, specialized agents)
 > - [Tool Building Pipeline](./tool_building_pipeline.md) - Canonical home for `_build_tool_from_node`, tool discovery, per-type Temporal dispatch
-> - [Memory Lifecycle](./memory_lifecycle.md) - Canonical home for markdown memory format, vector store, session resume
+> - [Agent Context Flow](./agent_context_flow.md) - Canonical home for conversation continuity (RFC-0002 Context store); [Memory Lifecycle](./memory_lifecycle.md) covers only the retired V1 markdown model
 > - [CLAUDE.md](../CLAUDE.md) - Project overview and full node inventory
 
 ## Table of Contents
@@ -15,7 +15,7 @@ Detailed architecture reference for how AI Agent (`aiAgent`) and Chat Agent (`ch
 3. [Skill Injection Pipeline](#skill-injection-pipeline)
 4. [Tool Building Pipeline](#tool-building-pipeline)
 5. [Tool Execution Flow](#tool-execution-flow)
-6. [Memory Integration](#memory-integration)
+6. [Context and Memory Integration](#context-and-memory-integration)
 7. [execute_agent vs execute_chat_agent](#execute_agent-vs-execute_chat_agent)
 
 ---
@@ -27,7 +27,7 @@ User clicks "Run" on AI Agent
         |
         v
 ExecutionService.executeNodeViaWebSocket() client/src/services/executionService.ts
-  Called from ParameterPanel.tsx:71
+  Called from ParameterPanel.tsx:81
   Sends ALL workflow nodes + edges
         |
         v
@@ -51,7 +51,9 @@ collect_agent_connections()               server/services/plugin/edge_walker.py
   (called by nodes/agent/_inline.prepare_agent_call)
   Scans edges where target == node_id
   Groups by targetHandle into 5 buckets (returns a 5-tuple
-   memory_data, skill_data, tool_data, input_data, task_data):
+   context_data, skill_data, tool_data, input_data, task_data —
+   edge_walker.py:181-199; the first element is the Context descriptor,
+   or the legacy Memory descriptor on immutable V1 snapshots):
     input-context            -> context_data
     input-skill              -> skill_data[]
     input-tools              -> tool_data[]
@@ -60,10 +62,13 @@ collect_agent_connections()               server/services/plugin/edge_walker.py
         |
         v
 AIService.execute_agent() / execute_chat_agent()   server/services/ai.py
-  1. Inject skills into system message
+  1. Inject personality-skill bodies into the system message
+     (_build_skill_system_prompt -> services/skill_prompt.py); standard
+     skills ride the Skill tool instead
   2. Build provider-neutral AgentToolSpecs from tool_data
   3. Call run_native_agent_loop(ChatUnifier, ...)
-  4. Save memory, return result
+  4. Save the conversation (Context store; legacy V1 memory markdown
+     only for immutable V1 snapshots), return result
         |
         v
 run_native_agent_loop() execution
@@ -85,7 +90,8 @@ Result broadcast via WebSocket
 | `server/services/plugin/edge_walker.py` | `collect_agent_connections()` (the renamed `_collect_agent_connections`), `format_task_context()` |
 | `server/nodes/agent/_inline.py` | `prepare_agent_call()` — task-context injection + auto-prompt fallback + teammate collection; calls `collect_agent_connections` then `ai_service.execute_[chat_]agent` |
 | `server/nodes/agent/<plugin>/__init__.py` | Per-plugin `execute_op()` (Wave 11 replaced `handle_ai_agent` / `handle_chat_agent`) |
-| `server/services/ai.py` | `AIService` facade -- skill injection, tool building, memory and execution-boundary handling |
+| `server/services/ai.py` | `AIService` facade -- skill injection (`_build_skill_system_prompt`, line 273), tool building, context/memory and execution-boundary handling |
+| `server/services/skill_prompt.py` | `build_skill_system_prompt` -- the only skill-to-system-message path (personality bodies only) |
 | `server/services/agent_runtime.py` | `AgentToolSpec`, `run_native_llm_step`, and `run_native_agent_loop` |
 | `server/services/llm/` | `ChatUnifier`, provider-neutral messages/tool definitions, and native provider SDK adapters |
 | `server/services/handlers/tools.py` | `execute_tool()` -- dispatch router for all tool types |
@@ -138,15 +144,27 @@ async def run_native_agent_loop(
     initial_messages: Sequence[Message],
     thinking: Optional[ThinkingConfig] = None,
     tools: Optional[Sequence[AgentToolSpec]] = None,
-    tool_executor: Optional[Callable] = None,
+    tool_executor: Optional[Callable[[str, Dict[str, Any]], Awaitable[Any]]] = None,
     max_iterations: int = 500,
-    progress_callback: Optional[Callable[[int], Any]] = None,
+    progress_callback: Optional[Callable[[int], Awaitable[Any]]] = None,
     rebind_from_operations: Optional[
         Callable[[List[Dict[str, Any]]], Awaitable[List[AgentToolSpec]]]
     ] = None,
+    context_management: Optional[Dict[str, Any]] = None,
+    compaction_pause_callback: Optional[
+        Callable[[int, LLMResponse, List[Message]], Awaitable[Optional[List[Message]]]]
+    ] = None,
+    conversation_saver: Optional[Callable[[List[Message]], Awaitable[None]]] = None,
 ) -> Dict[str, Any]:
     """Returns messages, iteration, thinking, truncation, usage, and response."""
 ```
+
+(`services/agent_runtime.py:190-216`.) The three trailing keywords are the
+RFC-0002 hooks: `context_management` is forwarded to the provider step (the
+Anthropic compaction edit), `compaction_pause_callback` lets the caller swap
+the message list after a provider-side compaction pause, and
+`conversation_saver` persists the full transcript after every turn through
+the plain conversation store (see [agent_context_flow.md](agent_context_flow.md)).
 
 There is no mutable model binding step. Each native LLM request derives its
 provider-facing declarations from the current `AgentToolSpec.definition`
@@ -201,8 +219,8 @@ Two callsites in `server/services/ai.py`:
 - `execute_agent` — for `aiAgent` plugins.
 - `execute_chat_agent` — for `chatAgent` + all specialized agents + team leads.
 
-Both build native `initial_messages` (system, memory history, current prompt,
-and skill injection), build tools via `_build_tool_from_node`, then call
+Both build native `initial_messages` (system, stored conversation history,
+current prompt, and personality-skill injection), build tools via `_build_tool_from_node`, then call
 `run_native_agent_loop` and extract the final assistant message, accumulated
 thinking, usage, and iteration count from the returned dict.
 
@@ -234,7 +252,7 @@ For standard skill nodes (claudeSkill, whatsappSkill, etc.), a single entry is c
 skill_entry = {
     'node_id': source_node_id,
     'node_type': skill_type,           # e.g., 'whatsappSkill'
-    'skill_name': skill_params.get('skillName', skill_type),
+    'skill_name': skill_params.get('skill_name', skill_type),
     'parameters': skill_params,         # All node parameters from DB
     'label': source_node.get('data', {}).get('label', skill_type)
 }
@@ -243,28 +261,34 @@ skill_data.append(skill_entry)
 
 ### 3. Master Skill Expansion
 
-When the connected skill is a `masterSkill`, its `skillsConfig` parameter is expanded into N individual entries:
+When the connected skill is a `masterSkill`, its `skills_config` parameter is
+expanded into N individual entries. The expansion lives in the skill plugin
+folder — `nodes/skill/_expander.py`, registered into the edge walker via
+`register_master_skill_expander` — so `edge_walker.py` carries no knowledge of
+the Master Skill parameter shape:
 
 ```python
-if skill_type == 'masterSkill':
-    skills_config = skill_params.get('skillsConfig', {})
-    # Structure: {'whatsapp-skill': {'enabled': True, 'instructions': '...'}, ...}
+# nodes/skill/_expander.py
+skills_config = skill_params.get('skills_config', {})
+# Structure: {'whatsapp-skill': {'enabled': True, 'instructions': '...'}, ...}
 
-    for skill_key, skill_cfg in skills_config.items():
-        if not skill_cfg.get('enabled', False):
-            continue  # Skip disabled skills
+for skill_key, skill_cfg in skills_config.items():
+    if not skill_cfg.get('enabled', False):
+        continue  # Skip disabled skills
 
-        skill_data.append({
-            'node_id': f"{source_node_id}_{skill_key}",  # Unique composite ID
-            'master_skill_node_id': source_node_id,
-            'node_type': 'masterSkill',
-            'skill_name': skill_key,
-            'description': metadata.description,
-            # Customized instructions remain authoritative but are not put in
-            # the initial prompt for standard skills.
-            'parameters': {'instructions': skill_cfg.get('instructions', '')},
-            'label': skill_key
-        })
+    skill_data.append({
+        'node_id': f"{source_node_id}_{skill_key}",  # Unique composite ID
+        'master_skill_node_id': source_node_id,
+        'node_type': 'masterSkill',
+        'skill_name': skill_key,          # snake_case is canonical; a
+                                          # 'skillName' mirror is kept for
+                                          # legacy readers
+        'description': metadata.description,
+        # Customized instructions remain authoritative but are not put in
+        # the initial prompt for standard skills.
+        'parameters': {'instructions': skill_cfg.get('instructions', '')},
+        'label': skill_key
+    })
 ```
 
 One Master Skill node with 5 enabled skills produces 5 separate `skill_data` entries.
@@ -303,11 +327,12 @@ this behavior is not owned by the team-lead implementation.
 
 ### 4. SkillLoader Architecture
 
-Defined in `server/services/skill_loader.py:38+`:
+Defined in `server/services/skill_loader.py:54+`:
 
 ```
 SkillLoader
-├── _skill_dirs: [server/skills/, .opencompany/skills/]
+├── _skill_dirs: [server/skills/, <cwd>/.machina/skills/, <cwd>/.opencompany/skills/]
+│                                             # _default_skill_dirs(), later dirs win
 ├── _database                                  # DI database singleton (user skills live in the DB)
 ├── _registry: Dict[name -> SkillMetadata]    # Metadata only (~100 tokens each)
 ├── _cache: Dict[name -> Skill]               # Full content (lazy-loaded)
@@ -315,16 +340,16 @@ SkillLoader
 ├── scan_skills()           # rglob("SKILL.md") across all dirs, parses frontmatter
 ├── load_skill(name)        # Filesystem skills: cache -> registry -> SKILL.md
 ├── load_skill_async(name)  # DB-aware: filesystem first, then database.get_user_skill()
-├── get_registry_prompt()   # Generates "## Available Skills" for system message
+├── get_registry_prompt()   # "## Available Skills" text — DEAD: zero callers (see §5)
 └── get_skill_instructions()# Shortcut for load_skill().instructions
 ```
 
-**`scan_skills()`** (`skill_loader.py:63-88`):
+**`scan_skills()`** (`skill_loader.py:80-105`):
 - Iterates `_skill_dirs`, uses `rglob("SKILL.md")` for recursive discovery
 - Parses YAML frontmatter for each file (`_parse_skill_metadata`)
 - Populates `_registry` with `SkillMetadata` (name, description, allowed_tools, path)
 
-**`load_skill(name)`** (`skill_loader.py:174-249`):
+**`load_skill(name)`** (`skill_loader.py:228-298`):
 1. Check `_cache` -- return immediately if cached
 2. Look up `_registry[name]` -- fail if not registered
 3. Read `SKILL.md`, strip frontmatter, extract markdown body as `instructions`
@@ -336,7 +361,7 @@ SkillLoader
 - The global loader is constructed with the DI `container.database()` (resolved lazily, late-bound on a subsequent call if the container was not yet ready when the loader was first requested). User-created skills are stored in the database rather than on disk, so the wired DB is what lets them resolve.
 - `load_skill_async(name)` is the DB-aware loader: filesystem `_registry` first, then `database.get_user_skill(name)`. The `get_skill_content` WebSocket handler and the agent skill paths call it, so database user skills load just like filesystem skills. `init_skill_loader(database=...)` remains available for explicit eager initialization.
 
-**SKILL.md frontmatter parsing** (`skill_loader.py:126-172`):
+**SKILL.md frontmatter parsing** (`_parse_skill_metadata`, `skill_loader.py:144-227`):
 ```yaml
 ---
 name: http-skill                    # Lowercase with hyphens, validated by regex
@@ -350,53 +375,47 @@ metadata:
 
 ### 5. System Message Injection
 
-In `execute_agent()` and `execute_chat_agent()` within `server/services/ai.py`:
+The only path from `skill_data` to the system message is
+`_build_skill_system_prompt` (`server/services/ai.py:273`), a thin wrapper
+that imports and calls `services/skill_prompt.py::build_skill_system_prompt`.
+It is called from `execute_agent` (`ai.py:917`), `execute_chat_agent`
+(`ai.py:1633`), the RLM service (`services/rlm/service.py:74-77`) and the
+Temporal `agent.prepare_payload` activity (`agent_activities.py:971-973`):
 
 ```python
-if skill_data:
-    skill_loader = get_skill_loader()
-    skill_loader.scan_skills()
+# server/services/ai.py:273
+def _build_skill_system_prompt(skill_data, log_prefix="[Agent]") -> tuple:
+    from services.skill_prompt import build_skill_system_prompt
+    return build_skill_system_prompt(skill_data, log_prefix)
 
-    # Extract skill names from collected data
-    skill_names = []
-    for skill_info in skill_data:
-        skill_name = skill_info.get('skill_name') or ...
-        skill_names.append(skill_name)
-
-    # Generate structured skill listing
-    skill_prompt = skill_loader.get_registry_prompt(skill_names)
-    if skill_prompt:
-        system_message = f"{system_message}\n\n{skill_prompt}"
+# execute_agent / execute_chat_agent
+skill_prompt, has_personality = _build_skill_system_prompt(skill_data, log_prefix="[AIAgent]")
 ```
 
-### 6. Registry Prompt Output
+`build_skill_system_prompt` walks `skill_data` and injects **only personality
+skills** (names ending in `-personality`) — their full SKILL.md
+`parameters.instructions` body is appended verbatim to the system message,
+and `has_personality=True` tells the caller to drop the default system
+message. Every other skill is counted and logged but contributes **nothing**
+to the prompt: standard skills reach the model through the dynamically bound
+`Skill` tool (name/description catalogue, `load` for the body,
+`read_resource` / `search_resource` for declared files), as described in §3.
 
-`get_registry_prompt()` in `skill_loader.py:311-341` generates:
+### 6. Registry prompt (unused)
 
-```
-## Available Skills
-
-You have access to the following skills. When a user's request matches
-a skill's purpose, activate it to help them.
-
-- **http-skill**: Make HTTP requests to external APIs
-  - Tools: http-request
-- **whatsapp-skill**: Send and receive WhatsApp messages
-  - Tools: whatsapp-send, whatsapp-db
-- **maps-skill**: Location services via Google Maps
-
-To use a skill, identify when the user's request matches its purpose
-and apply the skill's instructions.
-```
-
-This text is appended to the system message. The full SKILL.md body (instructions) is available via individual skill entries but the registry prompt provides the high-level listing.
+`SkillLoader.get_registry_prompt()` (`skill_loader.py:361-391`) still exists
+and renders a `## Available Skills` markdown listing (name, description,
+`- Tools:` line per skill), but it has **zero callers** in the codebase. No
+agent path appends a skill listing to the system message; the Skill tool's
+catalogue replaced it. Treat the method as dead code — do not build new
+prompt features on it.
 
 ### 7. allowed-tools
 
-- **Parsed** from SKILL.md frontmatter as space-delimited list
-- **Included** in registry prompt as informational text for the LLM
+- **Parsed** from SKILL.md frontmatter as a space-delimited list into `SkillMetadata.allowed_tools`
+- **Surfaced** to the model through the Skill tool's catalogue / `load` result (and the `listSkills` / `getSkill` MCP tools for CLI agents), not through the system message
 - **NOT enforced** in code -- the LLM can call any tool connected to `input-tools`
-- Purpose: guides the LLM on which tools are relevant to each skill
+- Purpose: guides the LLM on which tools are relevant to each skill; also drives palette icon/color resolution for SKILL.md entries (first tool in `allowed-tools`)
 
 ---
 
@@ -427,20 +446,31 @@ Patterns covered in the canonical doc:
 ---
 
 
-## Memory Integration
+## Context and Memory Integration
 
-Memory load + save lives in
-[memory_lifecycle.md](./memory_lifecycle.md). The agent loop reads
-`memory_data` from `collect_agent_connections()`
-(`server/services/plugin/edge_walker.py`, via the `input-memory` edge),
-prepends history parsed into native `Message` values to the system message and
-current prompt, runs `run_native_agent_loop`, then atomically appends the turn,
-trims the window, and archives trimmed text to the optional vector store. The
-markdown helpers (`parse_memory_markdown`, `append_to_memory_markdown`,
-`trim_markdown_window`) and `NativeMemoryVectorStore` with the optional direct
-sentence-transformers embedder are the load-bearing surface — see the
-canonical doc for signatures, the markdown format, and the engine-specific
-table.
+Conversation continuity is the RFC-0002 Context store, documented in
+[agent_context_flow.md](./agent_context_flow.md) and
+[RFC-0002](../RFC-0002-AGENT-CONTEXT-AND-MEMORY.md). The agent reads
+`context_data` — the first element of the `collect_agent_connections()`
+5-tuple (`server/services/plugin/edge_walker.py:181-199`), populated from the
+`input-context` edge to a `context` node — and `AIService._prepare_context`
+resolves it into an `_AgentContextRuntime{key, history, database}`. Stored
+history is seeded into `initial_messages` (system messages filtered), the
+loop runs with `conversation_saver=runtime.save` so every turn persists the
+full transcript, and nothing else about the request changes because a Context
+node is attached.
+
+`simpleMemory` ("Memory") is **not** conversation history: it is a `ToolNode`
+on `input-tools` that the agent calls explicitly (`remember` / `recall` /
+`update` / `forget`). The `input-memory` handle is retired — no agent declares
+it; `normalize_workflow_graph` rewrites legacy `simpleMemory -> input-memory`
+edges into a Context node plus an ordinary tool edge. The legacy markdown
+memory path (`memory_data`, `parse_memory_markdown`,
+`append_to_memory_markdown`, `trim_markdown_window`, the vector store) is
+reached only for immutable V1 snapshots: `execute_agent` passes the tuple's
+first element as `context_data` to `_prepare_context` and sets `memory_data =
+None` whenever a Context runtime resolves (`ai.py:969-980`). Token tracking
+and compaction thresholds are in [memory_compaction.md](memory_compaction.md).
 
 ---
 
@@ -591,7 +621,7 @@ to one iteration.
 
 `aiAgent` and `chatAgent` (display name "Zeenie") are near-identical in
 capability — both run `run_native_agent_loop` through `ChatUnifier`, support
-memory / skills / tools / task input, and can delegate asynchronously. The
+context / skills / tools / task input, and can delegate asynchronously. The
 differences are which backend method they call and the softness of callback
 error handling.
 
@@ -602,7 +632,7 @@ error handling.
 | Skill Support | Yes | Yes |
 | Task Input | Yes (`input-task`) | Yes (`input-task`) |
 | Bottom Handles | Skill, Tools | Skill, Tools |
-| Left Handles | Input, Memory, Task | Input, Memory, Task |
+| Left Handles | Input, Context, Task | Input, Context, Task |
 | Backend Method | `execute_agent()` | `execute_chat_agent()` |
 | No-tool path | Native loop returns after the first final response | Native loop is bounded to one iteration |
 | Tool-failure handling | Callback re-raises; loop creates an error tool-result message | Callback returns `{"error": str(e)}`; loop creates the tool-result message |

@@ -303,7 +303,7 @@ The poll loop:
 
 All credential resolution and IMAP access still delegate to `EmailService` —
 nothing is duplicated in the controller. See
-[Temporal Execution Engine RFC](temporal-execution-engine-rfc.md) for the
+[Temporal Execution Engine RFC](ARCHIVE/temporal-execution-engine-rfc.md) for the
 control and trigger lifecycle.
 
 ## Credentials Storage
@@ -442,7 +442,7 @@ cargo install himalaya
 
 - [Node Creation Guide](./node_creation.md) — canonical plugin recipe (covers dual-purpose nodes; `emailSend`/`emailRead` are live examples)
 - [Event Waiter System](./event_waiter_system.md) — trigger registration for `emailReceive`
-- [New Service Integration](./new_service_integration.md) — end-to-end integration pattern (use Google Workspace as a richer OAuth example)
+- [New Service Integration](./ARCHIVE/new_service_integration.md) — end-to-end integration pattern (use Google Workspace as a richer OAuth example)
 - [Credentials Encryption](./credentials_encryption.md) — how `email_*` keys are encrypted on disk
 
 ## Security notes

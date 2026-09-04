@@ -1,5 +1,12 @@
 # Frontend UI Stack Migration — antd → shadcn/ui (canonical, no custom wrappers)
 
+> **ARCHIVED 2026-09-04 — Superseded.** The antd → shadcn migration completion log. Waves 1–10 shipped; the `get_node_spec` blocker it names for Phase 6 no longer exists, and the design system grew to 12 themes. `pnpm` commands in the per-wave records are pre-bun-migration.
+>
+> For current state see:
+>
+> - [frontend_architecture.md](../frontend_architecture.md) — current stack
+> - [theme_system.md](../theme_system.md) — 12-theme system
+
 > **Status (2026-05-08):** Phases 0–5 + 7 **complete**. Phase 6 (`ParameterRenderer` → JSON Forms) deferred pending backend `NodeSpec` handler. Zero antd / `@ant-design/icons` / styled-components imports remain. Wave 12 retired the surviving tribal patterns (string-compares, opacity arithmetic, whole-store destructure). Wave 13 unified credential storage on a single source of truth + RFC 9700 / OWASP V9.9 compliance. **Wave 14** (May 2026) lit up the 10-theme design system end-to-end (chrome migration, decorative wrappers, sound packs, canvas overlays). Current state lives in [frontend_architecture.md](./frontend_architecture.md) and [theme_system.md](./theme_system.md) — those docs supersede this plan as the source of truth for what the frontend IS; this doc documents how we got there.
 
 ## Completion table

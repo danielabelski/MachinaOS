@@ -1,5 +1,12 @@
 # RFC: Temporal Execution Engine Architecture
 
+> **ARCHIVED 2026-09-04 — Superseded.** Design rationale for the Temporal engine. Items this RFC lists as pending have shipped: boot reconciliation (§14, §19.1 — `reconcile_active_controls_on_boot`), controller continue-as-new (§18, §19.2 — `WorkflowControlWorkflow`), indexed event routing (§19.4 — the `ControlEventTypes` Search Attribute), and most of the §19.5 test list (`test_worker_restart.py`, `test_cooperative_pause.py`, `test_terminate_sweep.py`, `test_agent_workflow_replay.py`). Agent activity names carry no `.v1` suffix.
+>
+> For current state see:
+>
+> - [temporal-workflow-control.md](../temporal-workflow-control.md) — control plane as shipped
+> - [TEMPORAL_ARCHITECTURE.md](../TEMPORAL_ARCHITECTURE.md) — dispatch paths and activities
+
 | Field | Value |
 |---|---|
 | Status | Implemented; canonical current-state design |

@@ -308,7 +308,7 @@ export interface INodeTypeDescription {
   // NOTE: runtime output shape is no longer declared on the frontend. It is
   // served lazy by the backend at GET /api/schemas/nodes/{nodeType}.json and
   // consumed by InputSection via useNodeOutputSchemaQuery. See
-  // docs-internal/schema_source_of_truth_rfc.md.
+  // docs-internal/ARCHIVE/schema_source_of_truth_rfc.md.
 }
 
 // Node type interface that nodes must implement

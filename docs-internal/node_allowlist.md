@@ -60,9 +60,7 @@ Re-enable: drop the entries. The hook + filters are forward-compatible with empt
 
 ## What's currently disabled
 
-| Domain | Why | Hidden from |
-|---|---|---|
-| `email` group + `email` credential category | Himalaya CLI dependency — complex install path, IMAP/SMTP config burden | Palette + credentials |
+Nothing is blocklisted. All four disable lists (`disabled_groups`, `disabled_nodes`, `disabled_credential_categories`, `disabled_skill_folders`) are empty in the shipped `server/config/node_allowlist.json`; the `email` group + credential category that this section once listed as disabled are no longer blocked. The only active list is `enabled_nodes` — the positive allowlist that decides what normal mode shows (dev/pro mode bypasses it). Read the live entry count from the JSON rather than from this doc (51 at the time of writing).
 
 Android service nodes are enabled and connect directly to an agent's
 `input-tools` handle. The Android Agent, Android credential category, and

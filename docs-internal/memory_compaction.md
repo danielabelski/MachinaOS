@@ -41,7 +41,7 @@ native agent loop
        └─ Temporal AgentWorkflow
             ├─ returns aggregate usage in the workflow result
             └─ when its context counter reaches the prepared threshold:
-                 agent.compact_memory → compact_context()
+                 agent.compact_context → compact_context()
 
 compact_context()
   └─ run_native_llm_step(ChatUnifier, selected provider/model)
@@ -99,6 +99,12 @@ class TokenUsageMetric(SQLModel, table=True):
     iteration: int = 1               # Agent loop iteration number
     execution_id: Optional[str]      # Workflow execution ID
     created_at: Optional[datetime]
+
+    # Cost columns (USD), computed by PricingService at track() time
+    input_cost: float = 0.0
+    output_cost: float = 0.0
+    cache_cost: float = 0.0
+    total_cost: float = 0.0
 ```
 
 ### SessionTokenState
@@ -143,7 +149,8 @@ class CompactionEvent(SQLModel, table=True):
     node_id: str
     workflow_id: Optional[str]
 
-    trigger_reason: str              # "native", "threshold", "manual"
+    trigger_reason: str              # Always "native" today — record() hardcodes it
+                                     # (compaction.py:233); no other value is written
     tokens_before: int
     tokens_after: int
     messages_before: int = 0
@@ -200,7 +207,8 @@ result = await svc.track(
 # {
 #     "total": 6000,           # New cumulative total
 #     "threshold": 800000,     # Model-aware: 80% of 1M context window
-#     "total_cost": 0.021,     # USD cost
+#     "total_cost": 0.021,     # USD cost (cumulative)
+#     "context_length": 1000000,  # Model context window the threshold was derived from
 #     "needs_compaction": False
 # }
 #
@@ -234,12 +242,13 @@ stats = await svc.stats("user-session-123", model="claude-opus-4.6", provider="a
 #     "session_id": "user-session-123",
 #     "total": 15000,
 #     "threshold": 800000,  # 80% of 1M context window
-#     "count": 1  # Number of compactions
+#     "count": 1,  # Number of compactions
+#     "context_length": 1000000  # 0 when no model/provider given
 # }
 
 # Without model/provider, falls back to global default
 stats = await svc.stats("user-session-123")
-# {"session_id": "user-session-123", "total": 15000, "threshold": 100000, "count": 1}
+# {"session_id": "user-session-123", "total": 15000, "threshold": 100000, "count": 1, "context_length": 0}
 ```
 
 ### Configure Per-Session Settings
@@ -321,7 +330,7 @@ ws.send(JSON.stringify({
 ### Environment Variables
 
 ```bash
-# In server/.env (mirrors .env.template)
+# In the repo-root .env (defaults live in the root .env.template:189-194)
 COMPACTION_ENABLED=true       # Enable/disable compaction globally (default: true)
 COMPACTION_RATIO=0.8          # Fraction of context window that triggers compaction
                               # (default: 0.8 — was 0.5 pre-2026.06). Range 0.05-0.99.
@@ -387,22 +396,28 @@ usage = final_state["usage"]
 ### In-Process Persistence Point
 
 In `server/services/ai.py`, the in-process path calls the service only when a
-memory session is connected:
+legacy memory session id was resolved earlier in the run (`session_id` is set
+from `memory_data["session_id"]` at `ai.py:1005`; it stays `None` once a
+Context runtime resolves, because `execute_agent` nulls `memory_data` in that
+case):
 
 ```python
-# After native agent-loop execution, before memory save
-if memory_data and memory_data.get('session_id'):
+# ai.py:1430-1446 — after native agent-loop execution, before memory save
+if session_id and ai_response:
     compaction_result = await self._track_token_usage(
-        session_id=memory_data['session_id'],
+        session_id=session_id,
         node_id=node_id,
         provider=provider,
         model=model,
-        ai_response=final_state["usage"],
-        all_messages=final_state["messages"],
-        memory_content=memory_data.get("memory_content", ""),
+        ai_response=final_state.get("usage") or ai_response,
+        all_messages=all_messages,
+        broadcaster=broadcaster,
+        workflow_id=workflow_id,
+        memory_content=memory_data.get("memory_content", "") if memory_data else None,
         api_key=api_key,
-        memory_node_id=memory_data.get("node_id"),
+        memory_node_id=memory_data.get("node_id") if memory_data else None,
     )
+    _accumulate_compaction_usage(final_state, compaction_result)
 ```
 
 ## File Reference
@@ -415,7 +430,7 @@ if memory_data and memory_data.get('session_id'):
 | `server/core/database.py` | CRUD methods for metrics and events |
 | `server/core/config.py` | Environment variable configuration |
 | `server/core/container.py` | Dependency injection setup |
-| `server/routers/websocket.py` | WebSocket handlers |
+| `server/services/settings/handlers.py` | WebSocket handlers `get_compaction_stats` (line 215) and `configure_compaction` (line 233); registered into `MESSAGE_HANDLERS` by `routers/websocket.py` |
 | `server/main.py` | Service initialization on startup |
 
 ## Design Decisions
@@ -520,7 +535,8 @@ if tracking.get('needs_compaction') and memory_content and api_key:
 F4.B performs a parallel check inside `AgentWorkflow` using the workflow's
 active-context usage counter and the ratio-based threshold recorded by
 `agent.prepare_payload`. It invokes the same `compact_context()` method
-through `agent.compact_memory`.
+through the `agent.compact_context` activity
+(`services/temporal/agent_activities.py:1944`).
 
 ### AI Service Wiring
 
@@ -586,35 +602,41 @@ Broadcast when compaction finishes:
 
 ### Token Usage Panel
 
-The Token Usage panel is displayed in the MiddleSection of the parameter panel for memory nodes (simpleMemory). It shows:
+The Token Usage panel is displayed in the MiddleSection of the parameter panel
+for **agent nodes that have a memory session connected** — the gate is
+`isAgentWithSkills && connectedMemorySessionId`
+(`client/src/components/parameterPanel/MiddleSection.tsx:767-768`), not the
+memory node itself. It shows:
 
-- **Progress bar**: Visual representation of tokens used vs threshold
-- **Statistics**: Current token count, threshold, compaction count
-- **Editable threshold**: Click edit icon to change threshold per session
+- **Progress bar**: tokens used vs the model's context length when known (`compactionStats.context_length`), else vs the threshold; turns destructive at 80%
+- **Statistics**: `Total`, editable `Threshold`, `Compactions`, and `Context` (when a context length is known), plus the session id
+- **Editable threshold**: click the `Threshold` stat to reveal a number input + save button; saving fires `configure_compaction` for the connected session
+
+Built from shadcn primitives (no antd):
 
 ```typescript
-// In client/src/components/parameterPanel/MiddleSection.tsx
-<Collapse.Panel header="Token Usage" key="tokenUsage">
-  <Progress
-    percent={Math.min(100, Math.round((tokenStats.total / tokenStats.threshold) * 100))}
-    status={tokenStats.total >= tokenStats.threshold ? 'exception' : 'normal'}
-  />
-  <Statistic title="Tokens Used" value={`${tokenStats.total.toLocaleString()} / ${tokenStats.threshold.toLocaleString()}`} />
-  <Statistic title="Compactions" value={tokenStats.count} />
-
-  {/* Editable threshold */}
-  {isEditingThreshold ? (
-    <InputNumber
-      value={editThresholdValue}
-      onChange={setEditThresholdValue}
-      min={10000}
-      max={1000000}
-      step={10000}
-    />
-  ) : (
-    <Button icon={<EditOutlined />} onClick={() => setIsEditingThreshold(true)} />
-  )}
-</Collapse.Panel>
+// client/src/components/parameterPanel/MiddleSection.tsx:768-870 (abridged)
+{isAgentWithSkills && connectedMemorySessionId && (
+  <Accordion type="single" collapsible defaultValue="tokens">
+    <AccordionItem value="tokens">
+      <AccordionTrigger>Token Usage {total}K / {displayMax}K</AccordionTrigger>
+      <AccordionContent>
+        <Progress value={Math.min(percent, 100)} className={cn(isWarning && '[&>div]:bg-destructive')} />
+        <Stat title="Total" value={compactionStats.total} />
+        {isEditingThreshold ? (
+          <>
+            <Input type="number" value={editThresholdValue} min={10000} max={2000000} step={10000} />
+            <ActionButton intent="save" onClick={() => configureCompactionMutation.mutate({ sessionId, threshold })} />
+          </>
+        ) : (
+          <Stat title="Threshold" value={compactionStats.threshold} />   {/* click to edit */}
+        )}
+        <Stat title="Compactions" value={compactionStats.count} />
+        {hasContext && <Stat title="Context" value={`${Math.round(ctxLen / 1000)}K`} />}
+      </AccordionContent>
+    </AccordionItem>
+  </Accordion>
+)}
 ```
 
 ## Future Enhancements

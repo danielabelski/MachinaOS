@@ -53,7 +53,16 @@ extra ~0.7 s sits entirely in the import phase — "all imports complete"
 at 3.29 s vs 1.98 s in the May timeline, and the routers + plugin-walker
 segment at 1.83 s vs 0.84 s — because the walker now loads **184**
 plugin modules against the **137** it walked in May. Lifespan cost is
-unchanged. The dev-mode rows were never benchmarked before (Vite and
+unchanged.
+
+**Counting rule for every plugin figure in this document.** The numbers
+(137 in May, 152 in July, 184 in September 2026) are the walker's
+*module* count — the `node plugins loaded: N modules` log line from
+`server/nodes/__init__.py`, i.e. `len(nodes._DISCOVERED)`, which
+includes `_*.py` helpers and per-folder submodules. They are **not**
+node-type counts: `len(services.node_registry.NODE_METADATA)` is 147
+today, spread across 37 group folders under `server/nodes/`. Both are
+computed from the tree; neither is hand-maintained here. The dev-mode rows were never benchmarked before (Vite and
 uvicorn compete for I/O during a dev boot, so they are not comparable
 to the prod numbers), and the first dev boot after a reinstall also
 rebuilds Vite's dep cache.
@@ -112,7 +121,7 @@ T+0.00 — port-free begin
            ├── DI container (0.42 s)
            ├── Core service imports (0.36 s)
            ├── AIService import (0.70 s) ← native boundary + lazy history shims
-           ├── Routers + plugin walker (0.84 s, 137 plugins)
+           ├── Routers + plugin walker (0.84 s, 137 plugin modules — May count; see counting rule)
            └── All imports complete (1.98 s)
 T+2.25 — Lifespan startup
        ├── DB + cache (0.04 s)
@@ -162,7 +171,7 @@ is idle in this window; the cost lives on the frontend. Likely
 contributors:
 
 1. **TanStack Query auth-bootstrap retry budget** ([client/src/contexts/AuthContext.tsx](../client/src/contexts/AuthContext.tsx) + [client/src/lib/connectionConfig.ts](../client/src/lib/connectionConfig.ts)). The `AUTH_RETRY` envelope (BASE 50 ms, CAP 4000 ms, MAX_ATTEMPTS 7) covers the typical 4 s backend cold-start window in 4-5 attempts. If the backend finishes mid-retry-cycle, the next jittered draw can land 1-3 s after readiness.
-2. **React Strict Mode dual-mount** in dev. The 100 ms guard in [WebSocketContext.tsx:2554](../client/src/contexts/WebSocketContext.tsx#L2554) absorbs the bulk; remaining cost is React reconciliation + babel-plugin-react-compiler overhead on first render.
+2. **React Strict Mode dual-mount** in dev. The 100 ms `setTimeout` guard in the connect effect at [WebSocketContext.tsx:3558](../client/src/contexts/WebSocketContext.tsx#L3558) absorbs the bulk; remaining cost is React reconciliation + babel-plugin-react-compiler overhead on first render.
 3. **PartySocket upgrade handshake**. Sub-100 ms in normal cases; would only matter on slow networks.
 
 To attribute definitively: add `console.time('auth.queryFn')` / `console.timeLog('auth.queryFn')` markers and a corresponding pair around `connect()`. Not blocking — the contract this layer was meant to fix (the +12 s disconnect-reconnect cycle) is resolved.
@@ -195,7 +204,7 @@ optimisations above; sum is what hurts.
 
 | # | Bottleneck | Cost | Class | Notes |
 |---|---|---|---|---|
-| 1 | Plugin walker at import time (152 modules under `server/nodes/`; ~2 s warm / ~4.7 s cold, dominated by `nodes/google`'s eager `googleapiclient` import) | ~2 s | Backend | `_HANDLER_REGISTRY` populates via `BaseNode.__init_subclass__` at import. Lazy `googleapiclient` is the cheap win (see follow-ups); full lazy-loading of the walker is the big-blast-radius option. |
+| 1 | Plugin walker at import time (152 modules under `server/nodes/` at the July measurement, 184 today — see the counting rule above; ~2 s warm / ~4.7 s cold, dominated by `nodes/google`'s eager `googleapiclient` import) | ~2 s | Backend | `_HANDLER_REGISTRY` populates via `BaseNode.__init_subclass__` at import. Lazy `googleapiclient` is the cheap win (see follow-ups); full lazy-loading of the walker is the big-blast-radius option. |
 | 2 | TanStack Query auth bootstrap retry window | ~3-5 s | Frontend | See "remaining +5 s gap" above. |
 | 3 | AIService/native orchestration import graph | ~0.7 s | Backend | Historical May baseline; new agent execution uses native `Message` / `AgentToolSpec` values and provider registration remains lazy. Re-measure before attributing this cost further. |
 | 4 | Status-broadcaster refresh (`refresh_all_services`, 2.6 s) | ~2.6 s | Backend | Runs after `Application startup complete`, doesn't block server-ready. WhatsApp + Telegram are the long tails. |

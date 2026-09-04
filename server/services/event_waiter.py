@@ -65,7 +65,8 @@ class TriggerConfig:
 
 
 # Registry of supported trigger types (event-based triggers only)
-# Note: cronScheduler is NOT an event-based trigger - it uses APScheduler directly
+# Note: cronScheduler is NOT an event-based trigger - it runs as a Temporal
+# Schedule (nodes/scheduler/cron_scheduler/_workflow.py) and never waits here.
 TRIGGER_REGISTRY: Dict[str, TriggerConfig] = {
     # Framework-level triggers — not owned by any plugin domain.
     "start": TriggerConfig(node_type="start", event_type="deploy_triggered", display_name="Deploy Start"),

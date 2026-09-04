@@ -192,14 +192,14 @@ flowchart TD
 
 ## Related
 
-- **Dedicated-path siblings**: [`rlmAgent`](./rlmAgent.md), [`claudeCodeAgent`](./claudeCodeAgent.md)
+- **Dedicated-path siblings**: [`rlmAgent`](./rlm_agent.md), [`claudeCodeAgent`](./claude_code_agent.md)
 - **Per-node variants** (short link-style docs):
-  [`androidAgent`](./androidAgent.md), [`codingAgent`](./codingAgent.md),
-  [`webAgent`](./webAgent.md), [`taskAgent`](./taskAgent.md),
-  [`socialAgent`](./socialAgent.md), [`travelAgent`](./travelAgent.md),
-  [`toolAgent`](./toolAgent.md), [`productivityAgent`](./productivityAgent.md),
-  [`paymentsAgent`](./paymentsAgent.md), [`consumerAgent`](./consumerAgent.md),
-  [`autonomousAgent`](./autonomousAgent.md),
-  [`orchestratorAgent`](./orchestratorAgent.md), [`aiEmployee`](./aiEmployee.md)
+  [`androidAgent`](./android_agent.md), [`codingAgent`](./coding_agent.md),
+  [`webAgent`](./web_agent.md), [`taskAgent`](./task_agent.md),
+  [`socialAgent`](./social_agent.md), [`travelAgent`](./travel_agent.md),
+  [`toolAgent`](./tool_agent.md), [`productivityAgent`](./productivity_agent.md),
+  [`paymentsAgent`](./payments_agent.md), [`consumerAgent`](./consumer_agent.md),
+  [`autonomousAgent`](./autonomous_agent.md),
+  [`orchestratorAgent`](./orchestrator_agent.md), [`aiEmployee`](./ai_employee.md)
 - **Architecture docs**: [Memory Compaction](../../memory_compaction.md),
   [Pricing Service](../../pricing_service.md)

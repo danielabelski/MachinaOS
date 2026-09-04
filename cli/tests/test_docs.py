@@ -66,10 +66,51 @@ def test_collect_registry_keys_scrapes_type_attribute(tmp_path: Path):
     assert keys == {"fooNode"}
 
 
-def test_collect_registry_keys_skips_underscore_and_init(tmp_path: Path):
+def test_collect_registry_keys_skips_underscore_helpers(tmp_path: Path):
     cat = tmp_path / "category"
     cat.mkdir(parents=True)
     (cat / "_base.py").write_text('    type = "skipMe"\n')
-    (cat / "__init__.py").write_text('    type = "alsoSkip"\n')
+    (cat / "_inline.py").write_text('    type = "alsoSkip"\n')
     (cat / "good.py").write_text('    type = "goodNode"\n')
     assert docs._collect_registry_keys(tmp_path) == {"goodNode"}
+
+
+def test_collect_registry_keys_scans_init_files(tmp_path: Path):
+    plugin = tmp_path / "group" / "plugin"
+    plugin.mkdir(parents=True)
+    (plugin / "__init__.py").write_text(
+        "class InitNode:\n" '    type = "initNode"\n',
+        encoding="utf-8",
+    )
+    assert docs._collect_registry_keys(tmp_path) == {"initNode"}
+
+
+def test_collect_registry_keys_collects_every_class_in_a_file(tmp_path: Path):
+    plugin = tmp_path / "group" / "two.py"
+    plugin.parent.mkdir(parents=True)
+    plugin.write_text(
+        "class Receive:\n"
+        '    type = "fooReceive"\n'
+        "\n"
+        "class Status:\n"
+        '    type: str = "fooStatus"\n',
+        encoding="utf-8",
+    )
+    assert docs._collect_registry_keys(tmp_path) == {"fooReceive", "fooStatus"}
+
+
+def test_collect_registry_keys_resolves_module_level_constant(tmp_path: Path):
+    plugin = tmp_path / "group" / "plugin" / "__init__.py"
+    plugin.parent.mkdir(parents=True)
+    plugin.write_text(
+        '_MY_TYPE = "constNode"\n'
+        "_OTHER = frozenset({_MY_TYPE})\n"
+        "\n"
+        "class ConstNode:\n"
+        "    type = _MY_TYPE\n"
+        "\n"
+        "class Unresolvable:\n"
+        "    type = _NOT_DEFINED_HERE\n",
+        encoding="utf-8",
+    )
+    assert docs._collect_registry_keys(tmp_path) == {"constNode"}

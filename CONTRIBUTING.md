@@ -104,11 +104,11 @@ The diagram above shows the full lifecycle of a workflow node: one self-containe
 
 **Integrate an OAuth service**
 - Guides: [plugin_system.md](docs-internal/plugin_system.md) (Connection facade, credentials, `register_router` / `register_option_loader`); live reference: [server/nodes/google/](server/nodes/google/) — 7 nodes sharing one OAuth connection via `_oauth.py` / `_router.py` / `_auth_helper.py`
-- ([new_service_integration.md](docs-internal/new_service_integration.md) is historical — do not follow its steps)
+- ([new_service_integration.md](docs-internal/ARCHIVE/new_service_integration.md) is archived — do not follow its steps)
 
 **Add a credential provider**
 - Declare a `Credential` subclass in the plugin folder's `_credentials.py` and add the provider entry to `server/config/credential_providers.json` — the Credentials Modal renders it with no React edits
-- Guides: [credentials_encryption.md](docs-internal/credentials_encryption.md) (storage pipeline) + [credentials_panel.md](docs-internal/credentials_panel.md) (modal state machine); test conventions in [server/tests/credentials/README.md](server/tests/credentials/README.md)
+- Guides: [credentials_encryption.md](docs-internal/credentials_encryption.md) (storage pipeline) + [frontend_architecture.md → Credentials](docs-internal/frontend_architecture.md) (the config-driven modal); the numbered invariants the tests cite live in the archived [credentials_panel.md §5](docs-internal/ARCHIVE/credentials_panel.md); test conventions in [server/tests/credentials/README.md](server/tests/credentials/README.md)
 
 **Contribute frontend / a new theme**
 - Read [frontend_architecture.md](docs-internal/frontend_architecture.md) first (stack, token tiers, state-ownership boundary, the strict styling rules), then [theme_system.md](docs-internal/theme_system.md) for the theme contract
@@ -121,7 +121,7 @@ The diagram above shows the full lifecycle of a workflow node: one self-containe
 - **Behavioral tests** live per category in `server/tests/nodes/test_<category>.py`, driven through `NodeTestHarness` ([server/tests/nodes/_harness.py](server/tests/nodes/_harness.py)) — it executes any node via `NodeExecutor` with mocked services and asserts the result envelope.
 - **Import sanity:** `uv run pytest --collect-only` (from `server/`) is the live plugin-count invariant — it fails if any plugin errors at import.
 - **Credential tests** follow the numbered-invariant style documented in [server/tests/credentials/README.md](server/tests/credentials/README.md).
-- Run everything: `uv run pytest` from `server/`, `npm test` from `client/`, `uv run pytest cli/tests` from the repo root.
+- Run everything: `uv run pytest` from `server/`, `bun run --filter react-flow-client test` from the repo root, `uv run pytest cli/tests` from the repo root.
 
 ## Local Dev Quick Reference
 
@@ -152,25 +152,25 @@ Full setup and scripts reference: [SETUP.md](docs-internal/SETUP.md) - [SCRIPTS.
 | [DESIGN.md](docs-internal/DESIGN.md) | Execution engine architecture, design patterns, execution modes |
 | [TEMPORAL_ARCHITECTURE.md](docs-internal/TEMPORAL_ARCHITECTURE.md) | Distributed execution via Temporal activities |
 | [workflow-schema.md](docs-internal/workflow-schema.md) | Workflow JSON schema and node catalog (live count = glob `server/nodes/**/__init__.py`) |
-| [ROADMAP.md](docs-internal/ROADMAP.md) | Implementation status and completed phases |
+| [ROADMAP.md](docs-internal/ARCHIVE/ROADMAP.md) | *Archived* status snapshot; current state is in DESIGN.md and the Temporal docs |
 | [SETUP.md](docs-internal/SETUP.md) | Development environment setup |
-| [SCRIPTS.md](docs-internal/SCRIPTS.md) | npm/shell scripts reference |
-| [server-readme.md](docs-internal/server-readme.md) | Python backend architecture and API |
+| [SCRIPTS.md](docs-internal/SCRIPTS.md) | bun/shell scripts and CLI verbs reference |
+| [server-readme.md](docs-internal/ARCHIVE/server-readme.md) | *Archived*; see SETUP.md, authentication.md, plugin_system.md |
 | [agent_architecture.md](docs-internal/agent_architecture.md) | AI Agent / Chat Agent skill and tool discovery |
 | [agent_delegation.md](docs-internal/agent_delegation.md) | How delegated agents share context and memory |
 | [agent_teams.md](docs-internal/agent_teams.md) | Agent Teams pattern with `input-teammates` handle |
 | [native_llm_sdk.md](docs-internal/native_llm_sdk.md) | Native LLM SDK layer and provider protocol |
 | [rlm_service.md](docs-internal/rlm_service.md) | Recursive Language Model agent via REPL |
 | [claude_code_agent.md](docs-internal/claude_code_agent.md) | Claude Code agent hub (routes to architecture, interactive mode, and the vendored `claude_code_*_reference.md` snapshots) |
-| [claude_code_agent_architecture.md](docs-internal/claude_code_agent_architecture.md) | Claude Code SDK integration as a specialized agent |
+| [claude_code_agent_architecture.md](docs-internal/ARCHIVE/claude_code_agent_architecture.md) | *Archived* LangGraph-era design notes; see claude_code_interactive_mode.md |
 | [cli_agent_framework.md](docs-internal/cli_agent_framework.md) | Multi-provider CLI agent runtime (Claude Code / Codex / Gemini) — worktree isolation, MCP bridge, memory bridge |
-| [autonomous_agent_creation.md](docs-internal/autonomous_agent_creation.md) | Autonomous agents with Code Mode patterns |
+| [autonomous_agent_creation.md](docs-internal/ARCHIVE/autonomous_agent_creation.md) | *Archived* external research notes on Code Mode agents; the plugin is `server/nodes/agent/autonomous_agent/` |
 | [event_framework.md](docs-internal/event_framework.md) | Wave 12 event framework — Temporal Signals + Visibility routing, Search Attributes, plugin `_events.py` contract |
 | [stripe_service.md](docs-internal/stripe_service.md) | Reference Wave 12 plugin — signed webhooks + CLI-managed auth, file-by-file |
 | [vercel_service.md](docs-internal/vercel_service.md) | CLI-managed auth, device-flow variant |
 | [github_service.md](docs-internal/github_service.md) | gh CLI integration — CLI owns auth entirely |
 | [discord_service.md](docs-internal/discord_service.md) | Discord bot — gateway/REST split, multi-account on the credential `session_id` scope, Ed25519 interactions endpoint |
-| [event_waiter_system.md](docs-internal/event_waiter_system.md) | Push-based trigger waiters *(historical, pre-Wave-11 — canvas-Run path only)* |
+| [event_waiter_system.md](docs-internal/event_waiter_system.md) | In-memory trigger waiters for the canvas-Run path (deployed triggers ride Temporal) |
 | [status_broadcaster.md](docs-internal/status_broadcaster.md) | WebSocket broadcaster (live handler count via `len(MESSAGE_HANDLERS) + len(get_ws_handlers())`) |
 | [credentials_encryption.md](docs-internal/credentials_encryption.md) | Fernet + PBKDF2 credentials system |
 | [memory_compaction.md](docs-internal/memory_compaction.md) | Token tracking and model-aware compaction |
@@ -178,15 +178,15 @@ Full setup and scripts reference: [SETUP.md](docs-internal/SETUP.md) - [SCRIPTS.
 | [proxy_service.md](docs-internal/proxy_service.md) | Residential proxy provider management |
 | [ci_cd.md](docs-internal/ci_cd.md) | GitHub Actions workflows |
 | [node_creation.md](docs-internal/node_creation.md) | How to create new nodes |
-| [memory_lifecycle.md](docs-internal/memory_lifecycle.md) | Canonical home for markdown memory format, vector store, claude_code_agent session resume |
+| [memory_lifecycle.md](docs-internal/ARCHIVE/memory_lifecycle.md) | *Archived* pre-RFC-0002 markdown memory model; see agent_context_flow.md and memory_compaction.md |
 | [tool_building_pipeline.md](docs-internal/tool_building_pipeline.md) | Canonical home for `_build_tool_from_node`, tool discovery, per-type Temporal dispatch |
-| [new_service_integration.md](docs-internal/new_service_integration.md) | External service integration *(historical, pre-Wave-11 — do not follow; see the OAuth recipe above)* |
+| [new_service_integration.md](docs-internal/ARCHIVE/new_service_integration.md) | *Archived* pre-Wave-11 integration guide; see node_creation.md and the OAuth recipe above |
 | [cli_services_integration.md](docs-internal/cli_services_integration.md) | CLI service lifecycle management |
 | [onboarding.md](docs-internal/onboarding.md) | Welcome wizard and replay |
 | [frontend_architecture.md](docs-internal/frontend_architecture.md) | Current frontend stack, token tiers, state-ownership boundary, strict styling rules |
 | [theme_system.md](docs-internal/theme_system.md) | The 12-theme token contract + "Adding a new theme" checklist |
 | [workflow_ops_protocol.md](docs-internal/workflow_ops_protocol.md) | Backend → canvas mutation wire format (`{operations: [...]}`) |
-| [schema_source_of_truth_rfc.md](docs-internal/schema_source_of_truth_rfc.md) | Backend-as-SSOT for node schemas, icons, output schemas |
+| [schema_source_of_truth_rfc.md](docs-internal/ARCHIVE/schema_source_of_truth_rfc.md) | *Archived* backend-as-SSOT RFC (shipped); see plugin_system.md |
 | [node_allowlist.md](docs-internal/node_allowlist.md) | Single-config UI visibility gating (`node_allowlist.json`) |
 | [authentication.md](docs-internal/authentication.md) | JWT/cookie auth — modes, middleware, frontend bootstrap |
 | [errors.md](docs-internal/errors.md) | Known errors and troubleshooting |

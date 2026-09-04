@@ -17,7 +17,7 @@ grant** that makes the optional API token the only path to analytics.
 | Auth | Dual-path: cf-owned OAuth login OR optional `cloudflare_api_token` field -> `CLOUDFLARE_API_TOKEN` env |
 | Task queue | `TaskQueue.REST_API` |
 | Output | `ui_hints = {"outputMode": "terminal"}`; `_shape` contract (parsed JSON -> `result`, text -> `stdout`, never both) + NDJSON recovery |
-| Tests | [`server/tests/test_cloudflare_plugin.py`](../server/tests/test_cloudflare_plugin.py) (35 contract tests) |
+| Tests | [`server/tests/test_cloudflare_plugin.py`](../server/tests/test_cloudflare_plugin.py) (42 contract tests at time of writing; `pytest --collect-only -q`) |
 | Paired skill | [`server/skills/cloudflare/cloudflare-skill/SKILL.md`](../server/skills/cloudflare/cloudflare-skill/SKILL.md) |
 
 ## Folder map

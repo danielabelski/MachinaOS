@@ -1,5 +1,11 @@
 # RFC: Temporal Cleanup, Queue Routing, Resilience & Performance (Waves 15-18)
 
+> **ARCHIVED 2026-09-04 — Superseded.** Waves 15–18 shipped. One recorded outcome was later reverted: the 17.2 one-shot `LLM_STEP_RETRY` (`maximum_attempts=1`) killed whole runs on a single 429 and is now unlimited with backoff (`services/temporal/_retry_policies.py`). `get_backend_mode` in `event_waiter.py` was kept deliberately rather than deleted. The Temporal Web UI port is `TEMPORAL_UI_PORT`, not 8233.
+>
+> For current state see:
+>
+> - [TEMPORAL_ARCHITECTURE.md](../TEMPORAL_ARCHITECTURE.md) — current worker pool, retry and resilience settings
+
 > **Historical implementation plan.** This document records the Waves 15-18
 > migration and retains names that must remain replay-compatible. The current
 > execution and control architecture is specified in

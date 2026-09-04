@@ -4,18 +4,19 @@
 
 ```
 OpenCompany/
-├── client/                 # React frontend (Vite dev server on :5678, proxying the backend; production build served by uvicorn on :5678)
+├── client/                 # React frontend (Vite dev server on VITE_CLIENT_PORT, proxying the backend; production build served by uvicorn on PYTHON_BACKEND_PORT)
 │   ├── src/
 │   └── package.json
-├── server/                 # Python FastAPI backend (port 5678)
+├── server/                 # Python FastAPI backend (port PYTHON_BACKEND_PORT)
 │   ├── services/           # Business logic (workflow, AI, etc.)
 │   ├── routers/            # API endpoints
 │   ├── core/               # DI container, database, cache
 │   ├── models/             # SQLModel definitions
-│   ├── whatsapp-rpc/       # Go WhatsApp service (port 5683)
+│   ├── nodes/              # Plugin folders (one per node; the WhatsApp bridge is the
+│   │                       #   `edgymeow` npm package installed under DATA_DIR/packages/, not in-tree)
 │   └── requirements.txt
-├── scripts/                # Build and utility scripts
-└── package.json            # Workspace root with npm scripts
+├── scripts/                # npm-tarball install lifecycle helpers (install/preinstall/postinstall)
+└── package.json            # Workspace root; bun@1.4.0 scripts wrapping `python -m cli`
 ```
 
 ## Quick Start
@@ -49,22 +50,22 @@ the embedding node and long-term memory, install the optional extra:
 cd server && uv sync --extra local-embeddings
 ```
 
-Services (production `company start`):
-- **App (API + WS + SPA)**: http://localhost:5678
-- **WhatsApp Service**: http://localhost:5683 (backend-spawned on demand)
-- **Temporal dev server**: gRPC :5681, Web UI :5680 (backend-spawned when `TEMPORAL_ENABLED`)
+Services (production `company start`; every port is declared once in `.env.template`):
+- **App (API + WS + SPA)**: `http://localhost:${PYTHON_BACKEND_PORT}`
+- **WhatsApp Service**: `WHATSAPP_RPC_PORT` (backend-spawned on demand)
+- **Temporal dev server**: gRPC `TEMPORAL_FRONTEND_GRPC_PORT`, Web UI `TEMPORAL_UI_PORT` (backend-spawned when `TEMPORAL_ENABLED`)
 
-`company dev` serves the same URL (http://localhost:5678) from the Vite HMR server, which proxies /api /ws /webhook to the backend on :5679.
+`company dev` serves the same app URL from the Vite HMR server, which proxies /api /ws /webhook /health /mcp to the backend; `.env.dev` moves the backend one port up (`PYTHON_BACKEND_PORT` override) so the app URL stays put.
 
 ## Services Overview
 
-### Frontend (React — always at :5678; Vite dev server proxying the backend, or the production build served by uvicorn)
+### Frontend (React — always at the app port; Vite dev server proxying the backend, or the production build served by uvicorn)
 - React 19 with TypeScript
 - React Flow for workflow canvas
 - Zustand for state management
 - WebSocket connection to backend
 
-### Backend (Python FastAPI - Port 5678)
+### Backend (Python FastAPI - `PYTHON_BACKEND_PORT`)
 - FastAPI with async support
 - SQLAlchemy + SQLite database
 - Native Anthropic and Google Gen AI providers plus the OpenAI SDK for OpenAI-compatible chat through `ChatUnifier`; Ollama's SDK is used for local model discovery and embeddings
@@ -74,8 +75,8 @@ Services (production `company start`):
 - `GET /health` - Health check
 - `WS /ws/status` - Real-time status WebSocket
 - `ANY /webhook/{path}` - Dynamic webhook endpoints
-- `POST /api/ai/*` - AI model execution
-- `POST /api/android/*` - Android device operations
+- `/api/android/*` - Android device operations (plugin router in `nodes/android/_router.py`)
+- AI model execution has no REST surface — it is WebSocket-only (`execute_ai_node`, `get_ai_models`, `execute_node`)
 
 ### WhatsApp Service (Go — optional, on-demand; port `WHATSAPP_RPC_PORT`)
 - Go service using whatsmeow library
@@ -87,9 +88,9 @@ Services (production `company start`):
 - Provides durable workflow execution with per-node retry and horizontal scaling
 - Official `temporal` CLI downloaded by `pooch` from `https://temporal.download/cli/archive/latest` on `company build` (or first backend boot with Temporal enabled)
 - Backend-owned: the FastAPI lifespan starts `temporal server start-dev` via `TemporalServerRuntime.ensure_started()` when `TEMPORAL_ENABLED` and the configured address is loopback (external clusters are detected via TCP probe and left alone) — SQLite at `~/.opencompany/temporal.db`
-- Ports: gRPC 5681, Web UI 5680
-- Embedded worker runs inside Python backend (`TemporalWorkerManager` in `main.py`)
-- Workflow auto-resumption disabled at startup (history preserved); see `TEMPORAL_TERMINATE_RUNNING_ON_STARTUP`
+- Ports: gRPC `TEMPORAL_FRONTEND_GRPC_PORT`, Web UI `TEMPORAL_UI_PORT` (values in `.env.template`)
+- Embedded worker runs inside the Python backend (`TemporalWorkerManager` + `TemporalWorkerPool`, built by `services/temporal/lifecycle.py`; `main.py` only schedules `run_temporal_lifecycle`)
+- Running and paused deployments survive restarts: `TEMPORAL_TERMINATE_RUNNING_ON_STARTUP=false` is the default, and the boot-time reconcile pass re-arms them. Setting it `true` is a debug-only sweep (history preserved; active control rows still veto it)
 - See [Temporal Architecture](./TEMPORAL_ARCHITECTURE.md) and [CLI Services Guide](./cli_services_integration.md)
 
 ### Database (SQLite)
@@ -104,7 +105,7 @@ Services (production `company start`):
 Copy the example environment file:
 
 ```bash
-cp .env.example .env
+cp .env.template .env
 ```
 
 Alternatively, `company build` scaffolds `.env` from `.env.template` automatically when it is missing (step `[0/6]`) and generates fresh random secrets for `SECRET_KEY` / `JWT_SECRET_KEY` / `API_KEY_ENCRYPTION_KEY` instead of the dev placeholders. An existing `.env` is never modified. If you copy the template by hand and later enable auth (or set `DEPLOYMENT_MODE` to anything other than `local`), the server logs a non-fatal error banner at startup until the placeholder secrets are replaced.
@@ -113,11 +114,11 @@ Alternatively, `company build` scaffolds `.env` from `.env.template` automatical
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `VITE_CLIENT_PORT` | 5678 | App port (Vite dev server; proxies backend prefixes) |
-| `PYTHON_BACKEND_PORT` | 5678 | Backend port (5679 in dev via `.env.dev`, behind the Vite proxy) |
+| `VITE_CLIENT_PORT` | see `.env.template` | App port (Vite dev server; proxies backend prefixes). Same value as `PYTHON_BACKEND_PORT` in production |
+| `PYTHON_BACKEND_PORT` | see `.env.template` | Backend port (`.env.dev` moves it one up in dev, behind the Vite proxy) |
 | `AUTH_MODE` | single | Authentication mode (single/multi) |
 | `REDIS_ENABLED` | false | Enable Redis cache (production) |
-| `DEBUG` | true | Debug mode |
+| `DEBUG` | false | Debug mode |
 
 ### API Keys (Optional)
 Add these to `.env` or configure via the Credentials UI:
@@ -148,7 +149,7 @@ When `VITE_AUTH_ENABLED=false` (the default):
 |---------|-------------|
 | `bun run start` | Start the app (backend-owned daemons start on demand) |
 | `bun run stop` | Stop all services |
-| `bun run build` | Install dependencies |
+| `bun run build` | Full production build (`company build`: bun install, client, sidecar, uv sync, bytecode, Temporal binary) |
 | `bun run dev` | Start development server |
 
 ## Troubleshooting

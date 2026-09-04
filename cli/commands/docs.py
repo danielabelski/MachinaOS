@@ -30,10 +30,15 @@ app = typer.Typer(
 _START = "<!-- AUTO-GENERATED-INDEX-START -->"
 _END = "<!-- AUTO-GENERATED-INDEX-END -->"
 _H1 = re.compile(r"^#\s+(.+)$", re.MULTILINE)
-# Mirror the existing JS regex: ``    type[: str] = "<nodeType>"`` at
-# class-attribute indentation.
+# ``    type[: str] = "<nodeType>"`` or ``    type = NAME`` at class-attribute
+# indentation. Group 1 is the literal, group 2 the bare constant name.
 _TYPE_ATTR = re.compile(
-    r"^\s{4}type\s*(?::\s*str\s*)?=\s*['\"]([A-Za-z_][\w]*)['\"]",
+    r"^\s{4}type\s*(?::\s*str\s*)?=\s*(?:['\"]([A-Za-z_]\w*)['\"]|([A-Za-z_]\w*))",
+    re.MULTILINE,
+)
+# Module-level ``NAME[: str] = "<value>"`` -- the target of ``type = NAME``.
+_STR_CONST = re.compile(
+    r"^([A-Za-z_]\w*)\s*(?::\s*str\s*)?=\s*['\"]([A-Za-z_]\w*)['\"]",
     re.MULTILINE,
 )
 
@@ -96,16 +101,25 @@ def _collect_documented_keys(docs_dir: Path) -> set[str]:
 
 
 def _collect_registry_keys(plugins_dir: Path) -> set[str]:
-    """Scrape ``type = "<nodeType>"`` from every plugin file."""
+    """Scrape ``type = "<nodeType>"`` from every plugin file.
+
+    Scans ``__init__.py`` too (folder-per-plugin nodes declare their class
+    there), skips ``_``-prefixed helpers, collects every class in a file, and
+    resolves ``type = NAME`` against a module-level ``NAME = "..."`` string
+    constant in the same file.
+    """
     keys: set[str] = set()
     if not plugins_dir.exists():
         return keys
     for path in plugins_dir.rglob("*.py"):
-        if path.name == "__init__.py" or path.name.startswith("_"):
+        if path.name.startswith("_") and path.name != "__init__.py":
             continue
-        match = _TYPE_ATTR.search(path.read_text(encoding="utf-8"))
-        if match:
-            keys.add(match.group(1))
+        text = path.read_text(encoding="utf-8")
+        consts = dict(_STR_CONST.findall(text))
+        for literal, name in _TYPE_ATTR.findall(text):
+            key = literal or consts.get(name)
+            if key:
+                keys.add(key)
     return keys
 
 

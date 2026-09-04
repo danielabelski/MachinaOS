@@ -6,8 +6,8 @@ n8n-inspired authentication system with JWT tokens stored in HttpOnly cookies. A
 ## Authentication Toggle
 | Setting | Environment Variable | Description |
 |---------|---------------------|-------------|
-| **Enabled** | `VITE_AUTH_ENABLED=true` | Require login (default) |
-| **Disabled** | `VITE_AUTH_ENABLED=false` | Bypass authentication, anonymous access |
+| **Enabled** | `VITE_AUTH_ENABLED=true` | Require login (`company deploy` sets this on cloud VMs) |
+| **Disabled** | `VITE_AUTH_ENABLED=false` | Bypass authentication, anonymous access (**default** in `.env.template`) |
 
 When `VITE_AUTH_ENABLED=false`:
 - Frontend skips login page entirely
@@ -91,9 +91,13 @@ and never cleared on logout. See
 
 `routers/auth.py` defines its own local `get_auth_service()` helper
 (`return container.auth_service()`) — `get_auth_service` is NOT exported from
-`services/auth.py`. The same local-helper pattern is repeated in
-`routers/twitter.py`, `routers/google.py`, and `routers/websocket.py`. In
-handlers/services use `from core.container import container; auth = container.auth_service()`.
+`services/auth.py`. `routers/websocket.py` repeats the same local helper.
+The OAuth callback routers moved into their plugin folders
+(`nodes/twitter/_router.py`, `nodes/google/_router.py`, built by
+`services.events.oauth_lifecycle.make_oauth_callback_router`) and resolve the
+service through `services.plugin.deps.get_auth_service` — the same call-time
+container lookup, deliberately not memoised. In handlers/services use
+`from core.container import container; auth = container.auth_service()`.
 
 ### Auth Middleware (`server/middleware/auth.py`)
 Protects all routes except public paths:
@@ -162,7 +166,7 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
 Environment variables in `.env`:
 ```bash
 # Authentication Toggle (frontend - Vite)
-VITE_AUTH_ENABLED=true              # 'true' or 'false' - disable to bypass login
+VITE_AUTH_ENABLED=false             # 'false' (template default) bypasses login; 'true' requires it
 
 # Authentication Mode (backend)
 AUTH_MODE=single                    # 'single' or 'multi'
@@ -306,7 +310,7 @@ useEffect(() => {
 | `client/src/components/auth/LoginPage.tsx` | Login UI |
 | `client/src/components/auth/ProtectedRoute.tsx` | Route guard |
 | `server/models/auth.py` | User SQLModel with bcrypt |
-| `server/services/user_auth.py` | JWT creation/verification + encryption init on login/logout |
+| `server/services/user_auth.py` | `UserAuthService`: register / login / JWT mint + verify / `get_current_user`. No encryption-service coupling (see the note under Auth Service) |
 | `server/routers/auth.py` | REST endpoints |
 | `server/middleware/auth.py` | Route protection (`PUBLIC_PATHS` / `PUBLIC_PREFIXES`) |
 | `server/core/config.py` | Settings with `vite_auth_enabled` field |

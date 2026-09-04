@@ -66,7 +66,7 @@ StatusBroadcaster.connect(ws)
         |
         v
 Message loop:
-  receive_json -> dispatch to handler in _HANDLERS registry
+  receive_json -> dispatch: MESSAGE_HANDLERS.get(type) or get_ws_handlers().get(type)
   send_json    -> pushed by broadcaster on state change
   ping/pong    -> keepalive every 30s from frontend
         |
@@ -77,11 +77,11 @@ Frontend unmounts or logs out
 StatusBroadcaster.disconnect(ws) -> remove from _connections
 ```
 
-Auto-reconnect is handled by `WebSocketContext.tsx`: on disconnect, it schedules a reconnect after 3 seconds with a 100ms mount delay to avoid React Strict Mode double-connect in dev.
+Auto-reconnect is handled by `WebSocketContext.tsx` through PartySocket's `ReconnectingWebSocket` (`partysocket/ws`): jittered exponential backoff (`MIN_DELAY_MS` / `MAX_DELAY_MS` / `GROW_FACTOR` in `client/src/lib/connectionConfig.ts`), message replay, and intentional-close handling (code 1000 stops the reconnect loop). A 100ms mount delay avoids React Strict Mode double-connect in dev.
 
 ## Handler Registry
 
-Handlers are registered via the `@ws_handler` decorator:
+Handlers are plain async functions wrapped by the `@ws_handler` decorator (`services/ws_handler_registry.py`):
 
 ```python
 @ws_handler()
@@ -91,7 +91,7 @@ async def handle_get_node_parameters(data: Dict, websocket: WebSocket) -> Dict:
     return {"success": True, "parameters": params}
 ```
 
-The decorator populates a module-level `_HANDLERS: Dict[str, Callable]` map from the function name (`handle_get_node_parameters` -> `"get_node_parameters"`). The dispatcher reads the incoming message's `type` field and looks up the handler.
+The decorator does **not** register anything. It validates the listed required fields, default-injects `{"success": True}`, and wraps exceptions into a `{"success": False, "error": ...}` envelope. Registration is explicit and lives in two places: the core `MESSAGE_HANDLERS` dict in `server/routers/websocket.py` (`"get_node_parameters": handle_get_node_parameters, ...`), and the plugin-side `register_ws_handlers({...})` calls from each `nodes/<plugin>/__init__.py`, which write into the `_WS_REGISTRY` `IdempotentRegistry` in `services/ws_handler_registry.py`. The dispatcher reads the incoming message's `type` field and resolves `MESSAGE_HANDLERS.get(type) or get_ws_handlers().get(type)`. Plugin handlers that can fail user-correctably use `@ws_response` (from `services.plugin.ws`) instead, which keeps the one-WARN-line `NodeUserError` contract.
 
 Live total = `len(MESSAGE_HANDLERS) + len(get_ws_handlers())` -- the `MESSAGE_HANDLERS` dict in `server/routers/websocket.py` plus plugin-registered handlers via `services.ws_handler_registry`. Do not hand-maintain a fixed count here.
 
@@ -104,11 +104,11 @@ Live total = `len(MESSAGE_HANDLERS) + len(get_ws_handlers())` -- the `MESSAGE_HA
 | Tool schemas | `get_tool_schema`, `save_tool_schema`, `delete_tool_schema`, `get_all_tool_schemas` |
 | Node execution | `execute_node`, `execute_workflow`, `cancel_execution`, `get_node_output`, `clear_node_output` |
 | Triggers / events | `cancel_event_wait`, `get_active_waiters` |
-| Dead letter queue | `get_dlq_entries`, `replay_dlq_entry`, `remove_dlq_entry`, `purge_dlq`, `get_dlq_stats` |
+| Dead letter queue | `get_dlq_entries`, `get_dlq_entry`, `replay_dlq_entry`, `remove_dlq_entry`, `purge_dlq`, `get_dlq_stats` |
 | Deployment | `deploy_workflow`, `cancel_deployment`, `get_deployment_status`, `update_deployment_settings` |
-| AI operations | `execute_ai_node`, `get_ai_models`, `test_ai_proxy` |
+| AI operations | `execute_ai_node`, `get_ai_models` |
 | API keys | `validate_api_key`, `get_stored_api_key`, `save_api_key`, `delete_api_key` |
-| OAuth flows | `claude_oauth_login`, `twitter_oauth_login`, `twitter_logout`, `google_oauth_login`, `google_logout` |
+| OAuth / CLI login flows | `claude_code_login`, `claude_code_logout` (plugin-registered from `nodes/agent/claude_code_agent/_handlers.py`), `twitter_oauth_login`, `twitter_logout`, `google_oauth_login`, `google_logout` |
 | Android | `get_android_devices`, `execute_android_action`, `android_relay_connect`, `android_relay_disconnect`, `android_relay_reconnect` |
 | WhatsApp | `whatsapp_status`, `whatsapp_qr`, `whatsapp_send`, `whatsapp_chat_history`, `whatsapp_newsletters`, `whatsapp_diagnostics`, ... |
 | Telegram | `telegram_connect`, `telegram_disconnect`, `telegram_status`, `telegram_send`, `telegram_get_me`, `telegram_get_chat` |
@@ -122,7 +122,7 @@ Live total = `len(MESSAGE_HANDLERS) + len(get_ws_handlers())` -- the `MESSAGE_HA
 | Agent teams | `create_team`, `add_team_task`, `claim_team_task`, `complete_team_task`, `get_team_messages` |
 | Model registry | `get_model_constraints`, `refresh_model_registry` |
 
-The exact set drifts over time. The canonical count comes from counting `@ws_handler(` occurrences in `server/routers/websocket.py`.
+The exact set drifts over time. The canonical count is `len(MESSAGE_HANDLERS) + len(get_ws_handlers())` at runtime (many handlers now live in `services/credentials/handlers.py`, `services/settings/handlers.py` and `nodes/<plugin>/_handlers.py`, so counting decorators in `websocket.py` undercounts).
 
 ## Broadcast Messages (Server -> Clients)
 
@@ -139,7 +139,7 @@ Broadcasts are sent to all connected clients without a request-response correlat
 | `api_key_status` | Credential validation result; also fired by `delete_api_key` to clear `apiKeyStatuses[provider]` | `{provider, data: {valid, hasKey, models, message, timestamp}}` |
 | `credential_catalogue_updated` | Credential mutation (save / delete / oauth-disconnect) — wraps `WorkflowEvent` (CloudEvents v1.0) from `services/events/envelope.py`. Outer `type` stays this string for FE back-compat; body's `type` follows `credential.<area>.<action>` (e.g. `credential.api_key.saved`). Frontend `WebSocketContext` invalidates `useCatalogueQuery` via the 300 ms `invalidateCatalogue` debounce. | `{specversion: "1.0", id, source: "opencompany://services/credentials", type, subject: provider, time, data: {provider, customer_id?}}` |
 | `node_parameters_updated` | Parameters saved by parameter-panel user, Claude CLI memory bridge, or AgentWorkflow per-turn memory append — wraps `WorkflowEvent` (CloudEvents v1.0) from `services/events/envelope.py`. Body's `type` is `com.opencompany.node.parameters.updated`. `data.source` (`"user"` / `"cli"` / `"agent"`) distinguishes the three emission sites. Replaces the legacy raw-dict broadcast at commit `7c9e873`. Locked by `tests/test_cloudevents_node_parameters.py`. | `{specversion: "1.0", id, source: "opencompany://services/parameters", type: "com.opencompany.node.parameters.updated", subject: node_id, time, data: {node_id, parameters, version, source}}` |
-| `agent_progress` | Agent-loop / AgentWorkflow lifecycle phase (canvas badge "N / max" + phase indicator) — wraps `WorkflowEvent.agent_progress` (CloudEvents v1.0). Emitted from `services/ai.py:execute_agent` (legacy) and via the `agent.broadcast_progress.v1` Temporal activity (F4.B). F4.B fires the full phase set: `starting` (entry, drives `node_status="executing"`), `llm_step` (per iteration), `executing_tool` + `tool_completed` (around each per-type tool activity), `completed` (final, drives `node_status="success"`). The activity optionally drives a raw-dict `update_node_status` alongside the CloudEvents envelope so the canvas-glow color follows the lifecycle without a separate handler — same dual-channel pattern F4.A's `_node_activity` uses. | `{specversion: "1.0", id, source: "opencompany://services/agent", type: "com.opencompany.agent.progress", subject: node_id, time, data: {node_id, iteration, max_iterations, phase?, tool_name?}}` |
+| `agent_progress` | Agent-loop / AgentWorkflow lifecycle phase (canvas badge "N / max" + phase indicator) — wraps `WorkflowEvent.agent_progress` (CloudEvents v1.0). Emitted from `services/ai.py:execute_agent` (legacy) and via the `agent.broadcast_progress` Temporal activity (F4.B). F4.B fires the full phase set: `starting` (entry, drives `node_status="executing"`), `llm_step` (per iteration), `executing_tool` + `tool_completed` (around each per-type tool activity), `completed` (final, drives `node_status="success"`). The activity optionally drives a raw-dict `update_node_status` alongside the CloudEvents envelope so the canvas-glow color follows the lifecycle without a separate handler — same dual-channel pattern F4.A's `_node_activity` uses. | `{specversion: "1.0", id, source: "opencompany://services/agent", type: "com.opencompany.agent.progress", subject: node_id, time, data: {node_id, iteration, max_iterations, phase?, tool_name?}}` |
 | `token_usage_update` | AI execution updates token counters | `{session_id, data: {total, threshold, needs_compaction}}` |
 | `compaction_starting` | Memory compaction begins | `{session_id, node_id}` |
 | `compaction_completed` | Memory compaction ends | `{session_id, success, tokens_before, tokens_after}` |
@@ -210,7 +210,7 @@ Android service nodes (`batteryMonitor`, `wifiAutomation`, etc.) check `androidS
 **Frontend** (`WebSocketContext.tsx`):
 
 - 30-second `setInterval` sends `{"type": "ping"}`.
-- On disconnect: schedule reconnect after 3 seconds.
+- On disconnect: PartySocket's `ReconnectingWebSocket` reconnects with jittered exponential backoff (`client/src/lib/connectionConfig.ts`), replaying queued messages; an intentional close (code 1000) stops the loop.
 - 100ms mount delay avoids React Strict Mode double-connect in development.
 - `isMountedRef` prevents connections after unmount.
 - WebSocket is gated on `isAuthenticated` from `AuthContext`: if auth is disabled or not yet loaded, the provider defers connection.

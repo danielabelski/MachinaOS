@@ -11,8 +11,8 @@ Wave 11.C migrated all 16 Android nodes to self-contained plugin folders
 under `server/nodes/android/<service>/__init__.py`. Each is a trivial
 subclass of the shared `AndroidServiceBase` (`server/nodes/android/_base.py`)
 that sets `type` / `display_name` / `description` / `tool_name` only. The old
-`server/services/handlers/android.py::handle_android_service` and
-`server/services/android_service.py` files are **deleted**. Dispatch flows
+`handlers/android.py::handle_android_service` handler and the
+`android_service.py` service module are **deleted**. Dispatch flows
 through `BaseNode.execute()` -> the `@Operation("invoke")` method on
 `AndroidServiceBase`.
 

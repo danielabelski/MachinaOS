@@ -63,5 +63,5 @@ expansion above.
 ## Related
 
 - **Pattern doc**: [`_pattern.md`](./_pattern.md)
-- **Sibling team lead**: [`aiEmployee`](./aiEmployee.md)
+- **Sibling team lead**: [`aiEmployee`](./ai_employee.md)
 - **Architecture**: [Agent Teams](../../agent_teams.md)

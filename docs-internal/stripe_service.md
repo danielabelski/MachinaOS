@@ -234,7 +234,7 @@ StripeListenSource.stop()
 | `server/routers/webhook.py` | Path-handler arm: consults `WEBHOOK_SOURCES` before falling through to legacy generic dispatch. |
 | `server/nodes/visuals.json` | `stripeAction` / `stripeReceive` icon + color (`asset:stripe`, `#635BFF`). |
 | `server/nodes/groups.py` | `payments` palette group. |
-| `client/src/assets/icons/stripe.svg` | Stripe icon. |
+| `server/credentials/icons/stripe.svg` | Stripe credential-tile icon, served at `/api/schemas/credentials/stripe/icon`. |
 | `server/tests/services/test_events.py` | 18 framework tests (envelope, verifiers, polling/daemon lifecycle, WebhookSource). |
 | `server/tests/nodes/test_stripe_plugin.py` | 21 Stripe-specific tests (shape, filter, action passthrough, registrations). |
 
@@ -837,7 +837,7 @@ End-to-end smoke (requires Stripe CLI installed and a Stripe account):
    "create a Stripe test customer with email rosy@sparrow.com"; the
    LLM emits a `stripeAction.run` tool call.
 7. **Signature failure.**
-   `curl -X POST -H "Stripe-Signature: t=0,v1=garbage" http://localhost:5678/webhook/stripe -d '{}'`
+   `curl -X POST -H "Stripe-Signature: t=0,v1=garbage" http://localhost:${PYTHON_BACKEND_PORT}/webhook/stripe -d '{}'`
    returns 400; no event dispatched.
 8. **Logout.** Credentials Modal → Disconnect. Confirm
    `process_service.list_processes("_stripe_global")` is empty AND
@@ -848,8 +848,8 @@ End-to-end smoke (requires Stripe CLI installed and a Stripe account):
    triggers `make_status_refresh` which auto-spawns the daemon.
 
 Unit tests live in [`server/tests/nodes/test_stripe_plugin.py`](../server/tests/nodes/test_stripe_plugin.py)
-(21 tests) and [`server/tests/services/test_events.py`](../server/tests/services/test_events.py)
-(18 framework tests). Run via `pytest server/tests/services/test_events.py
+(20 collected cases at time of writing) and [`server/tests/services/test_events.py`](../server/tests/services/test_events.py)
+(29 framework tests; counts via `pytest --collect-only -q`). Run via `pytest server/tests/services/test_events.py
 server/tests/nodes/test_stripe_plugin.py -v`.
 
 ## Related Docs

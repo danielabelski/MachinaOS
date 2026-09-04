@@ -1,6 +1,6 @@
 """Tests for EncryptionService (Fernet + PBKDF2).
 
-Locks in invariant 13 from docs-internal/credentials_panel.md:
+Locks in invariant 13 from docs-internal/ARCHIVE/credentials_panel.md:
   - Encryption is reversible for unicode and large payloads
   - Tampered ciphertext raises ValueError
   - Uninitialized service raises RuntimeError

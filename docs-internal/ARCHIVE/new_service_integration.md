@@ -1,5 +1,13 @@
 # New Service Integration Guide
 
+> **ARCHIVED 2026-09-04 — Superseded.** Pre-Wave-11 integration guide. The `*_NODE_TYPES` lists, `client/src/nodeDefinitions/`, `services/google_oauth.py` and `handlers/google_auth.py` it walks through are gone; a service is now one self-contained plugin folder.
+>
+> For current state see:
+>
+> - [node_creation.md](../node_creation.md) — decision tree
+> - [plugin_system.md](../plugin_system.md) — full reference
+> - [server/nodes/README.md](../../server/nodes/README.md) — 5-minute recipe
+
 > **⚠️ HISTORICAL — do not follow these steps.** This guide predates
 > Wave 11 and is preserved only as background for reading old code.
 >

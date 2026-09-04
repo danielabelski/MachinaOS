@@ -1,6 +1,6 @@
 """Tests for CredentialsDatabase (encrypted SQLite storage).
 
-Locks in the two-table separation (invariants 3 and 8 in docs-internal/credentials_panel.md):
+Locks in the two-table separation (invariants 3 and 8 in docs-internal/ARCHIVE/credentials_panel.md):
   - get_api_key for a provider only stored in the OAuth table returns None
   - get_oauth_tokens for a provider only stored as API key returns None
   - Stored ciphertext is never plaintext

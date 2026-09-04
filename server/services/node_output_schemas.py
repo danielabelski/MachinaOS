@@ -7,7 +7,7 @@ HTTP endpoint) to populate the draggable variable list *before* the
 workflow has been executed. Once a node has run, the editor prefers
 the real execution data over the declared schema (mirrors n8n's
 VirtualSchema.vue precedence — see
-docs-internal/schema_source_of_truth_rfc.md).
+docs-internal/ARCHIVE/schema_source_of_truth_rfc.md).
 
 Design notes:
 - Models here are **UI-visible shape projections**. They do NOT have to

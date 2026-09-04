@@ -1,5 +1,14 @@
 # Python Backend - Environment Setup
 
+> **ARCHIVED 2026-09-04 — Superseded.** Most of this file described modules that never existed in this tree (`handlers/gmail.py`, `WHATSAPP_SERVICE_URL`, `.env.example`, an auth-gated encryption init). Kept only as a record; do not follow it.
+>
+> For current state see:
+>
+> - [SETUP.md](../SETUP.md) — environment and first run
+> - [authentication.md](../authentication.md) and [credentials_encryption.md](../credentials_encryption.md)
+> - [plugin_system.md](../plugin_system.md) — backend architecture
+> - [CLAUDE.md](../../CLAUDE.md) — the live index
+
 ## Quick Start
 
 1. Copy the template to create your .env file:

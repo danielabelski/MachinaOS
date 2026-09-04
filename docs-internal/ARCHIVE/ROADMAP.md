@@ -1,5 +1,12 @@
 # Execution Engine Roadmap
 
+> **ARCHIVED 2026-09-04 — Superseded.** A status snapshot whose helper names, DLQ path, test list and pending-features section had all drifted (OpenTelemetry tracing shipped; `_add_to_dlq` never existed; the listed test files do not). Implementation status now lives with the design docs.
+>
+> For current state see:
+>
+> - [DESIGN.md](../DESIGN.md) — execution engine
+> - [TEMPORAL_ARCHITECTURE.md](../TEMPORAL_ARCHITECTURE.md) and [temporal-workflow-control.md](../temporal-workflow-control.md)
+
 ## Overview
 
 This document tracks the implementation status of the robust workflow execution engine based on industry-standard patterns from Netflix Conductor, Prefect 3.0, and Redis Streams.

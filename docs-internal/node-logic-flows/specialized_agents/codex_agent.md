@@ -137,6 +137,6 @@ flowchart TD
 
 ## Related
 
-- **Dedicated-path siblings**: [`claudeCodeAgent`](./claudeCodeAgent.md), [`rlmAgent`](./rlmAgent.md)
+- **Dedicated-path siblings**: [`claudeCodeAgent`](./claude_code_agent.md), [`rlmAgent`](./rlm_agent.md)
 - **Generic pattern**: [`_pattern.md`](./_pattern.md)
 - **Architecture**: [CLI Agent Framework](../../cli_agent_framework.md)

@@ -24,7 +24,7 @@ import { resolveNodeDescription } from '../../lib/nodeSpec';
 // Backend-driven node output schema lookup.
 //
 // Mirrors n8n's schemaPreview pattern (see
-// docs-internal/schema_source_of_truth_rfc.md): the shape shown in the
+// docs-internal/ARCHIVE/schema_source_of_truth_rfc.md): the shape shown in the
 // drag-drop variable panel for a node that has not been executed yet
 // comes from the backend's Pydantic model registry via the
 // `get_node_output_schema` WS handler. Results are cached per node

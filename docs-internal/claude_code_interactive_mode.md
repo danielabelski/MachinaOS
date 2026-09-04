@@ -1,7 +1,9 @@
 # Claude Code interactive mode (subprocess + stream-json)
 
 > **TL;DR.** `ClaudeSessionPool` keeps a warm `claude` subprocess per
-> `simpleMemory.node_id` and drives it with the same flags Anthropic's
+> session key (the RFC-0002 conversation key `context_bridge.pool_key` when
+> a Context node is wired; the legacy `simpleMemory.node_id` on immutable V1
+> graphs — `services/cli_agent/service.py:354-358`) and drives it with the same flags Anthropic's
 > own VSCode extension uses — stdio pipes, `--output-format stream-json
 > --input-format stream-json --verbose --ide`. Multi-turn happens by
 > writing newline-delimited JSON to `proc.stdin` of the long-lived
@@ -294,11 +296,14 @@ allowlist is:
   agent to load every skill through the `getSkill` MCP round-trip)
   is materially worse UX for the common case where the workflow
   pre-wired which skills should be on the table.
-- The five OpenCompany MCP infrastructure tools — `getWorkspaceFiles`,
-  `listSkills`, `getSkill`, `getCredential`, `broadcastLog` — which
-  are how the agent reads its workspace, discovers connected skills
-  (when no wiring is present), fetches scoped credentials, and
-  surfaces intermediate progress to the FE.
+- The seven OpenCompany MCP infrastructure tools — `getWorkspaceFiles`,
+  `listSkills`, `getSkill`, `readSkillResource`, `searchSkillResource`,
+  `getCredential`, `broadcastLog` (`_provider.py:275-283`; defined in
+  `services/cli_agent/mcp_server.py:359-560`) — which are how the agent
+  reads its workspace, discovers connected skills (when no wiring is
+  present), pages through and searches a loaded skill's declared
+  resources, fetches scoped credentials, and surfaces intermediate
+  progress to the FE.
 
 Callers wanting specific claude built-ins back in opt in per-task via
 `ClaudeTaskSpec.allowed_tools` (the field is honored verbatim — no
@@ -372,8 +377,9 @@ with `cwd=repo_root` (stable for `--continue`'s `project_key`
 resolution) and non-memory runs with `cwd=worktree`, neither of which
 sees files dropped by upstream nodes (`fileDownloader`,
 `documentParser`, code executors, etc.). Mirrors the ai_agent
-pattern ([`services/ai.py:1899`](../server/services/ai.py) —
-`config['workspace_dir'] = context.get('workspace_dir', '')`) but
+pattern ([`services/ai.py:1186`](../server/services/ai.py) in
+`execute_agent`, `:1924` in `execute_chat_agent` —
+`config["workspace_dir"] = context.get("workspace_dir", "")`) but
 uses claude's native `--add-dir` instead of MCP-tool-config injection
 because claude has its own filesystem tools (`Read`, `Edit`, `Glob`,
 `Grep`, `Write`, `Bash`) rather than MCP-injected ones. Verified

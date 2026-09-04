@@ -68,7 +68,7 @@ exists to keep them apart.
 **`account_id` is stripped from model arguments.** `server_controlled_fields`
 is enforced only in `BaseNode.execute_as_tool`'s ToolNode branch; a dual-purpose
 ActionNode takes an earlier return that merges `{**node_params, **tool_args}`
-with model arguments winning ([base.py:637-652](../server/services/plugin/base.py)).
+with model arguments winning ([base.py:653-669](../server/services/plugin/base.py)).
 Since inbound Discord messages are the realistic source of hostile tool
 arguments and `account_id` selects which bot identity sends, `AccountScopedNode`
 in [`_base.py`](../server/nodes/discord/_base.py) removes locked fields before
@@ -253,7 +253,8 @@ filters on them and ignores the node with no listener and no warning
 ## Testing
 
 [`server/tests/nodes/test_discord.py`](../server/tests/nodes/test_discord.py) —
-121 tests, no live bot required. Covers account scoping, the path guard, error
+121 collected cases (80 test functions, several parametrized; `pytest --collect-only -q`
+is the counting method), no live bot required. Covers account scoping, the path guard, error
 classification, rate-limit parsing, content splitting, the tool-path account
 lock, send/action shapes, event shaping, filters, gateway lifecycle, the
 Ed25519 verifier, the endpoint's 401/503/PONG/defer behaviour, and route

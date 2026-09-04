@@ -1,6 +1,6 @@
 """Tests for TwitterOAuth (PKCE flow).
 
-Locks in invariants 9 and 10 from docs-internal/credentials_panel.md:
+Locks in invariants 9 and 10 from docs-internal/ARCHIVE/credentials_panel.md:
   - PKCE state consumed exactly once
   - code_challenge = base64url(sha256(code_verifier))
   - Authorization URL contains code_challenge_method=S256

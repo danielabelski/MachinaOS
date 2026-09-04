@@ -24,18 +24,18 @@ are already done. Your job is to repeat the pilot pattern for your category.
 ## What to read
 
 1. The handler file(s) for your category (paths in your prompt).
-2. The backend plugin at `server/nodes/<category>/<node>.py` (the NodeSpec SSOT).
+2. The backend plugin at `server/nodes/<group>/<plugin>/__init__.py` (the NodeSpec SSOT).
 3. Any matching skill at `server/skills/<folder>/<skill>/SKILL.md` - link to it from the doc, do not duplicate.
 4. The pilot files above so you copy the structure exactly.
 
 ## What to write
 
-1. **Per-node docs**: one Markdown file per node at `docs-internal/node-logic-flows/<category>/<nodeName>.md`. Use camelCase matching the registry key.
+1. **Per-node docs**: one Markdown file per node at `docs-internal/node-logic-flows/<category>/<type>.md`. The filename stem must equal the registered `type` string exactly (camelCase or snake_case, whatever the plugin declares).
 2. **One test file** at `server/tests/nodes/test_<category>.py` with one test class per node, covering at minimum:
    - happy path (assert envelope success + payload shape)
    - one validation/error short-circuit (e.g. empty required param)
    - one external-error path (HTTP 4xx/5xx, missing credential, subprocess failure)
-3. **Update the docs index**: run `node scripts/build-node-docs-index.js` after writing docs.
+3. **Update the docs index**: run `company docs nodes` after writing docs; `company docs nodes --check` fails when a registered node has no card.
 
 ## Doc style rules
 

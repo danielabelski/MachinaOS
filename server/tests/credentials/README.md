@@ -1,6 +1,6 @@
 # Credentials Test Suite
 
-Locks in the invariants enumerated in [docs-internal/credentials_panel.md §5](../../../docs-internal/credentials_panel.md).
+Locks in the invariants enumerated in [docs-internal/ARCHIVE/credentials_panel.md §5](../../../docs-internal/ARCHIVE/credentials_panel.md).
 
 ## Run
 

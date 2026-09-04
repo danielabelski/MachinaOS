@@ -27,7 +27,7 @@ intrinsic Task Manager -> `execute_chat_agent`.
 
 ## Behaviour
 
-See **[Orchestrator Agent](./orchestratorAgent.md)** for the teammate
+See **[Orchestrator Agent](./orchestrator_agent.md)** for the teammate
 expansion details, and **[Generic Specialized Agent Pattern](./_pattern.md)**
 for the shared contract.
 
@@ -39,5 +39,5 @@ for the shared contract.
 ## Related
 
 - **Pattern doc**: [`_pattern.md`](./_pattern.md)
-- **Sibling team lead**: [`orchestratorAgent`](./orchestratorAgent.md)
+- **Sibling team lead**: [`orchestratorAgent`](./orchestrator_agent.md)
 - **Architecture**: [Agent Teams](../../agent_teams.md)

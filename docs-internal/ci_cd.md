@@ -87,7 +87,7 @@ Reusable `workflow_call` workflow with four independent jobs (no plan/change-det
 - `build-and-lint` — `bun install --frozen-lockfile` + `bun run build`, then client lint (`bun run --filter react-flow-client lint`), TypeScript check (`... typecheck`), and frontend tests (`... test`, vitest). Runs on `ubuntu-latest`.
 - `backend-tests` — `uv sync` + `uv run pytest tests/ -v` in `server/`. Whole suite, unsharded. Runs on `ubuntu-latest`.
 - `cli-tests` — `uv pip install --system pytest pytest-asyncio pyyaml` + `python -m pytest cli/tests/ -v`. Runs on `ubuntu-latest`.
-- `test-build-start` — cross-OS matrix (`ubuntu-latest`, `macos-latest`, `windows-latest`, `fail-fast: false`). Runs `bun run build`, then a start smoke test. On Unix it backgrounds `bun run start`, polls `http://localhost:5678/health` for up to ~30 s, then `bun run stop`. On Windows it starts the supervisor as a background job, waits 15 s, and fails if the job already exited.
+- `test-build-start` — cross-OS matrix (`ubuntu-latest`, `macos-latest`, `windows-latest`, `fail-fast: false`). Runs `bun run build`, then `bun run tsc --version` (proves the per-platform TypeScript 7 Go binary delivered via `optionalDependencies` resolves on every OS — the type-check gate itself runs on ubuntu only; `bun run`, never `bunx`, so it resolves strictly from the root `node_modules/.bin`), then a start smoke test. On Unix it backgrounds `bun run start`, reads `PYTHON_BACKEND_PORT` out of `.env.template` and polls `http://localhost:${APP_PORT}/health` for up to ~30 s, then `bun run stop`. On Windows it starts the supervisor as a background job, waits 15 s, and fails if the job already exited.
 
 ---
 

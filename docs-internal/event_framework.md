@@ -56,7 +56,7 @@ phase plan lives in `~/.claude/plans/properly-fix-the-tech-dreamy-tarjan.md`.
 If the canary fan-out causes regressions in production:
 
 1. Set `EVENT_FRAMEWORK_ENABLED=false` in `.env` (or the process environment).
-2. Restart the server (`npm run start` / `uvicorn` reload). Pydantic Settings re-reads on startup.
+2. Restart the server (`company start` / `uvicorn` reload). Pydantic Settings re-reads on startup.
 3. Confirm pass-through: `dispatch.emit()` logs `event-framework disabled — emit no-op` at DEBUG.
 
 No DB migrations, no schema changes — the rollback is one env var + restart. The legacy `event_waiter` collector/processor keeps trigger nodes firing because plugin producers still call `event_waiter.dispatch(...)` alongside `dispatch.emit(...)` (the dual-dispatch pattern stays for the in-memory canvas-Run path; the Redis-Streams branch itself was retired in Wave 15.3).
@@ -103,14 +103,16 @@ chatTrigger. The scoping DECISION lives in the core call site
 session stays unscoped) and the narrowing in core dispatch — plugin
 `_events.py` factories only plumb the field of their own wire shape.
 
-Worker is embedded in the FastAPI process (`main.py:211-292`
-`TemporalWorkerManager.start()` runs as `asyncio.create_task()`). Activities
+Worker is embedded in the FastAPI process (`main.py:321-332` schedules
+`run_temporal_lifecycle` from `services/temporal/lifecycle.py` as one
+`asyncio.create_task()`; that module owns the connect loop and the
+`TemporalWorkerManager` / `TemporalWorkerPool` start). Activities
 and the WebSocket connection pool share memory + event loop, so the fan-out
 to FE clients is a direct in-process call — no Redis Streams hop required.
 
 ## Search Attributes setup
 
-The framework requires 6 custom Search Attributes on the Temporal
+The framework requires 7 custom Search Attributes on the Temporal
 namespace. Registration is **idempotent + automatic on Temporal client
 connect** (`services/temporal/client.py:TemporalClientWrapper.connect`):
 
@@ -122,6 +124,7 @@ connect** (`services/temporal/client.py:TemporalClientWrapper.connect`):
 | `TriggerNodeId` | KEYWORD | Per-trigger event-history queries |
 | `EventTriggerKind` | KEYWORD | Coarse classification (webhook / polling / …) |
 | `EventReceivedAt` | DATETIME | Time-range queries |
+| `ControlEventTypes` | KEYWORD_LIST | The push event types a `WorkflowControlWorkflow` currently has triggers for (upserted as triggers register); `dispatch.emit` skips controllers whose list does not contain the event type. Absent on pre-upgrade histories = match-all. |
 
 Declarations live in
 [`services/temporal/search_attributes.py:EVENT_SEARCH_ATTRIBUTES`](../server/services/temporal/search_attributes.py).
@@ -138,7 +141,7 @@ temporal operator search-attribute create \
   --namespace default \
   --name EventType \
   --type Keyword
-# ... repeat for the other 5 attributes
+# ... repeat for the other 6 attributes (ControlEventTypes is --type KeywordList)
 ```
 
 ### Verification
@@ -147,7 +150,7 @@ temporal operator search-attribute create \
 temporal operator search-attribute list --namespace default
 ```
 
-Should show the 6 framework attributes alongside Temporal's built-in
+Should show the 7 framework attributes alongside Temporal's built-in
 default attributes (`WorkflowType`, `WorkflowId`, `ExecutionStatus`, …).
 
 ## Temporal contract for plugin authors
@@ -290,7 +293,7 @@ Each Phase-A milestone has a verification command:
 | A1 | `pytest tests/test_plugin_contract.py::TestStartToCloseTimeoutOverridesAreCommented` |
 | A2 | `python -c "from services.plugin.scaling import RetryPolicy; assert 'NodeUserError' in RetryPolicy().non_retryable_error_types"` |
 | A3 | `python -c "from core.config import Settings; print(Settings().temporal_graceful_shutdown_seconds)"` |
-| A4 | After Temporal connect: `temporal operator search-attribute list \| grep -E 'EventType\|EventSource\|EventWorkflowId\|TriggerNodeId\|EventTriggerKind\|EventReceivedAt'` — all 6 lines |
+| A4 | After Temporal connect: `temporal operator search-attribute list \| grep -E 'EventType\|EventSource\|EventWorkflowId\|TriggerNodeId\|EventTriggerKind\|EventReceivedAt\|ControlEventTypes'` — all 7 lines |
 
 Full test surface landed in Phase A9. Phase B (plugin `_events.py`
 modules), Phase C (Temporal trigger-waiter migration), and Phase D
@@ -305,7 +308,7 @@ inspection surface:
 
 - **Visibility list**: `client.list_workflows(query="ExecutionStatus='Failed' AND EventWorkflowId='<deployment_workflow_id>'")` returns every failed run for a deployment. The same Search Attributes the cancel sweep uses for cleanup (per `services/temporal/search_attributes.py`) make this query work.
 - **Failure detail**: `client.get_workflow_history(workflow_id, run_id)` returns the full Event History, including the `ActivityTaskFailed` event's error message + stacktrace + each retry attempt timestamp.
-- **Temporal Web UI**: http://localhost:5680 — the same data, browsable.
+- **Temporal Web UI**: `http://localhost:<TEMPORAL_UI_PORT>` — the same data, browsable.
 
 This is why Wave 12 explicitly does NOT add a custom `event_dlq` SQLModel table. Doing so would reinvent the Temporal primitives the rest of the framework was built AROUND, not against. The pre-Temporal `services/execution/models.py::DLQEntry` for the legacy `WorkflowExecutor` is a separate concern and stays where it is.
 

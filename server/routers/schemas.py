@@ -2,8 +2,8 @@
 
 Mirrors n8n's static-asset pattern: the editor fetches
 ``GET /api/schemas/nodes/{node_type}.json`` on demand (no auth required,
-long-cacheable). See docs-internal/schema_source_of_truth_rfc.md for
-the design rationale and docs-internal/schema_source_of_truth_rfc.md
+long-cacheable). See docs-internal/ARCHIVE/schema_source_of_truth_rfc.md for
+the design rationale and docs-internal/ARCHIVE/schema_source_of_truth_rfc.md
 for the frontend consumer (useNodeOutputSchemaQuery).
 """
 

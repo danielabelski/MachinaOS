@@ -1,6 +1,6 @@
 # RLM Service -- Recursive Language Model Agent Integration
 
-> **Related docs:** [memory_lifecycle.md](./memory_lifecycle.md) for the shared markdown memory format (RLM uses the same simpleMemory surface as aiAgent); [tool_building_pipeline.md](./tool_building_pipeline.md) for how connected tool nodes are bound to the REPL via `ToolBridgeAdapter`.
+> **Related docs:** [agent_context_flow.md](./agent_context_flow.md) for conversation continuity — RLM is a specialized provider, so a connected Context node reaches it through `SpecializedAgentContextBridge` (`services/cli_agent/context_bridge.py`); [tool_building_pipeline.md](./tool_building_pipeline.md) for how connected tool nodes are bound to the REPL via `ToolBridgeAdapter`. [memory_lifecycle.md](./memory_lifecycle.md) describes only the retired V1 markdown memory path.
 
 ## Overview
 
@@ -30,18 +30,18 @@ OpenCompany Node Execution System
 ================================
 
 [chatTrigger] --input-main--+
-[simpleMemory] --input-memory--+
-[masterSkill] --input-skill--+
+[context]     --input-context--+     (RFC-0002 Context node; the retired
+[masterSkill] --input-skill--+        input-memory handle no longer exists)
                               v
                        +-----------+
                        | rlm_agent |
                        +-----+-----+
                              |
                       input-tools handle
-                     /       |        \
-  [openaiChatModel]  [pythonExecutor]  [braveSearch]
-  (small LM,          (tool node,       (tool node,
-   depth>=1)           bridged to        bridged to
+                     /       |        \         \
+  [openaiChatModel]  [pythonExecutor]  [braveSearch]  [simpleMemory]
+  (small LM,          (tool node,       (tool node,    (Memory is an
+   depth>=1)           bridged to        bridged to     ordinary tool)
                        custom_tool)      custom_tool)
 
 
@@ -203,10 +203,16 @@ These are extracted from the node's `options` object:
 preparation helpers, then delegates to the independent RLM service:
 
 ```python
-# 1. Collect connected memory, skills, tools, input, and task data
-memory_data, skill_data, tool_data, input_data, task_data = await collect_agent_connections(
+# 1. Collect connected context, skills, tools, input, and task data
+#    (nodes/agent/rlm_agent/__init__.py:61-72)
+context_data, skill_data, tool_data, input_data, task_data = await collect_agent_connections(
     node_id, ctx.raw, database, log_prefix="[RLM Agent]"
 )
+# The first element is a Context descriptor on V2 graphs (kind == "context"),
+# or the legacy Memory descriptor on immutable V1 snapshots. The service
+# receives them as separate kwargs: context_data=context_v2, memory_data=legacy.
+context_v2 = context_data if (context_data or {}).get("kind") == "context" else None
+memory_data = context_data if context_data and not context_v2 else None
 
 # 2. Inject task context and strip tools for terminal task notifications
 if task_data:
@@ -240,13 +246,14 @@ return await ai_service.rlm_service.execute(node_id, parameters, ...)
 
 | Function | Source | Purpose in RLM |
 |----------|--------|----------------|
-| `collect_agent_connections()` | `services/plugin/edge_walker.py` | Discover memory, skills, tools, input, task connections (renamed Wave-11 successor to `handlers/ai.py::_collect_agent_connections`; the old handler file is gone) |
+| `collect_agent_connections()` | `services/plugin/edge_walker.py` | Discover context, skills, tools, input, task connections (renamed Wave-11 successor to `handlers/ai.py::_collect_agent_connections`; the old handler file is gone) |
+| `SpecializedAgentContextBridge` | `services/cli_agent/context_bridge.py` | Context continuity for a connected Context node: `resolve` loads the stored conversation (`rlm/service.py:48-56`), `augment_prompt` renders it into the REPL prompt (`:202-203`), `record_turn(original_prompt, response)` saves the turn (`:230-234`) |
 | `prepare_agent_call()` | `nodes/agent/_inline.py` | Shared pre-dispatch helper — collects connections + injects task context + auto-prompt from upstream input |
 | `_build_skill_system_prompt()` | `services/ai.py` | Build system prompt from connected skill nodes |
 | `is_model_valid_for_provider()` | `services/ai.py` | Validate model name for provider |
 | `get_default_model_async()` | `services/ai.py` | Look up default model from DB or config |
 | `self.auth.get_api_key()` | AIService | Retrieve API key from credential store |
-| `save_message()` | `memory_store.py` | Persist conversation to memory |
+| `add_message()` | `services/memory_store.py:35` | Legacy V1 only — appends user/assistant turns to the in-memory session store when a V1 `memory_data` descriptor is present (`rlm/service.py:241-246`) |
 | `execute_tool()` | `services/handlers/tools.py` | Dispatch tool execution (used by ToolBridgeAdapter) |
 | `broadcaster.update_node_status()` | `status_broadcaster.py` | Real-time UI status updates |
 
@@ -303,20 +310,31 @@ The RLM service broadcasts these phases via WebSocket for UI animations:
 
 ---
 
-## Future Phases
+## Later phases (all shipped)
 
-### Delegation Support (Phase 4)
-Add `'rlm_agent'` to:
-- `DEFAULT_TOOL_NAMES` -> `'delegate_to_rlm_agent'`
-- `DEFAULT_TOOL_DESCRIPTIONS` -> ONE-SHOT delegation description
-- `_get_tool_schema()` -> `DelegateToAgentSchema` condition
-- `execute_tool()` dispatch tuple in `handlers/tools.py`
+The three follow-up phases this doc originally listed as future work have
+landed; the mechanisms differ from the original plan because the intervening
+Wave 11 / Wave 12 D5 refactors removed the surfaces they named.
 
-### Frontend (Phase 5)
-- Node definition in `specializedAgentNodes.ts`
-- `AGENT_CONFIGS` entry in `AIAgentNode.tsx`
-- Parameter panel integration in `MiddleSection.tsx` and `InputSection.tsx`
+### Delegation support (was Phase 4)
+`rlm_agent` is delegatable. The `DEFAULT_TOOL_NAMES` /
+`DEFAULT_TOOL_DESCRIPTIONS` dicts no longer exist (locked by
+`tests/test_tool_registry.py`); the delegation identity comes from
+`BaseNode.__init_subclass__`, which stamps `tool_name =
+f"delegate_to_{cls.type}"` on every agent plugin (`services/plugin/base.py:257`).
+`rlm_agent` is listed in both `_AGENT_DELEGATION_TYPES` (`services/ai.py:2510`,
+the `DelegateToAgentSchema` gate) and `AI_AGENT_TYPES` (`server/constants.py:32`,
+the `execute_tool` dispatch gate). It stays on the legacy fire-and-forget path
+— excluded from `AGENT_WORKFLOW_TYPES` because its REPL state is externalised.
 
-### RLM Skill (Phase 6)
-- `server/skills/rlm_agent/rlm-reasoning-skill/SKILL.md`
-- REPL usage instructions, available functions, decomposition strategies
+### Frontend (was Phase 5)
+There is nothing per-agent to add. `specializedAgentNodes.ts` and the
+`AGENT_CONFIGS` map were retired in Wave 10.D / Wave 11: `AIAgentNode.tsx`
+renders handles / icon / colour / display name from the backend NodeSpec via
+`useNodeSpec(type)`, and the parameter panel is schema-driven from the plugin's
+`Params`. Visuals come from `nodes/agent/rlm_agent/meta.json` (+ `icon.svg` or
+the `visuals.json` fallback).
+
+### RLM skill (was Phase 6)
+`server/skills/rlm_agent/rlm-reasoning-skill/SKILL.md` exists and covers REPL
+usage, the available functions, and decomposition strategies.

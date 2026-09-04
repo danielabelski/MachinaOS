@@ -1,7 +1,7 @@
 /**
  * Tests for useApiKeys hook.
  *
- * Locks in invariants 1, 6 from docs-internal/credentials_panel.md:
+ * Locks in invariants 1, 6 from docs-internal/ARCHIVE/credentials_panel.md:
  *   - validate/save/delete route to the correct WebSocket message types
  *   - Google Maps and Apify use dedicated validators (not generic validate_api_key)
  *   - Provider Defaults uses save_provider_defaults, NOT save_api_key

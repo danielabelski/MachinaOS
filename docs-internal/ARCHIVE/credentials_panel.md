@@ -1,5 +1,13 @@
 # Credentials Panel — Logic Flow Documentation
 
+> **ARCHIVED 2026-09-04 — Superseded.** Written against the pre-refactor 3000-line `CredentialsModal.tsx`; that file is now a one-line re-export and every `websocket.py:NNNN` citation here is dead. The credential WS handlers self-register from `server/services/credentials/handlers.py` and each plugin's `nodes/<plugin>/_handlers.py`. The §5 invariants are still locked by `server/tests/credentials/` and `client/src/test/`.
+>
+> For current state see:
+>
+> - [frontend_architecture.md → Credentials](../frontend_architecture.md) — config-driven `ProviderConfig` + `useCredentialPanel` model
+> - [credentials_encryption.md](../credentials_encryption.md) — storage pipeline
+> - [client/src/components/credentials/](../../client/src/components/credentials/) — the live modal
+
 > Reference for refactoring [client/src/components/CredentialsModal.tsx](../client/src/components/CredentialsModal.tsx) (~3000 lines).
 > Every claim here cites file + line number so reviewers can validate post-refactor.
 > Companion test suite in [server/tests/credentials/](../server/tests/credentials) and [client/src/test/](../client/src/test) locks in the invariants enumerated in section 5.

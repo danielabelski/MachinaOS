@@ -335,7 +335,7 @@ So the rule for the next kind:
 ## Images to models — the hydration boundary
 
 Multimodal input extends the never-bytes rule to LLM requests. Durable state
-(journal events, Temporal payloads, node results) carries image **FileRefs**
+(the `agent_conversations` conversation store, Temporal payloads, node results) carries image **FileRefs**
 inside `ContentBlock.source` (`kind="file_ref"`, ~450 B); actual bytes exist
 only between `services/llm/media.py::hydrate_image_blocks` and the provider
 HTTP call, on throwaway message copies. The protocol codec raises if a

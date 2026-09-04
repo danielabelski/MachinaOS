@@ -1,5 +1,12 @@
 # Schema source of truth — RFC
 
+> **ARCHIVED 2026-09-04 — Superseded.** Backend-as-SSOT RFC. Everything it deferred to Wave 7 shipped: `VITE_NODESPEC_BACKEND` defaults ON, `client/src/nodeDefinitions/` was deleted, and option loaders exist for google, android, whatsapp, whatsapp_business, discord, speech and translate.
+>
+> For current state see:
+>
+> - [plugin_system.md](../plugin_system.md) — NodeSpec, registries, credentials
+> - [server/nodes/README.md](../../server/nodes/README.md) — authoring recipe
+
 **Status:** ✅ **implemented + extended to full plugin registry** · **Owner:** frontend + backend platform · **Landing:** 2026-04-14 (output schemas) → **Wave 6** (NodeSpec contract) → **Wave 10** (plugin pattern + visual contract + icons, 2026-04-15)
 
 ## Landed outcome (Wave 3 — output schemas)

@@ -22,8 +22,8 @@ AI_CHAT_MODEL_TYPES: FrozenSet[str] = frozenset(
         "kimiChatModel",
         "mistralChatModel",
         "sarvamChatModel",
-        # Local-server providers (Phase 1 of the LiteLLM adoption — see
-        # plans/i-plan-to-implement-nested-orbit.md).
+        # Local-server providers (Ollama / LM Studio speak the OpenAI wire
+        # format; routed through OpenAIProvider with a localhost base_url).
         "ollamaChatModel",
         "lmstudioChatModel",
     ]

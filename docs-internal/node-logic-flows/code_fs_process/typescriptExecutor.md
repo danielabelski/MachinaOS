@@ -4,7 +4,7 @@
 |------|-------|
 | **Category** | code_fs_process / code |
 | **Backend handler** | [`server/nodes/code/typescript_executor/__init__.py::TypeScriptExecutorNode.execute_op`](../../../server/nodes/code/typescript_executor/__init__.py) (dispatched via `BaseNode.execute()` + `@Operation("execute")`; base in [`_base.py`](../../../server/nodes/code/_base.py)) |
-| **Node.js client** | [`server/nodes/code/_nodejs.py::get_nodejs_client`](../../../server/nodes/code/_nodejs.py) (singleton over [`server/nodes/code/_client.py::NodeJSClient`](../../../server/nodes/code/_client.py) — plugin-owned since July 2026; `services/nodejs_client.py` no longer exists) |
+| **Node.js client** | [`server/nodes/code/_nodejs.py::get_nodejs_client`](../../../server/nodes/code/_nodejs.py) (singleton over [`server/nodes/code/_client.py::NodeJSClient`](../../../server/nodes/code/_client.py) — plugin-owned since July 2026; the old `nodejs_client.py` service module no longer exists) |
 | **Tests** | [`server/tests/nodes/test_code_fs_process.py`](../../../server/tests/nodes/test_code_fs_process.py) |
 | **Skill (if any)** | - (shared with `javascript-skill`) |
 | **Dual-purpose tool** | yes - tool name `typescript_code` |

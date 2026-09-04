@@ -4,7 +4,7 @@ We invoke the handler functions directly (rather than spinning up the full FastA
 app + DI container) so the suite stays under 30s and doesn't pull in Temporal /
 LangChain / native LLM SDKs.
 
-Locks in invariants 1, 5, 6 from docs-internal/credentials_panel.md:
+Locks in invariants 1, 5, 6 from docs-internal/ARCHIVE/credentials_panel.md:
   - WebSocket message types and payload shapes
   - Status responses use camelCase hasKey / apiKey (matches the
     update_api_key_status broadcaster convention)

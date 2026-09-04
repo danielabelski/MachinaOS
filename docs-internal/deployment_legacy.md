@@ -34,7 +34,7 @@ company deploy destroy                                           # terraform des
 
 | Path | Responsibility |
 |------|----------------|
-| `cli/commands/serve.py` | Single-port runtime: uvicorn fronts API + WS + built SPA, plus the node sidecar |
+| `cli/commands/serve.py` | Single-port runtime: uvicorn fronts API + WS + built SPA. `serve` supervises exactly one process — the Node.js code-exec sidecar, WhatsApp and the Temporal dev server are backend-owned and spawn on demand |
 | `cli/commands/deploy/` | Verbs (`up.py` / `status.py` / `destroy.py`), `_secrets.py`, `_state.py`, `_terraform.py` (Terraform driver), `providers/` (`gcp.py` / `aws.py` provider CLI adapters) |
 | `cli/terraform/gcp/` | HCL module (`main.tf` / `variables.tf` / `outputs.tf`) + `startup.sh.tftpl` cloud-init template |
 
@@ -75,6 +75,11 @@ The project previously deployed using Docker Compose with an nginx reverse proxy
 | backend | opencompany-backend | 3010 | FastAPI Python backend |
 | frontend | opencompany-frontend | 3000 | React app via nginx |
 | whatsapp | opencompany-whatsapp | 5000 | Go WhatsApp bridge service |
+
+Every port number in this Docker section (3000 / 3010 / 3020 / 5000 / 9400 / 6379) is the
+historical compose-era value, kept verbatim as a record. The current runtime declares its
+serial port block once in `.env.template` (`PYTHON_BACKEND_PORT`, `NODEJS_EXECUTOR_PORT`,
+`WHATSAPP_RPC_PORT`, ...); nothing below applies to it.
 
 **Frontend (`client/Dockerfile`):**
 - Multi-stage build: Node.js builder -> nginx:alpine production
@@ -217,29 +222,36 @@ Located at `/etc/nginx/sites-available/flow.opencompany.sh`:
 
 ### Frontend API URL Resolution
 
-The frontend automatically detects production vs development. This logic still ships in
-`client/src/config/api.ts` (it is independent of the deployment mechanism):
+In the Docker era the frontend sniffed `window.location.hostname` to decide between an
+explicit `http://localhost:3010` dev backend and a same-origin production backend. That
+branch is gone. `client/src/config/api.ts` is now same-origin everywhere — in production
+uvicorn serves the SPA and the API on one port, and in dev the Vite server proxies the backend
+prefixes (`/api`, `/ws`, `/webhook`, `/health`, `/mcp`) — with `VITE_PYTHON_SERVICE_URL` left
+only as an explicit escape hatch for a remote backend:
 
 ```typescript
-// client/src/config/api.ts
-const isProduction = typeof window !== 'undefined' &&
-  !window.location.hostname.includes('localhost') &&
-  !window.location.hostname.includes('127.0.0.1');
-
+// client/src/config/api.ts (current)
 return {
-  // Python FastAPI backend (port 3010 in dev, same origin in prod)
-  PYTHON_BASE_URL: viteEnv.VITE_PYTHON_SERVICE_URL || (isProduction ? '' : 'http://localhost:3010'),
+  PYTHON_BASE_URL: viteEnv.VITE_PYTHON_SERVICE_URL || '',
 };
 ```
 
-- **Production**: Empty base URL = relative URLs (same origin)
-- **Development**: Explicit `http://localhost:3010`
+The historical shape, for the record:
 
-WebSocket URL derived from base URL:
+```typescript
+// client/src/config/api.ts (Docker era — no longer in the tree)
+const isProduction = typeof window !== 'undefined' &&
+  !window.location.hostname.includes('localhost') &&
+  !window.location.hostname.includes('127.0.0.1');
+PYTHON_BASE_URL: viteEnv.VITE_PYTHON_SERVICE_URL || (isProduction ? '' : 'http://localhost:3010'),
+```
+
+WebSocket URL derivation is unchanged and still lives in `getWebSocketUrl()`
+(`client/src/contexts/WebSocketContext.tsx`): an empty base URL means the current origin, a
+non-empty one has its `http(s)` scheme rewritten to `ws(s)`:
 ```typescript
 // client/src/contexts/WebSocketContext.tsx
 if (!baseUrl) {
-  // Production: use current origin
   const wsProtocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
   return `${wsProtocol}://${window.location.host}/ws/status`;
 }
@@ -313,9 +325,12 @@ docker-compose -f docker-compose.prod.yml down -v
 ## Local Development Build (current, non-Docker)
 
 ```bash
-# Create optimized build
-npm run build
+# Full production build (company build: bun install, client, sidecar, uv sync, bytecode, Temporal binary)
+bun run build
 
-# Serve built files locally
-npm run preview
+# Serve the built SPA + API on one port, exactly as a deployed VM does
+company start        # or: company serve
+
+# Vite's static preview of client/dist alone (no backend) — there is no root `preview` script
+cd client && bun run preview
 ```

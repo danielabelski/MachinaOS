@@ -30,23 +30,25 @@ BaseNode  (services/plugin/base.py)
 └── ToolNode              AI-invoked; flat return shape
 ```
 
-Single-file plugins inherit directly from `ActionNode` /
-`TriggerNode` / `ToolNode`. Self-contained plugin folders (telegram,
+Simple plugins inherit directly from `ActionNode` /
+`TriggerNode` / `ToolNode`. Rich plugin folders (telegram,
 stripe) layer additional bases from `services.events` underneath them.
 
-## Five-minute recipe — single file
+## Five-minute recipe — one folder, one `__init__.py`
 
 For nodes with no state, no daemon, no signed webhooks (the common
-case): the canonical single-file recipe code block lives in the
+case): the canonical recipe code block lives in the
 cookbook — see
 [`server/nodes/README.md` → Five-minute recipe](../server/nodes/README.md#five-minute-recipe).
 
-It is a single `server/nodes/<group>/<name>.py` declaring a
-`Credential` subclass, a `Params` model, an `Output` model, and one
-`ActionNode` subclass with `type` / `display_name` / `group` /
-`component_kind` / `handles` / `credentials` / `task_queue` /
-`usable_as_tool` / `Params` / `Output` plus one `@Operation` method.
-That's the entire node. On server restart it auto-registers, the
+It is a single folder `server/nodes/<group>/<name>/` whose
+`__init__.py` declares a `Credential` subclass, a `Params` model, an
+`Output` model, and one `ActionNode` subclass with `type` /
+`display_name` / `group` / `component_kind` / `handles` /
+`credentials` / `task_queue` / `usable_as_tool` / `Params` / `Output`
+plus one `@Operation` method. That's the entire node (the folder also
+holds `icon.svg` / `meta.json`, which is why a bare `.py` file is no
+longer the shape). On server restart it auto-registers, the
 NodeSpec is emitted at `/api/schemas/nodes/<type>/spec.json`, and it
 appears in the Component Palette under its first `group` entry.
 

@@ -23,7 +23,8 @@ Files:
 - [client/src/components/parameterPanel/InputSection.tsx](../client/src/components/parameterPanel/InputSection.tsx)
 - [client/src/components/parameterPanel/MiddleSection.tsx](../client/src/components/parameterPanel/MiddleSection.tsx)
 - [client/src/components/parameterPanel/OutputSection.tsx](../client/src/components/parameterPanel/OutputSection.tsx)
-- [client/src/components/output/OutputPanel.tsx](../client/src/components/output/OutputPanel.tsx) — drag source for connected outputs
+- [client/src/components/output/OutputPanel.tsx](../client/src/components/output/OutputPanel.tsx) — execution-results renderer (no edge walking; see §6)
+- [client/src/utils/parameterVisibility.ts](../client/src/utils/parameterVisibility.ts) — `shouldShowParameter` (shared by MiddleSection + ParameterRenderer)
 - [client/src/components/ParameterRenderer.tsx](../client/src/components/ParameterRenderer.tsx) — universal widget
 - [client/src/hooks/useParameterPanel.ts](../client/src/hooks/useParameterPanel.ts)
 - [client/src/hooks/useDragVariable.ts](../client/src/hooks/useDragVariable.ts)
@@ -51,8 +52,11 @@ Files:
 | Monitor (`teamMonitor`) | hidden | shown | hidden |
 | Everything else | shown | shown | shown |
 
-`ParameterPanel.tsx` lines 119–122 compute `showInputSection` / `showOutputSection` and pass them
-to `ParameterPanelLayout`.
+The buckets are not frontend type lists: `ParameterPanel.tsx` (around lines 141–150) reads
+`hideInputSection` / `hideOutputSection` / `hideRunButton` straight off the node's backend
+NodeSpec `uiHints` and passes the derived flags to `ParameterPanelLayout`. A plugin that wants the
+Start / Skill / Monitor shape declares those hints itself (Wave 10.G.5); nothing in the client
+matches on `node.type`.
 
 ## 3. Template Variable Naming (drag-and-drop contract)
 
@@ -116,24 +120,34 @@ When ALL conditions match the parameter renders; otherwise it's hidden.
 
 A parameter without `displayOptions.show` always renders.
 
-`MiddleSection.shouldShowParameter` (lines 59–81) implements this. The function is internal so
-tests assert it indirectly via component rendering — see
-[client/src/components/parameterPanel/__tests__/MiddleSection.test.tsx](../client/src/components/parameterPanel/__tests__/MiddleSection.test.tsx).
+`shouldShowParameter` in [client/src/utils/parameterVisibility.ts](../client/src/utils/parameterVisibility.ts)
+implements this. It was extracted out of `MiddleSection.tsx` so that `ParameterRenderer` (nested
+`collection` options, ~line 760) can share it and so tests can import it directly —
+[client/src/components/parameterPanel/__tests__/MiddleSection.test.tsx](../client/src/components/parameterPanel/__tests__/MiddleSection.test.tsx)
+exercises the pure function (array membership, scalar equality, AND across keys, type-coercion
+edges). `MiddleSection` applies it in its parameter filter (~line 187).
 
 ## 5. Connection Discovery (Input + Output)
 
-Both `InputSection` and `OutputPanel` walk the workflow's edges to figure out which other nodes
-are linked to the current one. They classify handles into two buckets:
+`InputSection` walks the workflow's edges to figure out which other nodes feed the current one
+(`OutputPanel` no longer does any edge walking — it only renders results). Its `isConfigHandle`
+helper (~line 258) classifies handles into two buckets:
 
 | Handle bucket | Examples | Effect |
 |---|---|---|
 | Data flow | `input-main`, `input-chat`, `input-task`, `input-teammates` | shown as connected nodes |
-| Config / auxiliary | `input-memory`, `input-tools`, `input-skill`, `input-model` | hidden — they belong to the dedicated UI in `MiddleSection` |
+| Config / auxiliary | every other `input-*` — `input-context`, `input-tools`, `input-skill`, `input-model` | hidden on agents that declare `uiHints.hasSkills` — they belong to the dedicated UI in `MiddleSection` |
 
-Plus a special case for **config nodes themselves** (e.g. `simpleMemory`, any node whose group
-includes `'memory'` or `'tool'`): when the user is viewing a config node, the panel inherits the
-parent agent's main inputs and labels them `(via Agent Name)` so the user can still drag those
-upstream variables into the config node's parameters.
+`input-memory` is retired (RFC-0002): `normalize_workflow_graph` rewrites legacy `simpleMemory ->
+input-memory` edges into a Context node plus an ordinary `input-tools` edge, so the handle never
+reaches this code on a normalised graph.
+
+Plus a special case for **config nodes themselves**: a node is a config node when its NodeSpec
+carries `uiHints.isConfigNode === true` (auto-derived on the backend by `_derive_auto_ui_hints` for
+any plugin whose `group` contains `memory` or `tool`; `canvas` opts out explicitly). When the user is
+viewing one, the panel inherits the parent agent's main inputs and labels them `via <Agent Name>` so
+the user can still drag those upstream variables into the config node's parameters. The client never
+inspects group strings for this.
 
 ## 6. Output Display (`OutputSection`)
 

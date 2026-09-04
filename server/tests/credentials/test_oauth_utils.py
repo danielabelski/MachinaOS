@@ -1,6 +1,6 @@
 """Tests for runtime OAuth redirect URI derivation.
 
-Locks in invariant 12 from docs-internal/credentials_panel.md:
+Locks in invariant 12 from docs-internal/ARCHIVE/credentials_panel.md:
   - get_redirect_uri strips connection.base_url path and converts ws->http
 """
 

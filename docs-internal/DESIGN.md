@@ -21,7 +21,7 @@ Related docs:
 
 ## Execution Modes
 
-`WorkflowService` in `server/services/workflow.py` is a thin facade (~460 lines) that routes every workflow run based on available infrastructure. In every shipped configuration the effective routing is Temporal -> sequential:
+`WorkflowService` in `server/services/workflow.py` is a thin facade (~840 lines) that routes every workflow run based on available infrastructure. In every shipped configuration the effective routing is Temporal -> sequential:
 
 ```
 workflow.execute(workflow_id, workflow_data)
@@ -42,7 +42,7 @@ workflow.execute(workflow_id, workflow_data)
 
 When `TEMPORAL_ENABLED=true` and the Temporal server is reachable, every workflow node executes through Temporal. Three dispatch paths coexist (legacy `execute_node_activity` / per-type `node.{type}.v{version}` / Agent-as-child-workflow `AgentWorkflow`) gated by `TEMPORAL_PER_TYPE_DISPATCH` and `TEMPORAL_AGENT_WORKFLOW_ENABLED` flags. Per-node retries, per-node timeouts, horizontal scaling via worker pool, and the FIRST_COMPLETED orchestrator pattern.
 
-Full dispatch matrix + activity inventory (legacy + per-type + the 5 F4.B agent activities) + worker configuration + heartbeat semantics live in [TEMPORAL_ARCHITECTURE.md](TEMPORAL_ARCHITECTURE.md). Tool-call dispatch under F4.A: [tool_building_pipeline.md §9](./tool_building_pipeline.md).
+Full dispatch matrix + activity inventory (legacy + per-type + the F4.B `agent.*` activities — read the live set from `collect_agent_activities()` in `services/temporal/agent_activities.py`) + worker configuration + heartbeat semantics live in [TEMPORAL_ARCHITECTURE.md](TEMPORAL_ARCHITECTURE.md). Tool-call dispatch under F4.A: [tool_building_pipeline.md §9](./tool_building_pipeline.md).
 
 ### 2. Sequential Fallback
 
@@ -54,7 +54,7 @@ When Temporal is not available, workflow execution falls back to a simple topolo
 
 - Conductor's decide pattern in `_workflow_decide()` under distributed Redis SETNX locks
 - Continuous scheduling via `asyncio.wait(FIRST_COMPLETED)` (`_execute_with_continuous_scheduling` — the only scheduling implementation; the legacy Fork/Join `_execute_parallel_nodes` helper was removed)
-- Prefect-style result caching keyed by `hash_inputs()` (see `services/execution/cache.py`)
+- Prefect-style result caching keyed by `hash_inputs()` (defined in `services/execution/models.py`; the cache read/write lives in `services/execution/cache.py`)
 - Crash recovery via `RecoverySweeper` with heartbeats
 - Dead Letter Queue for failed nodes (`services/execution/dlq.py`)
 
@@ -464,24 +464,22 @@ class ExecutionContext:
     nodes: List[Dict]          # Node definitions
     edges: List[Dict]          # Edge definitions
 
-    # Workspace (per-workflow filesystem for nodes and agents)
-    workspace_dir: str         # Absolute path to <DATA_DIR>/workspaces/<workflow_slug>/
-                               # (Wave 14 — keyed by the human-readable slug,
-                               # not the UUID id; see CLAUDE.md "Workflow Naming")
-
     # Execution Progress
-    execution_order: List[List[str]]  # Computed layers
+    execution_order: List[str] # Topological order (flat list)
     current_layer: int         # Current layer index
     checkpoints: List[str]     # Completed node IDs
 
     # Timing
-    started_at: float
-    completed_at: float
+    created_at: float
     updated_at: float
+    started_at: Optional[float]
+    completed_at: Optional[float]
 
     # Errors
     errors: List[Dict]         # Error records
 ```
+
+The per-workflow workspace directory (`<DATA_DIR>/workspaces/<workflow_slug>/`, Wave 14 — keyed by the human-readable slug, not the UUID id; see CLAUDE.md "Workflow Naming") is **not** a field on `ExecutionContext`. `WorkflowService` resolves it and injects `workspace_dir` into the execution context dict that node handlers receive (`services/workflow.py`).
 
 ### NodeExecution
 
@@ -628,11 +626,13 @@ _deployment_settings = {
 ### Execution Toggle
 
 ```python
-# Automatic fallback
-if use_parallel and settings.redis_enabled:
-    return await self._execute_workflow_parallel(...)
-else:
-    return await self._execute_workflow_sequential(...)
+# services/workflow.py — Temporal first, then the (unreachable) Redis branch, then sequential
+if use_temporal and self._temporal_executor is not None:
+    return await self._execute_temporal(...)
+# use_temporal with no executor logs an ERROR (silent fallthrough looked like success)
+if use_parallel and self.settings.redis_enabled:
+    return await self._execute_parallel(...)
+return await self._execute_sequential(...)
 ```
 
 ---
@@ -655,7 +655,7 @@ else:
 
 ### Runtime Conditional Branching (conditions.py)
 Edge conditions are evaluated at runtime using Prefect-style dynamic branching:
-- 20+ operators: eq, neq, gt, lt, gte, lte, contains, exists, matches, in, starts_with, etc.
+- 19 operators (the `OPERATORS` table in `conditions.py`): eq, neq, gt, lt, gte, lte, contains, not_contains, exists, not_exists, is_empty, is_not_empty, matches, in, not_in, starts_with, ends_with, is_true, is_false
 - Supports nested field access via dot notation (e.g., `result.status`)
 - AND/OR condition groups with recursive evaluation
 
@@ -663,11 +663,11 @@ Edge conditions are evaluated at runtime using Prefect-style dynamic branching:
 Failed nodes (after all retries exhausted) are stored for inspection and replay:
 - `DLQHandler` - Active handler storing failed nodes with full context
 - `NullDLQHandler` - No-op handler when DLQ disabled (Null Object pattern)
-- WebSocket handlers: `get_dlq_entries`, `replay_dlq_entry`, `remove_dlq_entry`, `get_dlq_stats`
+- WebSocket handlers: `get_dlq_entries`, `get_dlq_entry`, `replay_dlq_entry`, `remove_dlq_entry`, `purge_dlq`, `get_dlq_stats`
 
 ### Temporal Distributed Execution (Optional)
 When `TEMPORAL_ENABLED=true`, each node executes as an independent Temporal activity:
-- Per-node retry (3 attempts) and timeout (10 min default)
+- Per-node retry (3 attempts by default; plugin `retry_policy` wins) and a 24 h `start_to_close` ceiling (`_NODE_ACTIVITY_START_TO_CLOSE`); liveness is the 30 s heartbeat against a 2 min `heartbeat_timeout`
 - Horizontal scaling across worker pool
 - FIRST_COMPLETED pattern for dependency resolution
 - Connection pooling for WebSocket activity execution

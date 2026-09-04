@@ -280,7 +280,7 @@ async def handle_get_all_tool_schemas(data: Dict[str, Any], websocket: WebSocket
 # ============================================================================
 # Node Output Schemas (n8n-style: backend as single source of truth for
 # the drag-drop variable panel's "before first run" fallback shape).
-# See docs-internal/schema_source_of_truth_rfc.md.
+# See docs-internal/ARCHIVE/schema_source_of_truth_rfc.md.
 # ============================================================================
 
 
@@ -1467,7 +1467,7 @@ MESSAGE_HANDLERS: Dict[str, MessageHandler] = {
     "delete_tool_schema": handle_delete_tool_schema,
     "get_all_tool_schemas": handle_get_all_tool_schemas,
     # Node output schemas (Pydantic-backed registry; see
-    # docs-internal/schema_source_of_truth_rfc.md).
+    # docs-internal/ARCHIVE/schema_source_of_truth_rfc.md).
     "get_node_output_schema": handle_get_node_output_schema,
     # Wave 6 Phase 2: unified NodeSpec (input + output + metadata).
     "get_node_spec": handle_get_node_spec,

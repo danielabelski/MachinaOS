@@ -17,24 +17,24 @@ Wraps the official `temporal` CLI's `server start-dev` mode (per [docs.temporal.
 
 **Install:** Automated. `company build` step [6/6] runs `python -m services.temporal._install`, which uses `pooch` to download the official CLI archive from `https://temporal.download/cli/archive/latest?platform=<os>&arch=<arch>` into `<DATA_DIR>/packages/temporal/` (= `~/.opencompany/packages/temporal/` by default, on every OS — via `core.paths.package_dir("temporal")`). No npm package, no system install required.
 
-**Lifecycle:** Backend-owned (July 2026): the FastAPI lifespan starts the dev server via `TemporalServerRuntime.ensure_started()` ([server/services/temporal/_runtime.py](../server/services/temporal/_runtime.py)) when `TEMPORAL_ENABLED` and the configured address is loopback; `shutdown_all_supervisors()` stops it at shutdown. The CLI no longer supervises Temporal (the `_supervised_runtime.py` shim and `cli/commands/_temporal_specs.py` were deleted); `company stop` still frees the Temporal ports.
+**Lifecycle:** Backend-owned (July 2026): the FastAPI lifespan starts the dev server via `TemporalServerRuntime.ensure_started()` ([server/services/temporal/_runtime.py](../server/services/temporal/_runtime.py)) when `TEMPORAL_ENABLED` and the configured address is loopback; `shutdown_all_supervisors()` stops it at shutdown. The CLI no longer supervises Temporal (the `_supervised_runtime.py` shim and the `_temporal_specs.py` command helpers were deleted); `company stop` still frees the Temporal ports.
 
 **Ports (declared in `.env.template`, freed by `company stop`'s port-kill pre-flight):**
-| Service | Port | Env var |
+| Service | Env var (value in `.env.template`) | Note |
 |---------|------|---------|
-| gRPC    | 5681 | `TEMPORAL_FRONTEND_GRPC_PORT` |
-| Web UI  | 5680 | `TEMPORAL_UI_PORT` (CLI default is 8233; we override) |
+| gRPC    | `TEMPORAL_FRONTEND_GRPC_PORT` | passed as `--port` (Temporal's own default is 7233) |
+| Web UI  | `TEMPORAL_UI_PORT` | passed as `--ui-port` (the CLI would otherwise pick `--port + 1000`) |
 
 Both bound by the same `temporal.exe` process. Killing the process releases both.
 
 **Persistence + resumption:**
 - SQLite db at `~/.opencompany/temporal.db` (`TEMPORAL_SQLITE_PATH=temporal.db`, resolved under `DATA_DIR`). History is preserved across restarts; the Temporal UI keeps showing every workflow that ever ran.
-- Workflow auto-resumption is disabled at boot: [`TemporalClientWrapper.terminate_running_workflows`](../server/services/temporal/client.py) runs once after client connect and terminates every `Running` workflow with `reason="OpenCompany startup: auto-resumption disabled"`. Workflows show as `Terminated` (not deleted) in the UI. Gated by `TEMPORAL_TERMINATE_RUNNING_ON_STARTUP=true`. Flip to `false` once `DeploymentManager` reconcile-against-Visibility lands.
+- Running and paused deployments survive restarts. `TEMPORAL_TERMINATE_RUNNING_ON_STARTUP` defaults to **`false`** and the boot-time reconcile pass (`reconcile_active_controls_on_boot`) re-arms live generations from their persisted graph snapshot. Setting it `true` is a debug-only sweep: [`services/temporal/lifecycle.py`](../server/services/temporal/lifecycle.py) then calls [`TemporalClientWrapper.terminate_running_workflows`](../server/services/temporal/client.py) once after client connect (reason `"OpenCompany startup: auto-resumption disabled"`), workflows show as `Terminated` (not deleted) in the UI — and even then any active workflow-control row vetoes the sweep so a live deployment is never killed.
 
 **Embedded worker:**
-The Temporal worker runs inside the Python backend via `TemporalWorkerManager` in `main.py` lifespan. No separate worker process needed for single-server deployments. For horizontal scaling, run standalone workers:
+The Temporal worker runs inside the Python backend: `services/temporal/lifecycle.py` builds `TemporalWorkerManager` + `TemporalWorkerPool` inside `run_temporal_lifecycle`, which `main.py` schedules from the lifespan. No separate worker process needed for single-server deployments. For horizontal scaling, run standalone workers:
 ```bash
-cd server && python -m services.temporal.worker
+cd server && uv run python -m services.temporal.worker
 ```
 
 ---

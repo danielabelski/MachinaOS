@@ -93,7 +93,8 @@ flowchart TD
 - **Credentials**: optional `api_key` parameter forwarded as the chat backend's
   auth token. No lookup via `auth_service`.
 - **Services**: external chat backend speaking the project chat JSON-RPC
-  protocol (e.g. the chat mircoservice in `docs-internal/chat-service.md`).
+  protocol (see `services/chat_client.py` for the client side; no in-repo
+  server exists).
 - **Python packages**: `websockets` (via `services.chat_client`).
 - **Environment variables**: none.
 

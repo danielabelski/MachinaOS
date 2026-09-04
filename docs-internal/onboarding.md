@@ -2,9 +2,9 @@
 
 ## Overview
 
-The onboarding service provides a multi-step welcome wizard that appears after a user's first launch, guiding them through platform capabilities, key concepts, API key setup, UI layout, and getting started. It is database-backed, skippable, resumable, and replayable from Settings.
+The onboarding service provides a four-step welcome wizard that appears after a user's first launch: what OpenCompany is, how the canvas works, connecting an AI provider, and trying the shipped AI Assistant example. It is database-backed, skippable, resumable, and replayable from Settings. A separate, dismissable **Get Started checklist** (`GetStartedChecklist.tsx`) sits in the corner of the canvas after the wizard and tracks five first-session milestones.
 
-The frontend is **fully shadcn/ui + Tailwind** — antd was removed from `client/src/`. The wizard composes the project's `Modal` primitive, shadcn `Button` / `ActionButton` / `Card` / `Badge` / `Alert`, and `lucide-react` icons. The step progress indicator is a hand-rolled `<ol>` driven by node-role tokens (no antd `Steps`).
+The frontend is **fully shadcn/ui + Tailwind** — antd was removed from `client/src/`. The wizard composes the project's `Modal` primitive, shadcn `Button` / `ActionButton` / `Card` / `Badge` / `Alert` / `Skeleton`, and `lucide-react` icons. The step progress indicator is a hand-rolled `<ol>` driven by node-role tokens (no antd `Steps`).
 
 ## Architecture
 
@@ -21,10 +21,10 @@ The frontend is **fully shadcn/ui + Tailwind** — antd was removed from `client
 │  │  └───────────────┬────────────────────────────────┘    │    │
 │  │                  │                                      │    │
 │  │  STEPS array (single source of truth in wizard):       │    │
-│  │  ┌───────┬───────┬───────┬──────────┬──────────┐       │    │
-│  │  │Step 0 │Step 1 │Step 2 │Step 3    │Step 4    │       │    │
-│  │  │Welcome│Concept│APIKey │Canvas    │GetStarted│       │    │
-│  │  └───────┴───────┴───────┴──────────┴──────────┘       │    │
+│  │  ┌─────────┬──────────────┬─────────────────┬────────┐ │    │
+│  │  │Step 0   │Step 1        │Step 2           │Step 3  │ │    │
+│  │  │Welcome  │How it works  │Connect your AI  │Try it  │ │    │
+│  │  └─────────┴──────────────┴─────────────────┴────────┘ │    │
 │  │                                                         │    │
 │  │  Modal (project primitive, Radix-backed)               │    │
 │  │   + <ol> progress stepper (Tailwind + role tokens)     │    │
@@ -37,7 +37,7 @@ The frontend is **fully shadcn/ui + Tailwind** — antd was removed from `client
           │ WebSocket (via TanStack Q)   │ WebSocket
           ▼                              ▼
 ┌──────────────────────────────────────────────────────────────┐
-│  server/routers/websocket.py                                  │
+│  server/services/settings/handlers.py                        │
 │  - get_user_settings → returns onboarding_completed, step    │
 │  - save_user_settings → persists onboarding_completed, step  │
 │                                                               │
@@ -87,19 +87,21 @@ if "onboarding_step" not in columns:
 ```
 client/src/
 ├── components/
-│   ├── onboarding/
-│   │   ├── OnboardingWizard.tsx        # Main wizard modal orchestrator + STEPS SSOT + <ol> stepper
-│   │   ├── nodeRoleClasses.ts          # Shared role→Tailwind-token map for step cards
-│   │   └── steps/
-│   │       ├── WelcomeStep.tsx          # Step 0: Platform intro
-│   │       ├── ConceptsStep.tsx         # Step 1: Nodes, Edges, Agents, Skills, Modes
-│   │       ├── ApiKeyStep.tsx           # Step 2: AI provider key setup
-│   │       ├── CanvasStep.tsx           # Step 3: UI layout tour
-│   │       └── GetStartedStep.tsx       # Step 4: First workflow tips
-│   └── icons/
-│       └── AIProviderIcons.tsx          # Provider SVG icons used by ApiKeyStep
+│   └── onboarding/
+│       ├── OnboardingWizard.tsx        # Wizard modal orchestrator + STEPS SSOT + <ol> stepper
+│       ├── GetStartedChecklist.tsx     # Post-wizard corner checklist (collapsible, dismissable)
+│       ├── getStartedItems.ts          # The five checklist milestones + EXAMPLE_WORKFLOW_NAMES
+│       ├── aiProviderLinks.ts          # FEATURED_AI_PROVIDERS: hint + key-page URL per provider id
+│       ├── nodeRoleClasses.ts          # Shared role→Tailwind-token map for step cards
+│       ├── steps/
+│       │   ├── WelcomeStep.tsx          # Step 0: what OpenCompany is, 2×2 feature grid
+│       │   ├── HowItWorksStep.tsx       # Step 1: blocks, agents, chat; Normal/Dev switch
+│       │   ├── ConnectAIStep.tsx        # Step 2: provider tiles from the live catalogue
+│       │   └── TryItStep.tsx            # Step 3: three-step recipe for the AI Assistant example
+│       └── __tests__/                   # ConnectAIStep, GetStartedChecklist, HowItWorksStep, OnboardingWizard
 └── hooks/
-    └── useOnboarding.ts                # State management + TanStack-Query persistence
+    ├── useOnboarding.ts                # Wizard state + TanStack-Query persistence
+    └── useGetStarted.ts                # Checklist state (which milestones are done, dismissed)
 ```
 
 ## Components
@@ -113,7 +115,7 @@ Custom hook managing the full onboarding lifecycle. Persistence rides the **TanS
 ```typescript
 export const useOnboarding = (
   reopenTrigger?: number,
-  totalSteps: number = 5,   // DEFAULT_TOTAL_STEPS; caller passes STEPS.length
+  totalSteps: number = DEFAULT_TOTAL_STEPS,   // 4; the wizard passes STEPS.length
 ) => {
   // Returns (spread of OnboardingState + actions):
   // - isVisible: boolean       - Whether wizard should render
@@ -130,7 +132,7 @@ export const useOnboarding = (
 ```
 
 **Key behaviors**:
-- `totalSteps` is a **parameter** (default 5). The wizard owns the step list and passes `STEPS.length`, so the hook never hardcodes the count — it uses `totalSteps` only to detect last-step completion in `nextStep`.
+- `totalSteps` is a **parameter**. The wizard owns the step list and passes `STEPS.length`, so the hook never hardcodes the count — it uses `totalSteps` only to detect last-step completion in `nextStep`. The default only matters if a caller omits it; it matches the shipped wizard.
 - Hydrates UI state from `settingsQuery.data` on `isSuccess`: reads `onboarding_completed` / `onboarding_step`. Visibility flips only on first hydration (`prev.hasChecked ? prev.isVisible : !completed`) so a user-closed wizard does not re-open on later query refetches.
 - Each navigation (`nextStep` / `prevStep` / `skip` / `complete`) calls `saveSettings.mutate({ onboarding_step, onboarding_completed })` to persist progress.
 - Query errors surface as a non-blocking "checked" state (`isLoading=false, hasChecked=true`) so the app continues even if the round-trip failed.
@@ -145,16 +147,16 @@ export const useOnboarding = (
 |------|------|-------------|
 | `onOpenCredentials` | `() => void` | Opens CredentialsModal (passed from Dashboard) |
 | `reopenTrigger` | `number?` | Incrementing counter triggers wizard reopen |
+| `onFinish` | `() => void?` | Called after the last step's button completes the wizard; the Dashboard opens the AI Assistant example and focuses chat. Never called on skip or modal close. |
 
 **`STEPS` is the single source of truth.** The wizard declares a module-scope `STEPS` array of `{ title, render }` entries. Its `.length` feeds the hook's `totalSteps`, the progress indicator renders one node per entry, and the active step's `render` is dispatched by index. Adding a step is a one-line edit to this array.
 
 ```typescript
 const STEPS = [
-  { title: 'Welcome',     render: () => <WelcomeStep /> },
-  { title: 'Concepts',    render: () => <ConceptsStep /> },
-  { title: 'API Keys',    render: ({ onOpenCredentials }) => <ApiKeyStep onOpenCredentials={onOpenCredentials} /> },
-  { title: 'Canvas',      render: () => <CanvasStep /> },
-  { title: 'Get Started', render: () => <GetStartedStep /> },
+  { title: 'Welcome',         render: () => <WelcomeStep /> },
+  { title: 'How it works',    render: () => <HowItWorksStep /> },
+  { title: 'Connect your AI', render: ({ onOpenCredentials }) => <ConnectAIStep onOpenCredentials={onOpenCredentials} /> },
+  { title: 'Try it',          render: () => <TryItStep /> },
 ];
 ```
 
@@ -163,30 +165,35 @@ const STEPS = [
 - Progress indicator: a hand-rolled `<ol>` of step pills. Each pill is a rounded number/`Check` (lucide) badge with one of three statuses — `completed` (filled `bg-primary text-primary-foreground`), `active` (`border-primary text-primary`), `upcoming` (`border-border text-muted-foreground`) — joined by a connector `<div>` (`bg-primary` once passed, else `bg-border`). No antd `Steps`.
 - Step content rendered via `STEPS[safeIndex].render({ onOpenCredentials })` inside a scrollable `max-h-[calc(95vh-200px)]` container.
 - Footer: shadcn `Button variant="ghost"` "Skip for now" (left) | `Button variant="outline"` "Back" (shown when `currentStep > 0`) + an `ActionButton` on the right.
-- The right-side primary button uses **`ActionButton` intents**, not raw colour hex: `<ActionButton intent="tools">` for "Next" (with `ArrowRight`), `<ActionButton intent="run">` for the final "Start Building" (with `Check`). The pre-antd-removal dracula-purple/green hardcoding is gone.
+- The right-side primary button uses **`ActionButton` intents**, not raw colour hex: `<ActionButton intent="tools">` for "Next" (with `ArrowRight`), `<ActionButton intent="run">` for the final "Open AI Assistant" (with `MessageCircle`), which calls `complete()` and then `onFinish`.
 - Only renders when `isVisible && hasChecked && !isLoading`.
 
 ### Node-role token map
 
 **Location**: `client/src/components/onboarding/nodeRoleClasses.ts`
 
-`NODE_ROLE_CLASSES` maps a `NodeRole` (`model | skill | agent | workflow | trigger`) to the matching `--node-X` triplet (`{ card: 'bg-node-X-soft border-node-X-border', text: 'text-node-X' }`). `ConceptsStep` and `GetStartedStep` key their card surfaces off this so the cards track every theme with **no opacity arithmetic at the call site**.
+`NODE_ROLE_CLASSES` maps a `NodeRole` (`model | skill | agent | workflow | trigger`) to the matching `--node-X` triplet (`{ card: 'bg-node-X-soft border-node-X-border', text: 'text-node-X' }`). Every step keys its card surfaces off this so the cards track every theme with **no opacity arithmetic at the call site**.
 
 ### Step Components
 
-All steps are shadcn/Tailwind compositions using `lucide-react` icons (`Card` / `CardContent`, `Badge`, `Alert` / `AlertDescription`, `Button`, plus role tokens). No antd, no `@ant-design/icons`.
+All steps are shadcn/Tailwind compositions using `lucide-react` icons. No antd, no `@ant-design/icons`. The copy is deliberately non-technical (blocks, agents, chat), not node-type vocabulary.
 
-| Step | Component | Title | Purpose | Primitives used |
-|------|-----------|-------|---------|-----------------|
-| 0 | `WelcomeStep` | Welcome to OpenCompany | Platform intro + 2×2 feature grid | `Card` / `CardContent`, lucide `Rocket` / `Plug` / `Move` / `Zap`, `bg-node-agent-soft` |
-| 1 | `ConceptsStep` | Key Concepts | Nodes, Edges, AI Agents, Skills & Tools, Normal vs Dev Mode | role-token cards via `NODE_ROLE_CLASSES`, lucide `LayoutGrid` / `GitBranch` / `Bot` / `Wrench` / `ArrowLeftRight` |
-| 2 | `ApiKeyStep` | API Key Setup | Provider list + "Open Credentials" button | shadcn `Button`, `Alert variant="info"`, `AIProviderIcons`, lucide `Key` / `ExternalLink` |
-| 3 | `CanvasStep` | Canvas Tour | Visual UI layout diagram + keyboard shortcuts | `Badge`, role-token region tints, lucide `Layout` / `Wrench` / `Terminal` |
-| 4 | `GetStartedStep` | Get Started | Example workflows, quick recipe, tips | `Card` / `CardContent`, `Badge`, role-token cards, lucide `Play` / `FlaskConical` / `BookOpen` / `Settings` |
+| Step | Component | Heading | Purpose | Notable data sources |
+|------|-----------|---------|---------|----------------------|
+| 0 | `WelcomeStep` | Build your own AI team | Platform intro + 2×2 feature grid (agents, drag-and-drop, bring your AI, local and private) | static; `Card` / `CardContent`, role-token cards |
+| 1 | `HowItWorksStep` | See how it works | Three ideas: snap blocks together, agents do the thinking, chat to make it go; explains the Normal / Dev toolbar switch | `useNodeGroups()` — the Normal-mode group labels render live as `Badge`s |
+| 2 | `ConnectAIStep` | Connect your AI (or "You're connected") | Featured provider tiles with "Get a key" links, the remaining AI providers as chips, and the Connect / Manage button | `useCatalogueQuery()` for name, icon and `stored` state; `FEATURED_AI_PROVIDERS` for hint + key URL |
+| 3 | `TryItStep` | Say hello to your first agent | Three-step recipe (open AI Assistant, press Start, say hello) plus "more to explore" cards for Claude Assistant and AI Employee | static |
 
-**ApiKeyStep** accepts an `onOpenCredentials` prop to link to the existing CredentialsModal without duplicating key input logic. It lists six providers (OpenAI, Anthropic, Google, Groq, OpenRouter, Cerebras) with brand icons from `client/src/components/icons/AIProviderIcons.tsx` (imported as `../../icons/AIProviderIcons`), and closes with an `Alert variant="info"` noting keys can be changed later from the toolbar.
+**ConnectAIStep** takes an `onOpenCredentials` prop so it links to the existing CredentialsModal without duplicating key input. Everything about a provider except its marketing hint and key-page URL comes from the live credential catalogue: `FEATURED_AI_PROVIDERS` (`aiProviderLinks.ts`) lists only `{ id, hint, keyUrl }` for openai, anthropic and gemini, and the step joins that to `useCatalogueQuery().providers` filtered to `category === 'ai'`. Providers not featured render as a chip row with a note that Ollama and LM Studio run locally. While the catalogue loads it shows three `Skeleton` tiles; once any AI provider is `stored` the heading, button label and closing `Alert` all switch to the connected variant.
 
-**CanvasStep** renders a miniature UI-region diagram whose tints map node groups to regions: toolbar→`workflow`, sidebar→`model`, canvas→`agent`, palette→`skill`, console→`trigger`, each via the `--node-X-soft` / `text-node-X` tokens. The shortcut list (`Ctrl+S` Save, `F2` Rename node, `Delete` Remove node, `Ctrl+C` Copy node) renders as `Badge variant="outline"` mono chips.
+**HowItWorksStep** reads `useNodeGroups()` and renders the labels of every group whose `visibility` is `normal` or `all`, so the "Normal shows just the AI blocks" sentence stays true as groups are added.
+
+### Get Started checklist
+
+**Location**: `client/src/components/onboarding/GetStartedChecklist.tsx`, state in `client/src/hooks/useGetStarted.ts`, items in `getStartedItems.ts`.
+
+A fixed-position card (bottom right, above the console) that appears after the wizard and tracks five milestones: workspace set up (auto-complete), add an AI key, chat with the AI Assistant, build your own workflow (told apart from editing a shipped example via `EXAMPLE_WORKFLOW_NAMES`), and try a theme. Rows flagged `actionable` take a click handler from the Dashboard through the `actions` prop. It collapses to a pill and can be dismissed; dismissal is reversible from Settings → Help.
 
 ## Integration Points
 
@@ -208,6 +215,7 @@ const [onboardingReopenTrigger, setOnboardingReopenTrigger] = React.useState(0);
 <OnboardingWizard
   onOpenCredentials={() => setCredentialsOpen(true)}
   reopenTrigger={onboardingReopenTrigger}
+  onFinish={openAiAssistantAndFocusChat}
 />
 ```
 
@@ -217,7 +225,7 @@ const [onboardingReopenTrigger, setOnboardingReopenTrigger] = React.useState(0);
 
 ## WebSocket Handlers
 
-No new handlers were needed. The onboarding system reuses existing generic handlers, accessed through the TanStack Query user-settings layer:
+No new handlers were needed. The onboarding system reuses the generic user-settings handlers (registered from `server/services/settings/handlers.py`), accessed through the TanStack Query user-settings layer:
 
 | Handler | Usage |
 |---------|-------|
@@ -233,7 +241,7 @@ No new handlers were needed. The onboarding system reuses existing generic handl
 3. `onboarding_completed` defaults to `false`, `onboarding_step` defaults to `0`
 4. Wizard opens at step 0
 5. User navigates steps -- each transition saves via the save mutation (`save_user_settings`)
-6. On "Start Building" or "Skip for now", `onboarding_completed` set to `true`
+6. On "Open AI Assistant" or "Skip for now", `onboarding_completed` set to `true`; only the former also fires `onFinish`
 7. Wizard closes, does not reappear on refresh
 
 ### Existing User (Database Migration)
@@ -245,10 +253,10 @@ No new handlers were needed. The onboarding system reuses existing generic handl
 
 ### Resume Mid-Wizard
 
-1. User advances to step 3, closes browser
-2. `onboarding_step = 3` was saved on last navigation
-3. User reopens app, `useOnboarding` reads `step = 3, completed = false`
-4. Wizard opens at step 3
+1. User advances to step 2, closes browser
+2. `onboarding_step = 2` was saved on last navigation
+3. User reopens app, `useOnboarding` reads `step = 2, completed = false`
+4. Wizard opens at step 2
 
 ### Replay from Settings
 
@@ -271,35 +279,38 @@ No new handlers were needed. The onboarding system reuses existing generic handl
 | Multiple tabs | Completing in one tab doesn't update others until query refetch |
 | Replay from Settings | Resets local state and reopens wizard from step 0 |
 | Fresh database (no workflow.db) | Onboarding appears after first settings query resolves |
+| Credential catalogue still loading on step 2 | `Skeleton` tiles; the Connect button is always available |
 
 ## Verification Checklist
 
-1. **Fresh database**: Delete `server/workflow.db` (or the configured DB), start server -- wizard appears
-2. **Step navigation**: Click through all 5 steps -- the `<ol>` stepper updates, Back/Next work
+1. **Fresh database**: Delete `~/.opencompany/workflow.db` (or the configured DB), start server -- wizard appears
+2. **Step navigation**: Click through all 4 steps -- the `<ol>` stepper updates, Back/Next work
 3. **Skip**: Click "Skip for now" -- wizard closes, doesn't reappear on refresh
-4. **Resume**: Advance to step 3, close browser, reopen -- wizard resumes at step 3
-5. **Complete**: Finish all steps via "Start Building" -- wizard doesn't reappear
-6. **API Key step**: Click "Open Credentials" button -- CredentialsModal opens
+4. **Resume**: Advance to step 2, close browser, reopen -- wizard resumes at step 2
+5. **Complete**: Finish via "Open AI Assistant" -- wizard doesn't reappear, the AI Assistant example opens with chat focused
+6. **Connect step**: Click "Connect your AI account" -- CredentialsModal opens; after saving a key, the step re-renders as connected
 7. **Existing user migration**: With existing `workflow.db` where `examples_loaded=1` -- onboarding does NOT appear
-8. **Theme support**: Switch themes -- role-token cards and region tints adapt correctly
+8. **Theme support**: Switch themes -- role-token cards adapt correctly
 9. **Replay**: Open Settings, click "Replay Welcome Guide" -- wizard reopens from step 0
-10. **TypeScript**: `bun run typecheck` (root gate, TypeScript 7) passes clean
+10. **Tests**: `bun run --filter react-flow-client test` runs the four `onboarding/__tests__/` suites; `bun run typecheck` (root gate, TypeScript 7) passes clean
 
 ## Key Files
 
 | File | Description |
 |------|-------------|
-| `client/src/hooks/useOnboarding.ts` | Onboarding state hook; persists via TanStack-Query user-settings layer |
+| `client/src/hooks/useOnboarding.ts` | Wizard state hook; persists via TanStack-Query user-settings layer |
+| `client/src/hooks/useGetStarted.ts` | Get Started checklist state |
 | `client/src/hooks/useUserSettingsQuery.ts` | `useUserSettingsQuery` / `useSaveUserSettingsMutation` (WS-backed) |
 | `client/src/components/onboarding/OnboardingWizard.tsx` | Main wizard modal: `STEPS` SSOT + `<ol>` stepper + ActionButton footer |
+| `client/src/components/onboarding/GetStartedChecklist.tsx` | Post-wizard milestone checklist |
+| `client/src/components/onboarding/getStartedItems.ts` | Checklist items + `EXAMPLE_WORKFLOW_NAMES` |
+| `client/src/components/onboarding/aiProviderLinks.ts` | `FEATURED_AI_PROVIDERS` hints and key-page URLs |
 | `client/src/components/onboarding/nodeRoleClasses.ts` | `NODE_ROLE_CLASSES` role→token map for step cards |
-| `client/src/components/onboarding/steps/WelcomeStep.tsx` | Step 0: Platform introduction |
-| `client/src/components/onboarding/steps/ConceptsStep.tsx` | Step 1: Key concepts (Nodes, Edges, Agents, Skills, Modes) |
-| `client/src/components/onboarding/steps/ApiKeyStep.tsx` | Step 2: API key setup with Credentials link |
-| `client/src/components/onboarding/steps/CanvasStep.tsx` | Step 3: UI layout diagram + shortcuts |
-| `client/src/components/onboarding/steps/GetStartedStep.tsx` | Step 4: Getting started tips |
-| `client/src/components/icons/AIProviderIcons.tsx` | Provider brand icons used by ApiKeyStep |
-| `client/src/Dashboard.tsx` | Integration: renders wizard + passes replay trigger |
+| `client/src/components/onboarding/steps/WelcomeStep.tsx` | Step 0: what OpenCompany is |
+| `client/src/components/onboarding/steps/HowItWorksStep.tsx` | Step 1: blocks, agents, chat, Normal/Dev switch |
+| `client/src/components/onboarding/steps/ConnectAIStep.tsx` | Step 2: provider tiles from the catalogue + Credentials link |
+| `client/src/components/onboarding/steps/TryItStep.tsx` | Step 3: AI Assistant recipe |
+| `client/src/Dashboard.tsx` | Integration: renders wizard + checklist, passes replay trigger and `onFinish` |
 | `client/src/components/ui/SettingsPanel.tsx` | "Replay Welcome Guide" button in Help section |
 | `server/models/database.py` | `UserSettings.onboarding_completed`, `onboarding_step` fields |
 | `server/core/database.py` | Migration + CRUD for onboarding fields |
@@ -308,6 +319,6 @@ No new handlers were needed. The onboarding system reuses existing generic handl
 
 To add a new onboarding step:
 
-1. Create `client/src/components/onboarding/steps/NewStep.tsx` composing shadcn primitives + Tailwind tokens + lucide icons (use `NODE_ROLE_CLASSES` for tinted cards). Do NOT introduce antd.
-2. Add a `{ title, render }` entry to the `STEPS` array in `OnboardingWizard.tsx`. Its `.length` automatically updates the hook's `totalSteps` and the progress stepper — no separate count to maintain.
+1. Create `client/src/components/onboarding/steps/NewStep.tsx` composing shadcn primitives + Tailwind tokens + lucide icons (use `NODE_ROLE_CLASSES` for tinted cards). Do NOT introduce antd. Prefer live data (`useCatalogueQuery`, `useNodeGroups`) over hardcoded lists, as steps 1 and 2 do.
+2. Add a `{ title, render }` entry to the `STEPS` array in `OnboardingWizard.tsx`. Its `.length` automatically updates the hook's `totalSteps` and the progress stepper — no separate count to maintain. If the new step is last, the "Open AI Assistant" button and `onFinish` move to it automatically.
 3. No backend changes needed (step index is just a number).

@@ -1,5 +1,13 @@
 # Memory Lifecycle
 
+> **ARCHIVED 2026-09-04 — Superseded.** Documents the retired `input-memory` markdown model (pre-RFC-0002). The `services/memory/` helper API, vector store and claude session bridge sections were still broadly accurate, but the test citations were not: `tests/services/memory/test_markdown.py` does not exist, the CloudEvents lock is `tests/test_cloudevents_node_parameters.py`, and `parse_memory_markdown` / `trim_markdown_window` have no test coverage.
+>
+> For current state see:
+>
+> - [agent_context_flow.md](../agent_context_flow.md) and [RFC-0002](../../RFC-0002-AGENT-CONTEXT-AND-MEMORY.md) — conversation store
+> - [memory_compaction.md](../memory_compaction.md) — token tracking and compaction
+> - [cli_agent_framework.md → Memory bridge](../cli_agent_framework.md) — claude session continuity
+
 > ## ⚠ Partly superseded by RFC-0002
 >
 > This document describes the pre-RFC-0002 model, in which `simpleMemory` hung
