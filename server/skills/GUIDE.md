@@ -40,7 +40,7 @@ server/skills/
 ├── vertex_agent/             # vertex-agent-skill, vertex-agent-admin-skill
 └── web_agent/                # Web automation skills
       browser-skill, browser-harness-skill, http-request-skill, apify-skill,
-      crawlee-scraper-skill, proxy-config-skill, duckduckgo-search-skill,
+      crawlee-scraper-skill, tikhub-skill, proxy-config-skill, duckduckgo-search-skill,
       brave-search-skill, serper-search-skill, perplexity-search-skill
 ```
 

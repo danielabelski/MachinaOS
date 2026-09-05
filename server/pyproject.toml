@@ -100,6 +100,11 @@ dependencies = [
     # Apify Web Scraping
     "apify-client>=1.8.0",
 
+    # TikHub social scraping SDK. Auto-generated from TikHub's openapi.json;
+    # capped below 3 because the resource/method surface regenerates per
+    # release. Pulls typer for its own `tikhub` CLI (not imported by us).
+    "tikhub>=2.1.2,<3",
+
     # Crawlee Web Scraping
     "crawlee[beautifulsoup]>=1.4.0",
     "html2text>=2024.2.26",

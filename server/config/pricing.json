@@ -255,6 +255,14 @@
       "web_search": 0.003,
       "_default": 0.003
     },
+    "tikhub": {
+      "_description": "TikHub pay-per-request (non-2xx not billed)",
+      "_source": "https://tikhub.io/pricing",
+      "_updated": "2026-09",
+      "request": 0.001,
+      "meta": 0.0,
+      "_default": 0.001
+    },
     "serper": {
       "_description": "Serper Google Search API pricing (per query)",
       "_source": "https://serper.dev/pricing",
@@ -419,6 +427,11 @@
     },
     "brave_search": {
       "web_search": "web_search"
+    },
+    "tikhub": {
+      "call": "request",
+      "fetch_url": "request",
+      "account": "meta"
     },
     "serper": {
       "web_search": "web_search"

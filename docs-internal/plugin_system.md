@@ -396,7 +396,7 @@ on a plugin resolves to a registered class.
 | `nodes/location/_credentials.py` | `GoogleMapsCredential` | api_key (query) | gmaps_create / gmaps_locations / gmaps_nearby_places |
 | `nodes/twitter/_credentials.py` | `TwitterCredential` | oauth2 | twitterSend / twitterSearch / twitterUser / twitterReceive |
 | `nodes/telegram/_credentials.py` | `TelegramCredential` | api_key | telegramSend / telegramReceive |
-| `nodes/scraper/_credentials.py` | `ApifyCredential` | api_key (bearer) | apifyActor |
+| `nodes/scraper/_credentials.py` | `ApifyCredential` / `TikHubCredential` | api_key (bearer) | apifyActor / tikhubAction (TikHub probes `tikhub/user/get_user_info` declaratively — see [tikhub_service.md](./tikhub_service.md)) |
 | `nodes/model/_credentials.py` | `OpenAI / Anthropic / Gemini / OpenRouter / Groq / Cerebras / DeepSeek / Kimi / Mistral / Xai / Sarvam / Ollama / LMStudio` | api_key | 13 credential classes covering the 13 agent-selectable providers and the 12 standalone chat-model nodes (`ls server/nodes/model/*_chat_model`). Ollama / LM Studio store a local server URL; xAI is agent-selectable but has no standalone node; `SarvamCredential` also serves the speech / translate plugins. |
 | `nodes/search/<name>/__init__.py` (inline) | `BraveSearch / Serper / Perplexity` | api_key | single-use search nodes |
 
@@ -710,7 +710,7 @@ server/
 │   ├── proxy/                   # proxy_request / proxy_config / proxy_status
 │   │   └── _usage.py            # Shared track_proxy_usage
 │   ├── search/                  # brave / serper / perplexity / duckduckgo
-│   ├── scraper/                 # apify / crawlee
+│   ├── scraper/                 # apify / crawlee / tikhub_action (SDK-backed, reflective resource.method dispatch)
 │   ├── tool/                    # calculator / currentTime / taskManager / writeTodos / agent_builder / canvas / data_source / simple_memory
 │   ├── trigger/                 # webhookTrigger / chatTrigger / taskTrigger
 │   ├── workflow/                # start

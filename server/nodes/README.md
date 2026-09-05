@@ -123,7 +123,8 @@ social/      — Unified social (send / receive). Names no platform: each
                onto its own parameter shape.
 email/       — IMAP/SMTP via Himalaya CLI
 search/      — Web search APIs (brave / serper / perplexity / duckduckgo)
-scraper/     — Apify / Crawlee
+scraper/     — Apify / Crawlee / TikHub (SDK-backed, flattened like a
+               CLI: list_endpoints + call over resource.method ids)
 document/    — RAG pipeline (scrape / download / parse / chunk / embed / store)
 code/        — Python / Monty (sandboxed Python) / JS / TS executors
 filesystem/  — file_read / file_modify / shell / fs_search / gallery
@@ -210,7 +211,7 @@ from ._credentials import TwitterCredential              # shared with 3 sibling
 | `nodes/twitter/` | `TwitterCredential` (OAuth2 + PKCE) | twitter_send / _search / _user / _receive |
 | `nodes/telegram/` | `TelegramCredential` (bot token + owner chat id) | telegram_send / _receive |
 | `nodes/discord/` | `DiscordBotCredential` (bot token; overrides `inject()` because Discord uses `Bot <token>`, not the inherited `Bearer `) + `DiscordUserCredential` (OAuth2 user context, separate id so connecting a user never overwrites the bot) | discord_send / _action / _receive / _interaction |
-| `nodes/scraper/` | `ApifyCredential` (Bearer) | apify_actor |
+| `nodes/scraper/` | `ApifyCredential` (Bearer, SDK probe) + `TikHubCredential` (Bearer, declarative httpx probe against `tikhub/user/get_user_info` — kept SDK-free so the modal validates even if the `tikhub` import fails) | apify_actor / tikhub_action |
 | `nodes/model/` | 13 LLM credential classes: 11 cloud (`OpenAI / Anthropic / Gemini / OpenRouter / Groq / Cerebras / DeepSeek / Kimi / Mistral / xAI / Sarvam`) plus Ollama / LM Studio | 12 chat models (xAI has no standalone chat-model node) **plus the 5 `nodes/sarvam/` service nodes**, which import `SarvamCredential` from here — one stored key serves Sarvam's OpenAI-compatible chat endpoint *and* its `api-subscription-key` REST APIs |
 | `nodes/search/` | `BraveSearch / Serper / Perplexity` inlined in each plugin file | single-use per plugin |
 

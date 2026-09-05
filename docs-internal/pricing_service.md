@@ -2,10 +2,10 @@
 
 ## Overview
 
-The pricing service provides centralized cost tracking for both LLM tokens and external API services (Twitter/X, Google Maps). It supports:
+The pricing service provides centralized cost tracking for both LLM tokens and external API services (Twitter/X, Google Maps, TikHub). It supports:
 
 - **LLM Token Costs**: Per-model pricing with input/output/cache/reasoning token breakdown
-- **API Service Costs**: Per-request/resource pricing for third-party APIs (Twitter/X, Google Maps, Search APIs)
+- **API Service Costs**: Per-request/resource pricing for third-party APIs (Twitter/X, Google Maps, TikHub, Search APIs)
 - **Automatic Tracking**: HTTPX event hooks for transparent API call tracking
 - **Manual Tracking**: Helper functions for services that don't use HTTPX
 
@@ -285,6 +285,10 @@ async def track_google_usage(node_id, service, action, resource_count, context):
     cost_data = pricing.calculate_api_cost(service, action, resource_count)
     # ... save to database ...
 ```
+
+### Example: TikHub Plugin (flat per-request)
+
+TikHub bills roughly $0.001 per successful request and does not charge non-2xx responses, so `server/nodes/scraper/tikhub_action/_sdk.py::track_tikhub_usage(ctx, action, endpoint_path)` records one `resource_count=1` metric only after a 2xx and never for the local `list_endpoints` operation. It takes the `NodeContext` (not the raw dict), reads `session_id` / `workflow_id` from it, wraps everything in `try/except` + `logger.warning` so a metrics failure never fails a call that already cost money, and returns the USD figure for the node's `cost_usd` output key. `pricing.json` carries `api.tikhub` (`request` 0.001, `meta` 0.0) and `operation_map.tikhub` (`call` / `fetch_url` -> `request`, `account` -> `meta`); the credential entry sets `"usage_service": "tikhub"` so the spend shows in the Credentials modal usage table. See [tikhub_service.md](./tikhub_service.md).
 
 ### Example: Search Plugins (declarative cost)
 

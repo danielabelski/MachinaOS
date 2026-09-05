@@ -32,6 +32,8 @@
     "timer",
     "cronScheduler",
 
+    "tikhubAction",
+
     "telegramSend",
     "telegramReceive",
 

@@ -224,6 +224,7 @@ match its doc here, and each doc must still describe what the code does.
 - [Browser (`browser`)](./web_automation/browser.md)
 - [Browser Harness (`browserHarness`)](./web_automation/browserHarness.md)
 - [Crawlee Scraper (`crawleeScraper`)](./web_automation/crawleeScraper.md)
+- [TikHub (`tikhubAction`)](./web_automation/tikhubAction.md)
 
 ### whatsapp
 

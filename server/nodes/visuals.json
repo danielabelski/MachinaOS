@@ -21,6 +21,9 @@
   "apifyActor": {
     "skill": "apify-skill"
   },
+  "tikhubAction": {
+    "skill": "tikhub-skill"
+  },
   "appLauncher": {
     "icon": "🚀",
     "skill": "app-launcher-skill"
