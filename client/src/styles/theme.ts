@@ -258,7 +258,7 @@ export const theme = {
   // Node sizes (fixed per industry standard)
   nodeSize: {
     square: '64px',          // SquareNode (design-system spec: 64px box)
-    squareIcon: '32px',      // Icon inside square node (0.5 × box). The ONE
+    squareIcon: '36px',      // Icon inside square node (0.5625 × box). The ONE
                              // node-icon size: every canvas node passes it to
                              // <NodeIcon size=>, which applies it as width,
                              // height and emoji font size together.
