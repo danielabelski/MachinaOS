@@ -28,7 +28,7 @@ Post-migration (2026-04-14). Single source of truth for the current frontend.
 | Styling | Tailwind v4 + `@tailwindcss/vite` | [index.css](../client/src/index.css) + [tailwind.config.js](../client/tailwind.config.js) |
 | Component library | shadcn/ui (CLI `npx shadcn@latest add`) | [components/ui/](../client/src/components/ui/) |
 | Primitives | Radix UI | Pulled as transitive deps by shadcn |
-| Icons | `lucide-react` | Everywhere. No more `@ant-design/icons`. |
+| Icons | `lucide-react` | Everywhere. No more `@ant-design/icons`. Backend-declared node / provider icons go through `<NodeIcon size={token}>` — `theme.nodeSize.squareIcon` on canvas nodes, `theme.iconSize.*` elsewhere; the token is applied as width, height and emoji font size, so never size an icon with `h-*` / `text-*` classes. |
 | Typography | `@tailwindcss/typography` (`prose`) | Activated via `@plugin` in index.css |
 | Markdown | `react-markdown` + `remark-gfm` + `remark-breaks` | Output panel, memory display, skill instructions |
 | Code highlighting | `prismjs` | Code editor |

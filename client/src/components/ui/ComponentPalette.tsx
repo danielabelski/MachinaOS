@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Search } from 'lucide-react';
 import { NodeIcon } from '../../assets/icons';
+import { theme } from '../../styles/theme';
 import { useNodeGroups, listCachedNodeSpecs, NodeGroupEntry } from '../../lib/nodeSpec';
 import { nodeSpecToDescription } from '../../adapters/nodeSpecToDescription';
 
@@ -177,7 +178,7 @@ const ComponentPalette: React.FC<ComponentPaletteProps> = ({
                           >
                             <NodeIcon
                               icon={config.icon}
-                              className="h-4 w-4 text-base"
+                              size={theme.iconSize.sm}
                               fallback={<span>📦</span>}
                             />
                           </span>

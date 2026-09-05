@@ -15,6 +15,7 @@ import { useProviderStatus } from '../hooks';
 import { StatusCard, ActionBar } from '../primitives';
 import { RateLimitSection } from '../sections';
 import { NodeIcon } from '../../../assets/icons';
+import { theme } from '../../../styles/theme';
 import type { ActionDef } from '../primitives/ActionBar';
 import type { ProviderConfig } from '../types';
 
@@ -63,7 +64,7 @@ const QrPairingPanel: React.FC<{ config: ProviderConfig; visible: boolean }> = (
       />}
       {config.statusRows && (
         <StatusCard
-          icon={<NodeIcon icon={config.iconRef} className="h-6 w-6 text-2xl" />}
+          icon={<NodeIcon icon={config.iconRef} size={theme.iconSize.md} />}
           title={config.name}
           rows={config.statusRows}
           status={status}

@@ -45,6 +45,7 @@ import { folderSkillsQueryKey, type AvailableSkill } from '../../hooks/useFolder
 import { queryKeys, STALE_TIME } from '../../lib/queryConfig';
 import { INodeTypeDescription, INodeProperties } from '../../types/INodeProperties';
 import { NodeIcon } from '../../assets/icons';
+import { theme } from '../../styles/theme';
 import { ExecutionResult } from '../../services/executionService';
 import { Edge } from 'reactflow';
 import { shouldShowParameter } from '../../utils/parameterVisibility';
@@ -926,7 +927,7 @@ const MiddleSection: React.FC<MiddleSectionProps> = ({
                           >
                             <NodeIcon
                               icon={skill.icon}
-                              className="h-5 w-5 text-lg"
+                              size={theme.iconSize.md}
                             />
                           </div>
                           <div className="min-w-0 flex-1 overflow-hidden">

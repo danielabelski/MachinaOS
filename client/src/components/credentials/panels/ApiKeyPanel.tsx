@@ -16,6 +16,7 @@ import ApiKeyInput from '../../ui/ApiKeyInput';
 import { useCredentialPanel } from '../useCredentialPanel';
 import { ProviderDefaultsSection, LlmUsageSection, ApiUsageSection } from '../sections';
 import { NodeIcon } from '../../../assets/icons';
+import { theme } from '../../../styles/theme';
 import type { ProviderConfig } from '../types';
 
 const ApiKeyPanel: React.FC<{ config: ProviderConfig; visible: boolean }> = ({ config, visible }) => {
@@ -51,7 +52,7 @@ const ApiKeyPanel: React.FC<{ config: ProviderConfig; visible: boolean }> = ({ c
             >
               <NodeIcon
                 icon={config.iconRef}
-                className="h-12 w-12 text-2xl"
+                size={theme.iconSize.xl}
               />
             </div>
             {/* AQ.-prefixed keys route to the Vertex backend — show the

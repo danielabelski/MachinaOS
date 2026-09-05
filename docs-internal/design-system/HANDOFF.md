@@ -270,7 +270,7 @@ The skins that use `uppercase` + wide tracking (Cyber at `.18em`, Greek at `.18e
 - **Pin your toolbar clusters.** The wordmark, workflow-name chip, mode toggle and action cluster all need `flex: none`; leave exactly one group (File/Edit/View) shrinkable. Without this the mode toggle collapses to a sliver in Cyber and Atomic.
 - **Test the widest theme, not the default.** Anything that fits in Light will overflow somewhere. Cyber and Greek are the stress cases.
 
-Also: icons are **28px** (`h-7 w-7`) everywhere. Eight themes ship their own glyph set; Light, Dark, Plague and Surveillance fall through to lucide.
+Also: canvas node icons are **32px** everywhere, and the size is a token, not a class — `theme.nodeSize.squareIcon` in `client/src/styles/theme.ts` (0.5 x the 64px `nodeSize.square` box), passed to `NodeIcon` as `size=`; non-canvas surfaces use the `theme.iconSize.*` scale the same way. `NodeIcon` applies that one token as the box's width, height AND font size, so SVG, library and emoji icons all draw at the same edge. Never size an icon with Tailwind `h-*`/`text-*` classes: the theme type scale maps `text-3xl` to 44px, which is how emoji nodes once painted half again larger than every SVG-backed node beside them. Eight themes ship their own glyph set; Light, Dark, Plague and Surveillance fall through to lucide.
 
 ---
 

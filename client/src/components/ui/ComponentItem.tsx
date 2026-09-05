@@ -4,6 +4,7 @@ import { cn } from '@/lib/utils';
 import { Card } from '@/components/ui/card';
 import { INodeTypeDescription } from '../../types/INodeProperties';
 import { NodeIcon } from '../../assets/icons';
+import { theme } from '../../styles/theme';
 import { useNodeSpec } from '../../lib/nodeSpec';
 
 interface ComponentItemProps {
@@ -46,7 +47,7 @@ const ComponentItem: React.FC<ComponentItemProps> = ({ definition: localDefiniti
       <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-bg-elevated ring-1 ring-border-default/40">
         <NodeIcon
           icon={iconRaw}
-          className="h-5 w-5 text-lg"
+          size={theme.iconSize.md}
           fallback={<span>📦</span>}
         />
       </div>

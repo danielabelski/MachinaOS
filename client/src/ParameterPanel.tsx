@@ -7,6 +7,7 @@ import { useWebSocket } from './contexts/WebSocketContext';
 import { ExecutionService, ExecutionResult } from './services/executionService';
 import { ActionButton } from './components/ui/action-button';
 import { NodeIcon } from './assets/icons';
+import { theme } from './styles/theme';
 import { nodeExecutionReducer } from './utils/parameterPanelExecutionState';
 import { deriveCanvasLock } from './lib/canvasLock';
 
@@ -161,7 +162,7 @@ const ParameterPanel: React.FC = () => {
       <div className="flex items-center gap-2 font-display text-[15px] font-semibold tracking-[var(--type-tracking-display)] text-fg-default [text-transform:var(--type-uppercase)]">
         <NodeIcon
           icon={nodeDefinition.icon}
-          className="h-5 w-5 text-xl"
+          size={theme.iconSize.md}
         />
         <span>{nodeDefinition.displayName}</span>
         {hasUnsavedChanges && <span className="text-warning">*</span>}

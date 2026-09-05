@@ -39,6 +39,7 @@ import { Search, X } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { NodeIcon } from '../../assets/icons';
+import { theme } from '../../styles/theme';
 import { useWebSocket } from '../../contexts/WebSocketContext';
 import type { ProviderConfig, CategoryGroup } from './types';
 
@@ -231,7 +232,8 @@ const ProviderRow = memo<RowProps>(function ProviderRow({ provider, selected, on
     >
       <NodeIcon
         icon={provider.iconRef}
-        className="h-3.5 w-3.5 shrink-0 text-sm"
+        size={theme.iconSize.xs}
+        className="shrink-0"
       />
       <span className="flex-1 truncate">{provider.name}</span>
       <ProviderStatusDot providerId={provider.id} stored={!!provider.stored} />

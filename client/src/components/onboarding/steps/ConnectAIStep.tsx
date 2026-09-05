@@ -6,6 +6,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { NodeIcon } from '../../../assets/icons';
+import { theme } from '../../../styles/theme';
 import { useCatalogueQuery, type ServerProviderConfig } from '../../../hooks/useCatalogueQuery';
 import { FEATURED_AI_PROVIDERS } from '../aiProviderLinks';
 
@@ -69,7 +70,7 @@ const ConnectAIStep: React.FC<ConnectAIStepProps> = ({ onOpenCredentials }) => {
                 key={id}
                 className="flex flex-col items-center gap-1 rounded-md border border-border bg-muted/50 px-3 py-3 text-center"
               >
-                <NodeIcon icon={provider.icon_ref} className="h-6 w-6 shrink-0 text-lg" />
+                <NodeIcon icon={provider.icon_ref} size={theme.iconSize.md} className="shrink-0" />
                 <span className="text-sm font-semibold">{provider.name}</span>
                 <span className="text-xs text-muted-foreground">{hint}</span>
                 {provider.stored ? (
@@ -99,7 +100,7 @@ const ConnectAIStep: React.FC<ConnectAIStepProps> = ({ onOpenCredentials }) => {
                     key={p.id}
                     className="inline-flex items-center gap-1 rounded-full border border-border bg-muted/50 px-2 py-0.5 text-xs"
                   >
-                    <NodeIcon icon={p.icon_ref} className="h-3.5 w-3.5 shrink-0 text-sm" />
+                    <NodeIcon icon={p.icon_ref} size={theme.iconSize.xs} className="shrink-0" />
                     {p.name}
                     {p.stored && <Check className="h-3 w-3 text-success" />}
                   </span>

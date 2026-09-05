@@ -258,7 +258,10 @@ export const theme = {
   // Node sizes (fixed per industry standard)
   nodeSize: {
     square: '64px',          // SquareNode (design-system spec: 64px box)
-    squareIcon: '28px',      // Icon inside square node (≈ 0.44 × box)
+    squareIcon: '32px',      // Icon inside square node (0.5 × box). The ONE
+                             // node-icon size: every canvas node passes it to
+                             // <NodeIcon size=>, which applies it as width,
+                             // height and emoji font size together.
     handle: '8px',           // Connection handles
     statusIndicator: '10px', // Status dot
     paramButton: '16px',     // Parameters gear button

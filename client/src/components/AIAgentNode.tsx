@@ -234,9 +234,9 @@ const AIAgentNode: React.FC<NodeProps<NodeData>> = ({ id, type, data, isConnecta
       >⚙️</button>
 
       {/* Icon — `color` on the wrapper feeds currentColor to lucide;
-          NodeIcon stretches to fill via `h-7 w-7 text-3xl`. */}
+          the box edge is the shared node-icon token. */}
       <div style={{ marginBottom: theme.spacing.xs, color: accentColor }}>
-        <NodeIcon icon={spec?.icon} className="h-7 w-7 text-3xl" />
+        <NodeIcon icon={spec?.icon} size={theme.nodeSize.squareIcon} />
       </div>
 
       {/* Title — alignSelf:stretch + width:100% forces the flex child

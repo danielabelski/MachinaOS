@@ -48,6 +48,7 @@ import { toast } from 'sonner';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNodeStatus, useWebSocket } from '../../contexts/WebSocketContext';
 import { NodeIcon } from '../../assets/icons';
+import { theme } from '../../styles/theme';
 import { cn } from '@/lib/utils';
 import { useFolderSkills } from '../../hooks/useFolderSkills';
 import { useNodeAllowlist } from '../../hooks/useNodeAllowlist';
@@ -724,7 +725,7 @@ const MasterSkillEditor: React.FC<MasterSkillEditorProps> = ({
                         }}
                         onClick={(e) => e.stopPropagation()}
                       />
-                      <NodeIcon icon={skill.icon} className="h-4 w-4 text-base" />
+                      <NodeIcon icon={skill.icon} size={theme.iconSize.sm} />
                       <span
                         className={cn(
                           'flex-1 overflow-hidden text-sm whitespace-nowrap text-ellipsis',
@@ -793,7 +794,7 @@ const MasterSkillEditor: React.FC<MasterSkillEditorProps> = ({
                 style={{ color: pendingSkillData.color }}
               >
                 {pendingSkillData.icon
-                  ? <NodeIcon icon={pendingSkillData.icon} className="h-5 w-5 text-xl" />
+                  ? <NodeIcon icon={pendingSkillData.icon} size={theme.iconSize.md} />
                   : <Plus className="h-5 w-5" />}
               </div>
               <div className="flex-1">
@@ -895,7 +896,7 @@ const MasterSkillEditor: React.FC<MasterSkillEditorProps> = ({
           <>
             {/* Skill Header */}
             <div className="flex items-center gap-3 border-b border-border-default bg-bg-panel p-3">
-              <NodeIcon icon={selectedSkillInfo.icon} className="h-6 w-6 text-2xl" />
+              <NodeIcon icon={selectedSkillInfo.icon} size={theme.iconSize.md} />
               <div className="flex-1">
                 {isEditingUserSkill ? (
                   <Input

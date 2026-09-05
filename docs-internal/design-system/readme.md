@@ -48,7 +48,7 @@ The app ships 12 visual themes (light, dark, Renaissance, Cyber, Edo, Steampunk�
 ## ICONOGRAPHY
 
 - **Lucide is the system icon set** (`lucide-react` in app; pinned CDN UMD in this kit). 1.5px–2px stroke, no fill, sized 12–20px, colored via `currentColor`. Common verbs: Play/Square (run/stop), Save, Settings, KeyRound (credentials), FolderOpen, FilePlus, Search, GripVertical (drag), PanelLeft/RightClose, ChevronDown, Zap (dev mode), Clock (normal mode).
-- **Provider/brand logos** come from `@lobehub/icons` (OpenAI, Claude, Gemini, Groq, Ollama…) — colored brand marks, used at 16–28px on nodes and credential rows. In prototypes substitute colored dots or the service's official mark.
+- **Provider/brand logos** come from `@lobehub/icons` (OpenAI, Claude, Gemini, Groq, Ollama…) — colored brand marks, used at 12–32px on nodes and credential rows (always via the `theme.nodeSize.squareIcon` / `theme.iconSize.*` tokens, never ad-hoc pixel classes). In prototypes substitute colored dots or the service's official mark.
 - **Node/service icons in production are backend-declared** (`asset:<key>` SVGs, `lucide:<Name>`, or plain emoji strings). Many shipped nodes use full-color emoji-style glyphs (🧠 memory, 🤖 agent robot, ⚙️ gear) — see `assets/product-canvas-screenshot.png`. The ⚙️ gear emoji is literally the node's settings button.
 - **Fallback icon is 📦.** Status communicated by 6–10px colored dot "pips", not icons.
 - **No icon font; no custom-drawn icon set.** Use Lucide via the `Icon` component (`components/icons/`), which renders from the lucide CDN bundle.

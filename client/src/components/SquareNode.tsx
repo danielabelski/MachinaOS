@@ -362,7 +362,7 @@ const SquareNode: React.FC<NodeProps<NodeData>> = ({ id, type, data, isConnectab
 
 
         {/* Service Icon */}
-        <NodeIcon icon={iconRef} className="h-7 w-7 text-3xl" />
+        <NodeIcon icon={iconRef} size={theme.nodeSize.squareIcon} />
 
         {/* Parameters Button — visual styles (background, border, hover)
             owned by `.sq-node-gear` in base.css + per-theme overrides.

@@ -9,6 +9,7 @@ import { useProviderStatus } from '../hooks';
 import { OAuthConnect } from '../primitives';
 import { ApiUsageSection } from '../sections';
 import { NodeIcon } from '../../../assets/icons';
+import { theme } from '../../../styles/theme';
 import type { ProviderConfig } from '../types';
 
 const OAuthPanel: React.FC<{ config: ProviderConfig; visible: boolean }> = ({ config, visible }) => {
@@ -26,7 +27,7 @@ const OAuthPanel: React.FC<{ config: ProviderConfig; visible: boolean }> = ({ co
         config={config} form={panel.form} connected={connected}
         stored={panel.stored} loading={panel.loading} error={panel.error}
         verificationCode={panel.verificationCode}
-        icon={<NodeIcon icon={config.iconRef} className="h-6 w-6 text-2xl" />}
+        icon={<NodeIcon icon={config.iconRef} size={theme.iconSize.md} />}
         onSaveCredentials={() => {
           const missing = config.fields?.find(f => f.required && !panel.form.getFieldValue(f.key)?.trim());
           if (missing) { panel.setError(`${missing.label} is required`); return; }

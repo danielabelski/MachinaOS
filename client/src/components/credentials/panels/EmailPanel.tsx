@@ -40,6 +40,7 @@ import {
 } from '@/components/ui/select';
 import { useApiKeys } from '../../../hooks/useApiKeys';
 import { NodeIcon } from '../../../assets/icons';
+import { theme } from '../../../styles/theme';
 import { StatusCard } from '../primitives';
 import {
   AUTH_NOTES,
@@ -207,7 +208,7 @@ const EmailPanel: React.FC<{ config: ProviderConfig; visible: boolean }> = ({ co
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-4 p-5">
       <StatusCard
-        icon={<NodeIcon icon={config.iconRef} className="h-6 w-6 text-2xl" />}
+        icon={<NodeIcon icon={config.iconRef} size={theme.iconSize.md} />}
         title={config.name}
         status={{ stored, address }}
         rows={[

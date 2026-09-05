@@ -110,7 +110,7 @@ const ToolkitNode: React.FC<NodeProps<NodeData>> = ({ id, type, data, isConnecta
         }}
       >
         {/* Service Icon */}
-        <NodeIcon icon={iconRef} className="h-7 w-7 text-3xl" />
+        <NodeIcon icon={iconRef} size={theme.nodeSize.squareIcon} />
 
         {/* Parameters Button — CSS owns bg/border via .sq-node-gear */}
         <button
