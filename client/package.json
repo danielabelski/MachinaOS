@@ -1,7 +1,7 @@
 {
   "name": "react-flow-client",
   "private": true,
-  "version": "0.2.1",
+  "version": "0.3.0",
   "type": "module",
   "scripts": {
     "start": "vite --host 0.0.0.0",

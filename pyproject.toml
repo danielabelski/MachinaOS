@@ -1,6 +1,6 @@
 [project]
 name = "opencompany-cli"
-version = "0.2.1"
+version = "0.3.0"
 description = "OpenCompany project supervisor CLI (company)."
 requires-python = ">=3.12"
 dependencies = [
