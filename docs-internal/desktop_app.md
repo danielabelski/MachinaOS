@@ -191,7 +191,9 @@ bundled Python. Then remove the macOS notify-only branch in
   differs from the tag (the build ships the committed desktop version, not
   the tag's), stages, runs typecheck + unit + invariant tests, then
   `electron-builder --publish always` into that draft; a `finalize` job
-  undrafts it once all legs pass. A manual dispatch has no tag, so there is
+  undrafts it once all legs and the `predeploy` checks (the reusable
+  workflow `release.yml` also runs) pass, because Windows and Linux installs
+  update themselves as soon as the release is public. A manual dispatch has no tag, so there is
   no `prepare` draft and no `finalize`: the legs upload (into a draft
   electron-builder creates itself) only when its `publish` input is ticked,
   and otherwise build with `--publish never` and keep the artifacts.

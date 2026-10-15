@@ -13,7 +13,8 @@
 # sidecar with the repo toolchain, checks the synced version against the tag,
 # stages the app-root with the pinned runtimes for its target, runs the
 # invariant test and lets electron-builder upload into that one draft -> the
-# finalize job publishes the draft once every leg is green.
+# finalize job publishes the draft once every leg and the predeploy checks
+# (the gate release.yml runs before the registry publish) are green.
 
 name: Desktop release
 
@@ -68,6 +69,16 @@ jobs:
             echo "$TAG is a lightweight tag; drafting with generated notes"
             gh release create "$TAG" --repo "$REPO" --draft --verify-tag --title "OpenCompany $TAG" --generate-notes
           fi
+
+  # The same checks release.yml runs before the registry publish. The legs
+  # build while they run, but finalize publishes nothing until they pass:
+  # Windows and Linux installs update themselves as soon as the release is
+  # public.
+  predeploy:
+    if: github.event_name == 'push'
+    permissions:
+      contents: read
+    uses: ./.github/workflows/predeploy.yml
 
   build:
     name: ${{ matrix.name }}
@@ -135,7 +146,7 @@ jobs:
         run: |
           version=$(bun -e "console.log(require('./package.json').version)")
           if [ "v$version" != "$TAG" ]; then
-            echo "desktop/package.json is $version but the tag is $TAG: the release commit must run 'company version sync $TAG'" >&2
+            echo "desktop/package.json is $version but the tag is $TAG: the release commit must run 'python -m cli version sync $TAG'" >&2
             exit 1
           fi
 
@@ -181,7 +192,7 @@ jobs:
 
   finalize:
     name: Publish release
-    needs: build
+    needs: [build, predeploy]
     if: github.event_name == 'push'
     runs-on: ubuntu-latest
     steps:

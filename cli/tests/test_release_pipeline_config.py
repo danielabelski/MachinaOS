@@ -776,7 +776,7 @@ def test_desktop_release_drafts_from_the_tag_before_the_matrix_builds(
     and annotated from the tag message; ``finalize`` only undrafts it."""
     jobs = desktop_release_yml["jobs"]
     assert jobs["build"]["needs"] == "prepare"
-    assert jobs["finalize"]["needs"] == "build"
+    assert "build" in jobs["finalize"]["needs"]
 
     draft = next(
         step for step in jobs["prepare"]["steps"] if "gh release create" in step.get("run", "")
@@ -791,6 +791,19 @@ def test_desktop_release_drafts_from_the_tag_before_the_matrix_builds(
         step for step in jobs["finalize"]["steps"] if "gh release edit" in step.get("run", "")
     )
     assert "--draft=false" in undraft["run"]
+
+
+def test_desktop_release_publishes_only_after_the_predeploy_checks(
+    desktop_release_yml: dict,
+):
+    """The legs build while the checks run, but ``finalize`` publishes the
+    draft only after the same predeploy gate ``release.yml`` uses has passed
+    on the tag: Windows and Linux installs update themselves as soon as the
+    release is public, so a red test suite must never reach them."""
+    jobs = desktop_release_yml["jobs"]
+    assert jobs["predeploy"]["uses"] == "./.github/workflows/predeploy.yml"
+    assert jobs["predeploy"]["if"] == "github.event_name == 'push'"
+    assert sorted(jobs["finalize"]["needs"]) == ["build", "predeploy"]
 
 
 def test_desktop_release_refuses_a_version_that_does_not_match_the_tag(
