@@ -68,6 +68,7 @@
   "emailSend": "email_send",
   "emailRead": "email_read",
   "stripeAction": "stripe_action",
+  "dodoPaymentsAction": "dodo_payments_action",
   "cloudflareAction": "cloudflare",
   "githubAction": "github",
   "vercelAction": "vercel",

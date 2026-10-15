@@ -63,6 +63,7 @@ _MIGRATED_PLUGINS = (
     "cloudflare",
     "code",
     "discord",
+    "dodo_payments",
     "email",
     "gcloud",
     "github",
