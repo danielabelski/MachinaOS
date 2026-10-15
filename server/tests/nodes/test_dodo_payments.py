@@ -1,19 +1,26 @@
-"""Contract tests for the Dodo Payments action node (``dodoPaymentsAction``).
+"""Contract tests for the Dodo Payments plugin: the action node
+(``dodoPaymentsAction``) and the webhook trigger (``dodoPaymentsReceive``).
 
 The node calls Dodo through the official ``dodopayments`` SDK; every SDK touch
 lives in ``nodes/dodo_payments/_sdk.py``. These tests run the real SDK and
 intercept its HTTP traffic with respx, so requests are built exactly as the
 SDK builds them and nothing touches the network. Base URLs come from the
-SDK's own ``ENVIRONMENTS``.
+SDK's own ``ENVIRONMENTS``. Webhook deliveries are signed the Standard
+Webhooks way, as Dodo signs them.
 """
 
 from __future__ import annotations
 
+import asyncio
+import base64
+import hashlib
+import hmac
 import inspect
 import json
 import re
 import subprocess
 import sys
+import time
 import typing
 from pathlib import Path
 from typing import get_args
@@ -23,6 +30,7 @@ import httpx
 import pytest
 import respx
 from dodopayments import ENVIRONMENTS
+from fastapi import HTTPException
 
 from tests.nodes._mocks import patched_container
 
@@ -30,7 +38,10 @@ pytestmark = pytest.mark.node_contract
 
 import nodes.dodo_payments as dodo_pkg  # noqa: E402
 from nodes.dodo_payments import _sdk, dodo_payments_action  # noqa: E402
-from nodes.dodo_payments._credentials import MODE_FIELD, MODES, DodoPaymentsCredential  # noqa: E402
+from nodes.dodo_payments._credentials import MODE_FIELD, MODES, WEBHOOK_KEY_FIELD, DodoPaymentsCredential  # noqa: E402
+from nodes.dodo_payments._events import DODO_PAYMENTS_EVENT_RECEIVED_TYPE  # noqa: E402
+from nodes.dodo_payments._source import get_webhook_source, shape_dodo_payments_event  # noqa: E402
+from nodes.dodo_payments.dodo_payments_receive import DodoPaymentsReceiveNode, DodoPaymentsReceiveParams  # noqa: E402
 from services.node_registry import get_node_class  # noqa: E402
 from services.plugin.credential import CREDENTIAL_REGISTRY  # noqa: E402
 from services.ws_handler_registry import get_option_loader  # noqa: E402
@@ -730,3 +741,256 @@ class TestCatalogueAndAssets:
         assert re.fullmatch(r"#[0-9a-fA-F]{6}", meta["color"])
         assert "<svg" in (PLUGIN_DIR / "icon.svg").read_text(encoding="utf-8")
         assert DodoPaymentsCredential.get_icon_path() == PLUGIN_DIR / "dodo_payments.svg"
+
+
+# ============================================================================
+# Dodo Payments Receive — the webhook source
+# ============================================================================
+
+WEBHOOK_RAW = b"dodo-webhook-signing-key"
+WEBHOOK_SECRET = "whsec_" + base64.b64encode(WEBHOOK_RAW).decode()
+
+
+def _payload(event_type: str = "payment.succeeded") -> dict:
+    """A delivery as Dodo posts it."""
+    return {
+        "business_id": "bus_1",
+        "type": event_type,
+        "timestamp": "2026-10-15T08:00:00Z",
+        "data": {"payload_type": "Payment", "payment_id": "pay_1", "total_amount": 900},
+    }
+
+
+def _delivery(event_type: str = "payment.succeeded", *, msg_id: str = "msg_1", key: bytes = WEBHOOK_RAW, sent_at=None):
+    body = json.dumps(_payload(event_type)).encode()
+    stamp = str(int(time.time()) if sent_at is None else sent_at)
+    signature = base64.b64encode(hmac.new(key, f"{msg_id}.{stamp}.".encode() + body, hashlib.sha256).digest()).decode()
+    return body, {"webhook-id": msg_id, "webhook-timestamp": stamp, "webhook-signature": f"v1,{signature}"}
+
+
+def _request(body: bytes, headers: dict):
+    """An object with the two attributes WebhookSource.handle reads."""
+
+    class Request:
+        pass
+
+    request = Request()
+    request.headers = headers
+
+    async def read():
+        return body
+
+    request.body = read
+    return request
+
+
+def _secrets(**overrides):
+    secrets = {"api_key": "k", MODE_FIELD: "test_mode", WEBHOOK_KEY_FIELD: WEBHOOK_SECRET, **overrides}
+    return patch.object(DodoPaymentsCredential, "resolve", AsyncMock(return_value={k: v for k, v in secrets.items() if v}))
+
+
+class TestWebhookSource:
+    def test_registered_at_its_path(self):
+        from services.events import WEBHOOK_SOURCES
+
+        assert WEBHOOK_SOURCES["dodo-payments"] is get_webhook_source()
+
+    def test_a_delivery_is_flattened_for_the_trigger(self):
+        assert shape_dodo_payments_event(_payload(), event_id="msg_1") == {
+            "event_id": "msg_1",
+            "event_type": "payment.succeeded",
+            "business_id": "bus_1",
+            "timestamp": "2026-10-15T08:00:00Z",
+            "payload_type": "Payment",
+            "data": {"payload_type": "Payment", "payment_id": "pay_1", "total_amount": 900},
+        }
+
+    async def test_a_signed_delivery_reaches_the_waiter_and_the_listeners(self):
+        body, headers = _delivery("subscription.renewed")
+        with (
+            _secrets(),
+            patch("services.event_waiter.dispatch") as waiter,
+            patch("services.events.dispatch.emit", new=AsyncMock()) as emit,
+        ):
+            event = await get_webhook_source().handle(_request(body, headers))
+
+        (dispatched,) = waiter.call_args.args
+        assert dispatched is event
+        emit.assert_awaited_once()
+        # Payment events carry customer details and no client reads them, so
+        # they go to the workflows only, never to every connected socket.
+        assert emit.await_args.args == (event,)
+        assert emit.await_args.kwargs == {"broadcast": False}
+        # The webhook-id stays the same across retried deliveries, so a
+        # deployed listener drops a retry as a duplicate.
+        assert event.id == "msg_1"
+        assert event.type == DODO_PAYMENTS_EVENT_RECEIVED_TYPE
+        assert event.subject == "subscription.renewed"
+        assert event.source == "dodopayments://bus_1"
+        assert event.workflow_id is None
+
+    @pytest.mark.parametrize(
+        "delivery",
+        [
+            pytest.param(lambda: _delivery(key=b"another-key"), id="wrong-key"),
+            pytest.param(lambda: _delivery(sent_at=int(time.time()) - 3600), id="replayed-an-hour-later"),
+        ],
+    )
+    async def test_an_unverifiable_delivery_is_refused(self, delivery):
+        body, headers = delivery()
+        with _secrets(), patch("services.events.dispatch.emit", new=AsyncMock()) as emit:
+            with pytest.raises(HTTPException) as refused:
+                await get_webhook_source().handle(_request(body, headers))
+
+        assert refused.value.status_code == 400
+        emit.assert_not_awaited()
+
+    async def test_without_a_secret_deliveries_wait(self):
+        body, headers = _delivery()
+        with _secrets(**{WEBHOOK_KEY_FIELD: ""}), patch("services.events.dispatch.emit", new=AsyncMock()) as emit:
+            with pytest.raises(HTTPException) as refused:
+                await get_webhook_source().handle(_request(body, headers))
+
+        assert refused.value.status_code == 503
+        emit.assert_not_awaited()
+
+
+# ============================================================================
+# Dodo Payments Receive — the node
+# ============================================================================
+
+
+class TestReceiveFilter:
+    """Both callers hand the filter the envelope's ``data``: the event waiter
+    on a canvas Run, and ``evaluate_trigger_filter_activity`` once deployed."""
+
+    def _filter(self, pattern: str):
+        return DodoPaymentsReceiveNode().build_filter(DodoPaymentsReceiveParams(event_type_filter=pattern))
+
+    def _data(self, event_type: str) -> dict:
+        return shape_dodo_payments_event(_payload(event_type), event_id="msg_1")
+
+    def test_all_matches_anything(self):
+        assert self._filter("all")(self._data("refund.failed")) is True
+
+    def test_exact_and_prefix_patterns(self):
+        exact = self._filter("payment.succeeded")
+        prefix = self._filter("subscription.*")
+        assert exact(self._data("payment.succeeded")) is True
+        assert exact(self._data("payment.failed")) is False
+        assert prefix(self._data("subscription.cancelled")) is True
+        assert prefix(self._data("payment.succeeded")) is False
+
+    def test_an_envelope_is_accepted_and_junk_is_not(self):
+        from nodes.dodo_payments._events import dodo_payments_event_received
+
+        envelope = dodo_payments_event_received(self._data("dispute.opened"))
+        assert self._filter("dispute.*")(envelope) is True
+        assert self._filter("all")("not a payload") is False
+
+    def test_shape_output_is_the_shaped_delivery(self):
+        from nodes.dodo_payments._events import dodo_payments_event_received
+
+        data = self._data("payment.succeeded")
+        assert DodoPaymentsReceiveNode().shape_output(dodo_payments_event_received(data)) == data
+
+
+class TestPrecondition:
+    async def test_without_a_key(self):
+        with patch.object(DodoPaymentsCredential, "resolve", AsyncMock(side_effect=PermissionError("No API key"))):
+            message = await DodoPaymentsReceiveNode()._check_precondition()
+        assert "API key" in message
+
+    async def test_without_a_webhook_secret(self):
+        with _secrets(**{WEBHOOK_KEY_FIELD: ""}):
+            message = await DodoPaymentsReceiveNode()._check_precondition()
+        assert "webhook secret" in message
+
+    async def test_ready(self):
+        with _secrets():
+            assert await DodoPaymentsReceiveNode()._check_precondition() is None
+
+
+class TestCanvasRunResolves:
+    """End to end through the real event waiter: ``execute`` registers a
+    waiter keyed on the CloudEvents type, ``handle`` dispatches a signed
+    delivery."""
+
+    async def _run(self, params: dict, event_type: str):
+        from services import event_waiter
+
+        node = DodoPaymentsReceiveNode()
+        body, headers = _delivery(event_type)
+        with _secrets(), patch("services.events.dispatch.emit", new=AsyncMock()):
+            task = asyncio.create_task(node.execute("dodo-run-node", params, None))
+            # Let execute register its waiter before the delivery arrives.
+            for _ in range(20):
+                if any(w.node_id == "dodo-run-node" for w in event_waiter._waiters.values()):
+                    break
+                await asyncio.sleep(0)
+            await get_webhook_source().handle(_request(body, headers))
+            try:
+                return await asyncio.wait_for(asyncio.shield(task), timeout=0.5)
+            except asyncio.TimeoutError:
+                return None
+            finally:
+                event_waiter.cancel_for_node("dodo-run-node")
+                if not task.done():
+                    task.cancel()
+                await asyncio.gather(task, return_exceptions=True)
+
+    async def test_a_matching_delivery_resolves_the_run(self):
+        result = await self._run({"event_type_filter": "payment.*"}, "payment.succeeded")
+        assert result is not None, "the canvas Run never resolved"
+        assert result["success"] is True, result
+        assert result["result"]["event_id"] == "msg_1"
+        assert result["result"]["event_type"] == "payment.succeeded"
+        assert result["result"]["data"]["payment_id"] == "pay_1"
+
+    async def test_a_filtered_delivery_leaves_the_run_waiting(self):
+        assert await self._run({"event_type_filter": "refund.*"}, "payment.succeeded") is None
+
+
+class TestDeployedPath:
+    def test_the_trigger_is_deployable(self):
+        """find_trigger_nodes filters on these sets: a trigger missing from
+        them is silently ignored at deploy."""
+        from constants import EVENT_TRIGGER_TYPES, WORKFLOW_TRIGGER_TYPES
+
+        assert "dodoPaymentsReceive" in WORKFLOW_TRIGGER_TYPES
+        assert "dodoPaymentsReceive" in EVENT_TRIGGER_TYPES
+
+    async def test_the_canary_type_matches_every_emitted_envelope(self):
+        from services.deployment.canary_registry import cloudevent_type_for
+
+        assert cloudevent_type_for("dodoPaymentsReceive") == DODO_PAYMENTS_EVENT_RECEIVED_TYPE
+        assert DodoPaymentsReceiveNode.event_type == DODO_PAYMENTS_EVENT_RECEIVED_TYPE
+        for event_type in ("payment.succeeded", "refund.failed", "subscription.plan_changed"):
+            body, headers = _delivery(event_type)
+            event = await get_webhook_source().shape(_request(body, headers), body, _payload(event_type))
+            assert event.type == DODO_PAYMENTS_EVENT_RECEIVED_TYPE
+            assert event.subject == event_type
+
+    @pytest.mark.parametrize(
+        ("pattern", "event_type", "admitted"),
+        [("payment.*", "payment.failed", True), ("payment.*", "refund.succeeded", False)],
+    )
+    async def test_the_deployed_filter_applies(self, pattern, event_type, admitted):
+        """The deployed listener runs the node's filter through this activity,
+        which admits the event whenever the filter raises."""
+        from services.temporal.activities import evaluate_trigger_filter_activity
+
+        result = await evaluate_trigger_filter_activity(
+            {
+                "node_type": "dodoPaymentsReceive",
+                "filter_params": {"event_type_filter": pattern},
+                "event_data": shape_dodo_payments_event(_payload(event_type), event_id="msg_1"),
+            }
+        )
+        assert result is admitted
+
+    def test_both_nodes_and_their_output_schemas_are_registered(self):
+        from services.node_output_schemas import NODE_OUTPUT_SCHEMAS
+
+        assert get_node_class("dodoPaymentsReceive") is DodoPaymentsReceiveNode
+        assert {"dodoPaymentsAction", "dodoPaymentsReceive"} <= set(NODE_OUTPUT_SCHEMAS)
