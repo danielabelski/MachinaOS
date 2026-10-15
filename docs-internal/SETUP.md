@@ -99,8 +99,8 @@ Services (production `company start`; every port is declared once in `.env.templ
 ### Desktop app (Electron shell)
 
 End users can skip Python, bun and Node entirely: the installers attached to each
-GitHub Release (`OpenCompany-windows-x64.exe`, `OpenCompany-macos-arm64.dmg` /
-`-macos-x64.dmg`, `OpenCompany-linux-x86_64.AppImage` / `-linux-amd64.deb`;
+GitHub Release (`OpenCompany-windows-x64.exe`, `OpenCompany-macos-arm64.dmg`
+(Apple Silicon only), `OpenCompany-linux-x86_64.AppImage` / `-linux-amd64.deb`;
 the names carry no version, so
 `https://github.com/zeenie-ai/OpenCompany/releases/latest/download/<file>`
 always fetches the newest one, and the README links exactly those) bundle

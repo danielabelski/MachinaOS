@@ -81,10 +81,12 @@ jobs:
             os: windows-latest
             targets: win-x64
             builder_args: --win --x64
-          - name: macOS arm64 + x64
-            os: macos-14
-            targets: mac-arm64,mac-x64
-            builder_args: --mac --arm64 --x64
+          # Apple Silicon only; electron-builder.yml says why there is no
+          # Intel build.
+          - name: macOS arm64
+            os: macos-15
+            targets: mac-arm64
+            builder_args: --mac --arm64
           - name: Linux x64
             os: ubuntu-22.04
             targets: linux-x64

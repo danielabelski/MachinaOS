@@ -7,7 +7,7 @@
 #   resources/runtime/    uv, python, bun for THIS os/arch
 # Both come from desktop/stage/ (scripts/stage.ts). The ${os}-${arch}
 # macro selects the per-target runtime dir so one config serves every
-# platform and both macOS architectures.
+# platform.
 #
 # Unsigned first release: mac identity null (skips signing; Electron's own
 # ad-hoc signature keeps the arm64 binary launchable), hardened runtime and
@@ -70,11 +70,14 @@ nsis:
 
 mac:
   category: public.app-category.productivity
+  # Apple Silicon only. cryptography (49 and later) and dependency-injector
+  # publish no Intel macOS wheels, so on an Intel Mac the first-launch
+  # `uv sync` would have to compile them, which needs Rust and a C compiler.
   target:
     - target: dmg
-      arch: [arm64, x64]
+      arch: [arm64]
     - target: zip # required by electron-updater (Squirrel.Mac reads zips, not dmgs)
-      arch: [arm64, x64]
+      arch: [arm64]
   icon: build/icon.png
   artifactName: ${productName}-macos-${arch}.${ext}
   identity: null

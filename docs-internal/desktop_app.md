@@ -106,7 +106,10 @@ three times in five minutes, then the setup window shows the error.
 
 Standalone bun package (deliberately not in the root `workspaces`, which
 `cli/tests/test_release_pipeline_config.py` locks). Zero native Node
-modules, so both macOS architectures build on one arm64 runner.
+modules. The Mac app is built for Apple Silicon only: cryptography (49 and
+later) and dependency-injector publish no Intel macOS wheels, so on an Intel
+Mac the first-launch `uv sync` would have to compile them, which needs Rust
+and a C compiler.
 
 ```bash
 cd desktop
@@ -138,7 +141,7 @@ zips.
 
 `electron-builder.yml` maps `stage/app-root/` and
 `stage/runtime/${os}-${arch}/` to `resources/` outside the asar. Targets:
-NSIS x64; DMG + zip for arm64 and x64 (zip is required by electron-updater);
+NSIS x64; DMG + zip for arm64 (zip is required by electron-updater);
 AppImage + deb x64. Artifact names spell the OS out and carry no version
 (`OpenCompany-windows-x64.exe`, `OpenCompany-macos-arm64.dmg`,
 `OpenCompany-linux-x86_64.AppImage`, `OpenCompany-linux-amd64.deb`; on
@@ -183,7 +186,7 @@ bundled Python. Then remove the macOS notify-only branch in
 - `desktop-release.yml` on `v*.*.*` tags (and manual dispatch): a `prepare`
   job drafts the GitHub Release from the annotated tag's message (title +
   notes) so the three legs upload into one draft; the matrix
-  windows-latest / macos-14 / ubuntu-22.04 builds the client and sidecar
+  windows-latest / macos-15 / ubuntu-22.04 builds the client and sidecar
   with the repo toolchain, syncs the version and refuses to continue when it
   differs from the tag (the build ships the committed desktop version, not
   the tag's), stages, runs typecheck + unit + invariant tests, then
