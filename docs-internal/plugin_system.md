@@ -1322,7 +1322,7 @@ Drop-in HMAC schemes covering the major providers:
 | Class | Header | Algorithm | Used by |
 |---|---|---|---|
 | `StripeVerifier` | `Stripe-Signature: t=…,v1=…` | HMAC-SHA256 over `t.body` | Stripe |
-| `StandardWebhooksVerifier` | `webhook-id` / `webhook-timestamp` / `webhook-signature` | HMAC-SHA256 base64 over `id.ts.body` | Svix-backed providers (Resend, Clerk, Loops, …) |
+| `StandardWebhooksVerifier` | `webhook-id` / `webhook-timestamp` / `webhook-signature` | HMAC-SHA256 base64 over `id.ts.body`; a `webhook-timestamp` more than 5 minutes from now is refused (the spec's replay window) | Svix-backed providers (Resend, Clerk, Loops, …) |
 | `GitHubVerifier` | `X-Hub-Signature-256: sha256=…` | HMAC-SHA256 over body | GitHub |
 | `HmacVerifier` | configurable header + prefix | HMAC-SHA256 over body | generic fallback |
 

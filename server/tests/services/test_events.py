@@ -195,32 +195,69 @@ class TestGitHubVerifier:
 
 
 class TestStandardWebhooksVerifier:
+    SECRET_RAW = b"super-secret-key-bytes"
+    SECRET = "whsec_" + base64.b64encode(SECRET_RAW).decode()
+
+    def _signed(self, body: bytes, ts: int, msg_id: str = "msg_abc") -> dict:
+        signed = f"{msg_id}.{ts}.".encode() + body
+        sig = base64.b64encode(hmac.new(self.SECRET_RAW, signed, hashlib.sha256).digest()).decode()
+        return {
+            "webhook-id": msg_id,
+            "webhook-timestamp": str(ts),
+            "webhook-signature": f"v1,{sig}",
+        }
+
     def test_round_trip(self):
         from services.events import StandardWebhooksVerifier
 
-        secret_raw = b"super-secret-key-bytes"
-        secret = "whsec_" + base64.b64encode(secret_raw).decode()
         body = b'{"foo":"bar"}'
-        msg_id = "msg_abc"
-        ts = "1700000000"
-        signed = f"{msg_id}.{ts}.".encode() + body
-        sig = base64.b64encode(hmac.new(secret_raw, signed, hashlib.sha256).digest()).decode()
-        headers = {
-            "webhook-id": msg_id,
-            "webhook-timestamp": ts,
-            "webhook-signature": f"v1,{sig}",
-        }
-        StandardWebhooksVerifier.verify(headers, body, secret)
+        StandardWebhooksVerifier.verify(self._signed(body, int(time.time())), body, self.SECRET)
+
+    def test_rotated_secret_list_accepts_any_matching_entry(self):
+        from services.events import StandardWebhooksVerifier
+
+        body = b'{"foo":"bar"}'
+        headers = self._signed(body, int(time.time()))
+        headers["webhook-signature"] = "v1,c3RhbGU= " + headers["webhook-signature"]
+        StandardWebhooksVerifier.verify(headers, body, self.SECRET)
 
     def test_tampered_rejected(self):
         from services.events import StandardWebhooksVerifier
 
-        with pytest.raises(ValueError):
-            StandardWebhooksVerifier.verify(
-                {"webhook-id": "1", "webhook-timestamp": "1", "webhook-signature": "v1,bad"},
-                b"{}",
-                "whsec_AAAA",
-            )
+        headers = self._signed(b'{"foo":"bar"}', int(time.time()))
+        with pytest.raises(ValueError, match="signature mismatch"):
+            StandardWebhooksVerifier.verify(headers, b'{"foo":"baz"}', self.SECRET)
+
+    @pytest.mark.parametrize("offset", [-301, 301])
+    def test_timestamp_outside_the_window_is_rejected(self, offset):
+        """A correctly signed delivery replayed later (or stamped far ahead)
+        fails: the spec bounds the timestamp to five minutes either way."""
+        from services.events import StandardWebhooksVerifier
+
+        body = b'{"foo":"bar"}'
+        headers = self._signed(body, int(time.time()) + offset)
+        with pytest.raises(ValueError, match="tolerance"):
+            StandardWebhooksVerifier.verify(headers, body, self.SECRET)
+
+    def test_timestamp_inside_the_window_is_accepted(self):
+        from services.events import StandardWebhooksVerifier
+
+        body = b'{"foo":"bar"}'
+        StandardWebhooksVerifier.verify(self._signed(body, int(time.time()) - 240), body, self.SECRET)
+
+    def test_non_numeric_timestamp_rejected(self):
+        from services.events import StandardWebhooksVerifier
+
+        headers = self._signed(b"{}", int(time.time()))
+        headers["webhook-timestamp"] = "yesterday"
+        with pytest.raises(ValueError, match="not a number"):
+            StandardWebhooksVerifier.verify(headers, b"{}", self.SECRET)
+
+    def test_missing_headers_rejected(self):
+        from services.events import StandardWebhooksVerifier
+
+        with pytest.raises(ValueError, match="missing"):
+            StandardWebhooksVerifier.verify({}, b"{}", self.SECRET)
 
 
 class TestHmacVerifier:
