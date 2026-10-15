@@ -730,6 +730,23 @@ wheels = [
 ]
 
 [[package]]
+name = "dodopayments"
+version = "1.121.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "anyio" },
+    { name = "distro" },
+    { name = "httpx" },
+    { name = "pydantic" },
+    { name = "sniffio" },
+    { name = "typing-extensions" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/5a/bc/c564b073c89a191d758c46142dcb8ed9090740427f121147098667b05311/dodopayments-1.121.0.tar.gz", hash = "sha256:340baaacbae1964fc7da201c42e985dcec404a0f04f03121bdb2bf70391005e3", size = 459273, upload-time = "2026-10-14T08:27:01.206Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/35/9b/68b2c7b12b5a3dff740ab1aa996e03bbef82691452397018d7499d9ceae7/dodopayments-1.121.0-py3-none-any.whl", hash = "sha256:368c42173d81b75742c1fb89ffaa1a31b71284babcf76637268f6dd2957a43c9", size = 472058, upload-time = "2026-10-14T08:26:59.519Z" },
+]
+
+[[package]]
 name = "email-validator"
 version = "2.3.0"
 source = { registry = "https://pypi.org/simple" }
@@ -1926,6 +1943,7 @@ dependencies = [
     { name = "ddgs" },
     { name = "dependency-injector" },
     { name = "discord-py" },
+    { name = "dodopayments" },
     { name = "email-validator" },
     { name = "fastapi" },
     { name = "google-api-python-client" },
@@ -2016,6 +2034,7 @@ requires-dist = [
     { name = "ddgs", specifier = ">=9.0.0" },
     { name = "dependency-injector", specifier = ">=4.40.0" },
     { name = "discord-py", specifier = ">=2.7.1,<3" },
+    { name = "dodopayments", specifier = ">=1.121.0,<2" },
     { name = "email-validator", specifier = ">=2.0.0" },
     { name = "fastapi", specifier = ">=0.115.0" },
     { name = "google-api-python-client", specifier = ">=2.100.0" },
