@@ -48,7 +48,13 @@ uv run --project gateway pytest gateway/tests -v
 docker compose -f gateway/local/docker-compose.yml down -v
 ```
 
-`tests/test_pins.py` needs no stack: it checks that the version and price-list pins agree across files, and that every served provider's default model is priced. The console runs at http://127.0.0.1:4000/ui (user `admin`, password `sk-local-master-key`).
+`tests/test_pins.py` needs no stack. It checks that:
+- the version and price-list pins agree across files;
+- every served provider's default model is priced;
+- every vendor key the config reads has a Terraform secret;
+- Gemini goes to Vertex with the Agent Platform key.
+
+To try real Gemini on the local stack, mount a copy of `local/config.local.yaml` whose `gemini-*` and `gemini/*` entries match `litellm/config.yaml`, through a compose override that reads `GOOGLE_AGENT_API_KEY` from an env file outside the repository. That costs a fraction of a cent per call, billed to the key's project. The console runs at http://127.0.0.1:4000/ui (user `admin`, password `sk-local-master-key`).
 
 ## First deployment
 
@@ -69,6 +75,15 @@ Prerequisites: AWS credentials for the target account, an S3 bucket for Terrafor
    terraform init -backend-config=envs/staging.backend.hcl
    terraform apply -var-file=envs/staging.tfvars -target=aws_secretsmanager_secret.vendor
    aws secretsmanager put-secret-value --secret-id opencompany-gateway-staging/env/openai-api-key --secret-string 'sk-...'
+   ```
+
+   Give Gemini its own Agent Platform key: in the Google Cloud project, restricted to the Vertex AI API and bound to the project's service account. Create it in the console or with gcloud, then pass its string straight to the secret, so it never sits in a chat or a file:
+
+   ```bash
+   gcloud services api-keys create --display-name=opencompany-gateway \
+     --api-target=service=aiplatform.googleapis.com --service-account=<service-account-email>
+   aws secretsmanager put-secret-value --secret-id opencompany-gateway-staging/env/google-agent-api-key \
+     --secret-string "$(gcloud services api-keys get-key-string <key-name> --format='value(keyString)')"
    ```
 
 3. **Full apply.** `terraform apply -var-file=envs/staging.tfvars`. The module bootstraps the database and runs the migrations before the services start.
@@ -114,6 +129,7 @@ Why 1.103.x: it is the only stable line with the streamed-alias billing fix (Lit
 ## Known limits
 
 - Replay covers completed LLM calls only; an abandoned stream is billed for what it produced.
+- A small allowance refuses expensive models outright. LiteLLM reserves each call's worst case (the model's full context plus its maximum output) before admitting it, so an allowance below that refuses the model with `budget_exceeded`, even unspent. With $1, `gemini-3.5-flash`, `gemini-3.1-pro-preview` and `gemini-2.5-pro` were refused; the $50 default admits them.
 - Gemini SDK calls (the native `generateContent` route) carry the session id and tags, but 1.103.4 drops their per-call metadata and doesn't replay them from the cache, so a retried Gemini step is billed again.
 - `gpt-4o-mini-tts` (OpenCompany's Text to Speech default) carries a price override in `litellm/config.yaml`. The speech route returns no usage for the audio, so LiteLLM would otherwise bill the input text only, about 1% of the cost. The override's per-token rate assumes about 200 text tokens per minute of speech; revisit it if OpenAI's price changes.
 - Groq speech is not served: 1.103.4 bills Groq transcription at $0. The `groq/*` wildcard still lets a person call Groq Whisper directly with their key, billed $0 to them; Groq charges about $0.11 per hour of audio.

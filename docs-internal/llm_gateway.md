@@ -52,7 +52,7 @@ It applies only while the gateway serves Gemini, and the owner's own choice alwa
 | `gateway/litellm/config.yaml` | Production proxy config: provider wildcards, budget defaults, unpriced-model refusal, opt-in Redis cache, spend-log retention |
 | `gateway/local/` | Local stack: Postgres 16, Redis 7, LiteLLM with mock models, and `fake_upstream.py`, fake Anthropic, Gemini and OpenAI-audio upstreams. Mocks reuse one response id on `/v1/messages` (LiteLLM keys spend rows by it and drops repeats), carry no HTTP response on the native Gemini route (LiteLLM's logging drops those) and don't apply on the audio routes, so those tests use the fake upstreams |
 | `gateway/tests/test_gateway_contract.py` | Contract tests against the local stack (skipped when it isn't running) |
-| `gateway/tests/test_pins.py` | Offline checks: version and price-list pins agree; every served default chat, speech and embedding model is priced |
+| `gateway/tests/test_pins.py` | Offline checks: version and price-list pins agree; every served default chat, speech and embedding model is priced; every vendor key the config reads has a Terraform secret; Gemini goes to Vertex with the Agent Platform key |
 | `gateway/infra/terraform/` | Wrapper around `BerriAI/litellm/aws`: ECS Fargate, Aurora Postgres (IAM auth), ElastiCache, ALB, ACM, Route 53 records in the delegated `gw.opencompany.sh` zone |
 | `.github/workflows/gateway-ci.yml` | Terraform checks, cosign verification of the pinned images, locked and audited test dependencies, contract and pin tests |
 
@@ -90,4 +90,4 @@ Not served: OpenRouter, DeepSeek and Sarvam (no price for their default models),
 
 ## Keys
 
-People create one Default-type key per install in the console. A key draws on its person's monthly allowance, and LiteLLM reserves the worst-case cost of each call in Redis before admitting it, so a request with a large `max_tokens` can be refused near the cap. A Default key can also create and delete that person's own keys (not raise the allowance); a leaked key is revoked in the console.
+People create one Default-type key per install in the console. A key draws on its person's monthly allowance, and LiteLLM reserves the worst-case cost of each call in Redis before admitting it (the model's full context plus its maximum output), so a request with a large `max_tokens` can be refused near the cap. An allowance smaller than a model's worst case refuses that model outright, even unspent: with $1, `gemini-3.5-flash`, `gemini-3.1-pro-preview` and `gemini-2.5-pro` were refused, while the $50 default admits every curated model. A Default key can also create and delete that person's own keys (not raise the allowance); a leaked key is revoked in the console.

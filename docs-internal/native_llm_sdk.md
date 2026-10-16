@@ -153,7 +153,10 @@ the provider's `llm_defaults.json` block has a `"gateway"` entry: the gateway's
 URL replaces the `{ref}_proxy` row, the gateway key is sent, `OpenAIProvider`
 prefixes the wire model (`groq/...`), and every provider passes the per-request
 `extra_headers` / `extra_body` (attribution, replay cache). A call with a key is
-untouched. See [LLM Gateway](./llm_gateway.md).
+untouched. On the gateway, Gemini runs on Vertex AI express mode with an Agent
+Platform key, and an install that relies on the gateway defaults to Gemini 3.8
+Flash where the owner has set no global model (`gateway_default`). See
+[LLM Gateway](./llm_gateway.md).
 
 **Provider detection** ([`server/constants.py:detect_ai_provider`](../server/constants.py)) MUST list `ollama` / `lmstudio` substrings, or a chat-model node falls through to `'openai'`. Agents need no edit: their `provider` field is loader-driven.
 
