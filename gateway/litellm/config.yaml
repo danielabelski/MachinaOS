@@ -27,15 +27,21 @@ model_list:
     litellm_params:
       model: anthropic/claude-*
       api_key: os.environ/ANTHROPIC_API_KEY
+  # Gemini runs on Vertex AI express mode with an Agent Platform key (an AQ.
+  # key, billed to its Google Cloud project), which the Gemini Developer API
+  # refuses. The gemini provider keeps Gemini's request format and prices;
+  # api_base points it at Vertex, where it sends the key as x-goog-api-key.
   - model_name: gemini/*
     litellm_params:
       model: gemini/*
-      api_key: os.environ/GEMINI_API_KEY
+      api_key: os.environ/GOOGLE_AGENT_API_KEY
+      api_base: https://aiplatform.googleapis.com/v1/publishers/google
   # The Gemini SDK puts a bare model id in the /v1beta/models/<id> path.
   - model_name: gemini-*
     litellm_params:
       model: gemini/gemini-*
-      api_key: os.environ/GEMINI_API_KEY
+      api_key: os.environ/GOOGLE_AGENT_API_KEY
+      api_base: https://aiplatform.googleapis.com/v1/publishers/google
   - model_name: groq/*
     litellm_params:
       model: groq/*

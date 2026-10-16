@@ -53,7 +53,7 @@ variable "secret_env_names" {
   default = [
     "OPENAI_API_KEY",
     "ANTHROPIC_API_KEY",
-    "GEMINI_API_KEY",
+    "GOOGLE_AGENT_API_KEY",
     "GROQ_API_KEY",
     "CEREBRAS_API_KEY",
     "XAI_API_KEY",

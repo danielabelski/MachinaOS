@@ -28,6 +28,8 @@ The hosted LLM gateway for OpenCompany: invited people use LLMs on platform-owne
 | Speech | OpenAI (speech and transcription) |
 | Embeddings | OpenAI |
 
+Gemini runs on Vertex AI express mode with a Google Cloud Agent Platform key (`GOOGLE_AGENT_API_KEY`, a key starting `AQ.`), billed to that key's project. The Gemini Developer API refuses these keys, so `litellm/config.yaml` points the `gemini` provider's `api_base` at `https://aiplatform.googleapis.com/v1/publishers/google`.
+
 Not served: OpenRouter, DeepSeek and Sarvam (their default models have no price in the list), Groq speech (1.103.4 bills Groq transcription at $0), ElevenLabs and Deepgram (OpenCompany uses their native formats), and every tool API (Brave, Serper, TikHub, Google Maps, Perplexity, DeepL, Apify and the rest). Those stay on each install's own keys.
 
 To serve another provider:

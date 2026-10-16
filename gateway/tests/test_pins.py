@@ -23,6 +23,7 @@ import yaml
 
 REPO = Path(__file__).resolve().parents[2]
 TERRAFORM = (REPO / "gateway/infra/terraform/main.tf").read_text(encoding="utf-8")
+VARIABLES = (REPO / "gateway/infra/terraform/variables.tf").read_text(encoding="utf-8")
 GATEWAY_CONFIG = yaml.safe_load((REPO / "gateway/litellm/config.yaml").read_text(encoding="utf-8"))
 LOCAL_CONFIG = yaml.safe_load((REPO / "gateway/local/config.local.yaml").read_text(encoding="utf-8"))
 COMPOSE = yaml.safe_load((REPO / "gateway/local/docker-compose.yml").read_text(encoding="utf-8"))
@@ -67,6 +68,28 @@ def test_price_overrides_agree() -> None:
     overrides = _price_overrides(GATEWAY_CONFIG)
     assert overrides, "gateway/litellm/config.yaml has no price overrides"
     assert _price_overrides(LOCAL_CONFIG) == overrides
+
+
+def test_every_vendor_key_has_a_secret() -> None:
+    """ECS injects only the secrets Terraform creates (secret_env_names)."""
+    block = re.search(r'variable "secret_env_names".*?default\s*=\s*\[(.*?)\]', VARIABLES, re.DOTALL)
+    assert block, "secret_env_names not found in gateway/infra/terraform/variables.tf"
+    secrets = set(re.findall(r'"([A-Z0-9_]+)"', block.group(1)))
+    keys = {
+        str(deployment["litellm_params"]["api_key"]).removeprefix("os.environ/")
+        for deployment in GATEWAY_CONFIG["model_list"]
+        if str(deployment["litellm_params"].get("api_key", "")).startswith("os.environ/")
+    }
+    assert keys <= secrets, f"vendor keys with no secret: {sorted(keys - secrets)}"
+
+
+def test_gemini_runs_on_vertex_with_the_agent_platform_key() -> None:
+    """An Agent Platform key (AQ.) works on Vertex AI only; the Gemini Developer API refuses it."""
+    gemini = [d["litellm_params"] for d in GATEWAY_CONFIG["model_list"] if d["model_name"] in ("gemini/*", "gemini-*")]
+    assert len(gemini) == 2, gemini
+    for params in gemini:
+        assert params["api_key"] == "os.environ/GOOGLE_AGENT_API_KEY", params
+        assert params["api_base"] == "https://aiplatform.googleapis.com/v1/publishers/google", params
 
 
 @pytest.fixture(scope="module")
