@@ -47,7 +47,10 @@ dependencies = [
     # deps, MIT. Chosen over mutagen (GPL-2.0, incompatible with this
     # project's MIT licence) and over pydub / ffprobe, which both require
     # an ffmpeg binary on PATH that nothing installs on Windows.
-    "tinytag>=2.0.0",
+    # Security floor: <2.3.0 carries GHSA-24cc-9352-h2pg (CVE-2026-104266),
+    # an infinite loop on M4A files with invalid atoms. Do not lower without
+    # checking that advisory.
+    "tinytag>=2.3.0",
     # Data node read tiers (nodes/tool/data_source/_readers.py). First-class
     # rather than an optional extra so the LLM-facing tool behaves the same
     # on every install: openpyxl for XLSX (pure Python), Pillow for image
@@ -184,7 +187,10 @@ dependencies = [
     # path, so keep the floor bounded: an unbounded constraint let an upstream
     # major release break the build with no change on our side -- which is
     # exactly what happened. Lift the cap together with the FastMCP migration.
-    "mcp>=1.0.0,<2",
+    # Security floor: <1.30.0 carries GHSA-84m7-p3x7-pcfv (CVE-2026-59951),
+    # unbounded StreamableHTTP session accumulation (resource exhaustion).
+    # Do not lower without checking that advisory.
+    "mcp>=1.30.0,<2",
 
     # PTY transports — drive `claude` interactive TUI cross-platform.
     # POSIX uses ptyprocess (wraps forkpty) for `loop.add_reader`-friendly
