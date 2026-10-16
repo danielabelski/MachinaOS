@@ -23,6 +23,11 @@
     ]
   },
 
+  "gateway": {
+    "_description": "The OpenCompany Gateway's default model for an install that relies on it (services/gateway/routing.py gateway_default): default_provider's default_model. It applies where the owner has set no global model (Set Global Model): chat Auto, employee setup and the global model the editor shows, and only while the gateway serves that provider.",
+    "default_provider": "gemini"
+  },
+
   "providers": {
     "openai": {
       "display_name": "OpenAI",

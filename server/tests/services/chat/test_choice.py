@@ -75,6 +75,22 @@ async def test_auto_is_the_owners_default_model(database, connected):
     )
 
 
+async def test_auto_falls_back_to_the_gateways_default(database, connected, monkeypatch):
+    from services.gateway import routing
+
+    async def gateway_default():
+        return ("gemini", "gemini-3.8-flash")
+
+    monkeypatch.setattr(routing, "gateway_default", gateway_default)
+    connected.add("gemini")
+    assert await options(database, {"model": "auto"}) == {"model": "gemini::gemini-3.8-flash"}
+    picker = await choice.list_models(database, None, principal=None, graph=talk_graph(), name="Ada")
+    assert "Gemini 3.8 Flash" in picker["auto"]["description"] and picker["auto"]["available"] is True
+    # The owner's own default still wins.
+    await database.save_user_settings({"default_llm_provider": "anthropic", "default_llm_model": "claude-opus-5-5"})
+    assert await options(database, {"model": "auto"}) == {"model": OPUS}
+
+
 async def test_what_cannot_answer_is_refused(database, connected):
     with pytest.raises(choice.ChoiceRefused) as refused:
         await options(database, {"model": GPT})

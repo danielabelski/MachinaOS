@@ -9,8 +9,9 @@ edit and retry as ``options.model`` / ``options.effort``. Admission resolves it
 here and keeps the result on the run (``ChatRun.options``), and
 ``prepare_agent_payload`` applies it to the agent that answers the run only.
 
-- Auto is the owner's default model (Set Global Model). With none set it
-  changes nothing: the employee answers on its own model.
+- Auto is the owner's default model (Set Global Model), else the OpenCompany
+  Gateway's default while the gateway serves it (``gateway_default``). With
+  neither it changes nothing: the employee answers on its own model.
 - A model whose provider has no key is refused, never swapped for another,
   and so is a model the picker no longer offers.
 
@@ -72,6 +73,13 @@ def _default_of(settings: Mapping[str, Any]) -> Optional[Tuple[str, str]]:
     return (provider, model) if provider and model else None
 
 
+async def _default(settings: Mapping[str, Any]) -> Optional[Tuple[str, str]]:
+    """Auto's model: the owner's default, else the OpenCompany Gateway's."""
+    from services.gateway.routing import gateway_default
+
+    return _default_of(settings) or await gateway_default()
+
+
 def _unavailable(key: str, provider: str, model_name: str) -> str:
     return str(choice_setting(key)).format(model=model_name, provider=provider_display_name(provider))
 
@@ -99,7 +107,7 @@ async def run_options(database: Any, auth: Any, raw: Any, *, principal: Optional
         raise ValueError("model must be text")
     connected = await _connected(auth, principal)
     if model == AUTO:
-        default = _default_of(await _settings(database))
+        default = await _default(await _settings(database))
         if default is None:
             return options
         provider, name = default
@@ -183,7 +191,7 @@ async def list_models(
     connected = await _connected(auth, principal)
     settings = await _settings(database)
     auto_words = choice_setting("auto")
-    default = _default_of(settings)
+    default = await _default(settings)
     if default is not None:
         provider, model = default
         model_name = _model_name(provider, model)

@@ -109,6 +109,22 @@ async def test_gateway_covers_trusts_only_a_real_router(monkeypatch):
     assert await gateway_covers("openai") is False
 
 
+async def test_the_gateway_default_is_gemini_while_the_gateway_serves_it(monkeypatch):
+    from services.gateway import routing
+    from services.llm.config import LLM_DEFAULTS
+
+    covered = {"gemini"}
+
+    async def covers(provider):
+        return provider in covered
+
+    monkeypatch.setattr(routing, "gateway_covers", covers)
+    assert LLM_DEFAULTS["gateway"]["default_provider"] == "gemini"
+    assert await routing.gateway_default() == ("gemini", LLM_DEFAULTS["providers"]["gemini"]["default_model"])
+    covered.clear()
+    assert await routing.gateway_default() is None
+
+
 ROUTE = GatewayRoute(api_key="sk-gateway", base_url="https://gw.example/v1", model_prefix="openai/")
 
 

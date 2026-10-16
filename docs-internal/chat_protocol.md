@@ -626,7 +626,9 @@ the model thinks: Quick (`effort: "low"`), Balanced (no effort sent: the agent's
 picker: each node keeps its model.
 
 - **Auto** is the owner's default model (Set Global Model, `UserSettings.default_llm_provider` /
-  `default_llm_model`). With none set it changes nothing, and the employee answers on its own model.
+  `default_llm_model`). With none set it is the OpenCompany Gateway's default while the gateway serves it
+  (`gateway_default`, Gemini 3.8 Flash; see `llm_gateway.md`). With neither it changes nothing, and the
+  employee answers on its own model.
 - **The choice is the owner's**, saved with their settings (`UserSettings.chat_model`, default `"auto"`, and
   `chat_effort`, default `""`) through `save_user_settings`, which refuses a model the picker doesn't offer or an
   effort other than `low` / `high` (`chat_choice_refused`). The client sends it as `options.model` /

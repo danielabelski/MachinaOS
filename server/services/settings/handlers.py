@@ -217,6 +217,11 @@ async def handle_get_validated_ai_providers(
     settings = await database.get_user_settings(user_id)
     global_provider = settings.get("default_llm_provider") if settings else None
     global_model = settings.get("default_llm_model") if settings else None
+    if not (global_provider and global_model):
+        # The model that applies: the OpenCompany Gateway's default while it serves it.
+        from services.gateway.routing import gateway_default
+
+        global_provider, global_model = await gateway_default() or (global_provider, global_model)
 
     return {
         "providers": providers,

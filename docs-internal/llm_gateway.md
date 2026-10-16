@@ -17,6 +17,13 @@ OpenCompany's hosted LLM gateway is the stock open-source LiteLLM Proxy, deploye
 
 **Routing: own keys first** (`services/gateway/routing.py`). A call whose provider has a key of the install's own goes to that vendor as always. Otherwise, if the gateway is enabled, its key is stored and the provider has a `"gateway"` block in `server/config/llm_defaults.json`, `ChatUnifier.chat` builds the client with the gateway key and base URL (instead of the `{ref}_proxy` row) and passes the block's `model_prefix` to `OpenAIProvider`, which applies it to the wire model only. The gateway key stays inside the router and ChatUnifier: callers pass no key (`_resolve_activity_api_key` returns `""`), and it never enters node parameters or Temporal payloads. `ChatUnifier.fetch_models` never routes (it validates a key against its own vendor); `AIService.fetch_models` lists a gateway-covered provider's curated models with no network call. The checks that used to refuse "no key configured" accept gateway coverage (`GatewayRouter.covers`, or `gateway_covers` outside the DI graph): the three in `services/ai.py`, `_resolve_activity_api_key` and `prepare_agent_payload`, `Connections.ai_providers` (employee setup and the chat model picker), the global model list, and translate.
 
+**Default model** (`gateway_default`, the `"gateway"` entry in `server/config/llm_defaults.json`). Where the owner has set no global model, an install that relies on the gateway uses Gemini's `default_model`, Gemini 3.8 Flash:
+- chat Auto (`services/chat/choice.py`);
+- employee setup, before the first usable provider (`services/employees/llm.py`);
+- the global model the editor shows (`get_validated_ai_providers`).
+
+It applies only while the gateway serves Gemini, and the owner's own choice always wins.
+
 **Embeddings, speech and vision** call the gateway from their own clients, with the same rule and the provider's same `"gateway"` block: the gateway's key, its URL plus the block's `base_path`, the `model_prefix` on the wire model only, and the attribution headers built per call.
 - **The key.** `key_or_route(ctx, credential_id, provider)` gives a plugin node its key: its own through `ctx.connection`, else the gateway's with the route. With neither, the annotated missing-key error still reaches the Credentials modal.
 - **Embeddings** (`services/memory/vector_store.py`): `openai_embedding_access` tries the given key, then the stored OpenAI key, then the gateway. It routes only on OpenAI's own endpoint: an `endpoint` override names a server of the user's, which never gets the gateway key. `OpenAIEmbedder` never falls back to `OPENAI_API_KEY` from the environment.

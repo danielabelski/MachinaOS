@@ -24,7 +24,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, List, Mapping, Optional, Tuple
 
-from services.llm.config import split_provider_ref
+from services.llm.config import LLM_DEFAULTS, split_provider_ref
 
 #: Catalogue entry and credential id of the gateway key (Connectors).
 GATEWAY_CREDENTIAL_ID = "opencompany_gateway"
@@ -111,6 +111,19 @@ async def gateway_route(provider: str, *, openai_format: bool = False) -> Option
 async def gateway_covers(provider: str) -> bool:
     """:meth:`GatewayRouter.covers` outside the DI graph (see :func:`gateway_route`)."""
     return await gateway_route(provider) is not None
+
+
+async def gateway_default() -> Optional[Tuple[str, str]]:
+    """The gateway's default ``(provider, model)``: the ``"gateway"`` entry's
+    ``default_provider`` in llm_defaults.json and that provider's
+    ``default_model``. Where the owner has set no global model, an install
+    that relies on the gateway uses it. ``None`` while the gateway doesn't
+    serve that provider."""
+    provider = str((LLM_DEFAULTS.get("gateway") or {}).get("default_provider") or "")
+    model = str(((LLM_DEFAULTS.get("providers") or {}).get(provider) or {}).get("default_model") or "")
+    if not provider or not model or not await gateway_covers(provider):
+        return None
+    return provider, model
 
 
 async def key_or_route(ctx: Any, credential_id: str, provider: str) -> Tuple[str, Optional[GatewayRoute]]:

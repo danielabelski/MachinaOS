@@ -7,7 +7,9 @@
    "Keep everything on this computer" on;
 2. the global default provider and model from Settings, when that
    provider is usable;
-3. the first usable provider, then any saved OpenAI-compatible endpoint.
+3. the OpenCompany Gateway's default (``gateway_default``), when it is
+   usable;
+4. the first usable provider, then any saved OpenAI-compatible endpoint.
 
 A provider is usable when its credential is stored (the same check the
 credential catalogue serves). The model is the provider's saved default,
@@ -123,6 +125,12 @@ async def resolve_llm_choice(
     default_provider = str(settings.get("default_llm_provider") or "")
     if default_provider and (default_provider in usable or default_provider in endpoint_models):
         return await choose(default_provider, str(settings.get("default_llm_model") or "") or None)
+
+    from services.gateway.routing import gateway_default
+
+    gateway = await gateway_default()
+    if gateway is not None and gateway[0] in usable:
+        return await choose(*gateway)
 
     if usable:
         return await choose(usable[0])

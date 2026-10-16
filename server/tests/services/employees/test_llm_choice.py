@@ -1,6 +1,7 @@
 """Which model writes a setup screen: a local server when the owner keeps
 everything on this computer, else the global default when it is usable,
-else the first usable provider, else a saved OpenAI-compatible endpoint."""
+else the OpenCompany Gateway's default when it is usable, else the first
+usable provider, else a saved OpenAI-compatible endpoint."""
 
 from __future__ import annotations
 
@@ -72,6 +73,20 @@ async def test_the_global_default_when_local_is_off():
 async def test_a_default_that_is_not_usable_falls_through_to_the_first_usable():
     choice = await choose(["anthropic"], settings={"prefer_local_ai": False, "default_llm_provider": "openai"})
     assert choice.provider == "anthropic"
+
+
+async def test_the_gateways_default_before_the_first_usable(monkeypatch):
+    from services.gateway import routing
+
+    async def gateway_default():
+        return ("gemini", "gemini-3.8-flash")
+
+    monkeypatch.setattr(routing, "gateway_default", gateway_default)
+    choice = await choose(["openai", "gemini"], settings={"prefer_local_ai": False})
+    assert choice == llm.LLMChoice(provider="gemini", model="gemini-3.8-flash", local=False)
+    # The owner's usable default still wins.
+    choice = await choose(["openai", "gemini"], settings={"prefer_local_ai": False, "default_llm_provider": "openai", "default_llm_model": "gpt-x"})
+    assert choice.provider == "openai"
 
 
 async def test_the_saved_provider_default_model_beats_the_json_default():
