@@ -398,5 +398,8 @@
   },
   "stripeAction": {
     "skill": "stripe-skill"
+  },
+  "dodoPaymentsAction": {
+    "skill": "dodo-payments-skill"
   }
 }

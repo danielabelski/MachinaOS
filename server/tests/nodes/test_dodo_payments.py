@@ -742,6 +742,26 @@ class TestCatalogueAndAssets:
         assert "<svg" in (PLUGIN_DIR / "icon.svg").read_text(encoding="utf-8")
         assert DodoPaymentsCredential.get_icon_path() == PLUGIN_DIR / "dodo_payments.svg"
 
+    def test_visuals_skill_binding(self):
+        visuals = json.loads((SERVER_DIR / "nodes" / "visuals.json").read_text(encoding="utf-8"))
+        assert visuals["dodoPaymentsAction"]["skill"] == "dodo-payments-skill"
+
+    def test_skill_binds_the_tool(self):
+        text = (SERVER_DIR / "skills" / "payments_agent" / "dodo-payments-skill" / "SKILL.md").read_text(encoding="utf-8")
+        frontmatter = text.split("---", 2)[1]
+        assert "name: dodo-payments-skill" in frontmatter
+        assert '"dodo_payments_action"' in frontmatter
+
+    def test_hires_can_use_it(self):
+        apps = json.loads((SERVER_DIR / "config" / "employee_apps.json").read_text(encoding="utf-8"))["apps"]
+        app = apps["dodo_payments"]
+        assert app["provider_id"] == "dodo_payments"
+        assert [tool["type"] for tool in app["tools"]] == ["dodoPaymentsAction"]
+        assert app["side_effects"] == "money"
+        # Hire builds only allowlisted nodes.
+        allowlist = json.loads((SERVER_DIR / "config" / "node_allowlist.json").read_text(encoding="utf-8"))
+        assert "dodoPaymentsAction" in allowlist["enabled_nodes"]
+
 
 # ============================================================================
 # Dodo Payments Receive — the webhook source

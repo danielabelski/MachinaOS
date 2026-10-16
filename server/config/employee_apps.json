@@ -547,6 +547,33 @@
         "working": "Looking up payments in Stripe"
       }
     },
+    "dodo_payments": {
+      "name": "Dodo Payments",
+      "provider_id": "dodo_payments",
+      "aliases": [
+        "dodo payments",
+        "dodo"
+      ],
+      "_trigger_note": "Dodo Payments is a tool only here. dodoPaymentsReceive deploys, but no hire uses it as a trigger yet.",
+      "trigger": null,
+      "reply": null,
+      "notify_owner": null,
+      "tools": [
+        {
+          "type": "dodoPaymentsAction",
+          "label": "Dodo Payments",
+          "params": {
+            "operation": "list_payments"
+          },
+          "side_effects": "money",
+          "_side_effects_note": "refunds, cancellations, plan changes and any `call` that writes move money or change billing; under ask first they wait for the owner (the plugin's approval spec)."
+        }
+      ],
+      "side_effects": "money",
+      "phrases": {
+        "working": "Looking up payments in Dodo Payments"
+      }
+    },
     "web": {
       "name": "Web browser",
       "provider_id": "browser",
