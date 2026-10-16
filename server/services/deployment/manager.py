@@ -18,6 +18,7 @@ from core.logging import get_logger
 from constants import POLLING_TRIGGER_TYPES, WORKFLOW_TRIGGER_TYPES
 from services import event_waiter
 from services.events.envelope import equivalent_event_types
+from services.run_graph import collect_downstream_node_ids
 from .state import DeploymentState, TriggerInfo
 from .triggers import TriggerManager
 
@@ -1364,61 +1365,8 @@ class DeploymentManager:
         return result
 
     def _get_downstream_nodes(self, node_id: str, nodes: List[Dict], edges: List[Dict]) -> List[Dict]:
-        """Get all downstream nodes from a trigger."""
-        downstream_ids = set()
-        node_types = {n["id"]: n.get("type", "") for n in nodes}
-        def collect(current_id: str):
-            for edge in edges:
-                if edge.get("source") != current_id:
-                    continue
-                target_id = edge.get("target")
-                if not target_id or target_id in downstream_ids:
-                    continue
-
-                target_type = node_types.get(target_id, "")
-                is_trigger = target_type in WORKFLOW_TRIGGER_TYPES
-
-                # Stop at trigger nodes — they are independent event listeners,
-                # not regular execution nodes. Each trigger spawns its own
-                # execution run when its event fires (n8n pattern).
-                if is_trigger:
-                    continue
-
-                downstream_ids.add(target_id)
-                collect(target_id)
-
-        collect(node_id)
-
-        # Include config nodes connected to downstream nodes
-        for edge in edges:
-            target = edge.get("target")
-            source = edge.get("source")
-            handle = edge.get("targetHandle") or edge.get("target_handle") or ""
-
-            is_config = handle and handle.startswith("input-") and handle != "input-main"
-            if is_config and target in downstream_ids and source not in downstream_ids:
-                # Never include trigger nodes as config dependencies -
-                # they are event listeners, not configuration providers
-                source_type = node_types.get(source, "")
-                if source_type in WORKFLOW_TRIGGER_TYPES:
-                    continue
-                downstream_ids.add(source)
-
-        # Include tool nodes connected to AI Agent nodes (for capability discovery)
-        # When a child agent is included, we need its connected tools so the parent
-        # can discover what capabilities the child has
-        from constants import AI_AGENT_TYPES
-
-        agent_node_ids = {n["id"] for n in nodes if n.get("type") in AI_AGENT_TYPES and n["id"] in downstream_ids}
-        for edge in edges:
-            target = edge.get("target")
-            source = edge.get("source")
-            target_handle = edge.get("targetHandle") or edge.get("target_handle") or ""
-            # Include tool nodes connected to agent's input-tools handle
-            if target in agent_node_ids and target_handle == "input-tools" and source not in downstream_ids:
-                downstream_ids.add(source)
-                logger.debug(f"[Deployment] Including tool node {source} connected to agent {target}")
-
+        """Get downstream work with all connected configuration dependencies."""
+        downstream_ids = collect_downstream_node_ids(node_id, nodes, edges)
         return [n for n in nodes if n["id"] in downstream_ids]
 
     # =========================================================================

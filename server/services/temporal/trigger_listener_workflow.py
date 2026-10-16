@@ -43,6 +43,8 @@ from temporalio.common import (
 )
 from temporalio.workflow import ParentClosePolicy
 
+from services.run_graph import collect_downstream_node_ids
+
 from .workflow import TEMPORAL_ROUTING_INPUT_KEY
 
 
@@ -591,11 +593,10 @@ async def _broadcast_trigger_waiting(
 
 
 # ---------------------------------------------------------------------------
-# Pure graph builder — kept in this module on purpose: the only consumer is
-# this workflow class, and inlining keeps the import surface deterministic
-# (workflow.defn(sandboxed=False) still benefits from minimal imports).
-# Mirrors the logic in DeploymentManager._execute_from_trigger + ._get_downstream_nodes
-# but specialised for the listener's "trigger fires once, spawn run" path.
+# Pure graph builder shared by push, polling, cron, and controlled runs.
+# Dependency collection is shared with local deployments; trigger-output
+# decoration stays here. Changes to the selected graph affect child input
+# only, preserving parent command order and child workflow identities.
 # ---------------------------------------------------------------------------
 
 
@@ -612,50 +613,9 @@ def _build_run_graph(
     marks sibling triggers ``_pre_executed=True`` with ``{not_triggered:
     True}`` so MachinaWorkflow doesn't try to wait on them.
     """
-    from constants import (
-        AI_AGENT_TYPES,
-        WORKFLOW_TRIGGER_TYPES,
-    )
+    from constants import WORKFLOW_TRIGGER_TYPES
 
-    node_types = {n["id"]: n.get("type", "") for n in nodes}
-
-    downstream_ids: Set[str] = set()
-
-    def _collect(current_id: str) -> None:
-        for edge in edges:
-            if edge.get("source") != current_id:
-                continue
-            target_id = edge.get("target")
-            if not target_id or target_id in downstream_ids:
-                continue
-            target_type = node_types.get(target_id, "")
-            if target_type in WORKFLOW_TRIGGER_TYPES:
-                # Stop at trigger nodes — independent event listeners.
-                continue
-            downstream_ids.add(target_id)
-            _collect(target_id)
-
-    _collect(trigger_node_id)
-
-    # Config nodes (memory, tools, etc.) connected to downstream nodes.
-    for edge in edges:
-        target = edge.get("target")
-        source = edge.get("source")
-        handle = edge.get("targetHandle") or edge.get("target_handle") or ""
-        is_config = handle and handle.startswith("input-") and handle != "input-main"
-        if is_config and target in downstream_ids and source not in downstream_ids:
-            if node_types.get(source, "") in WORKFLOW_TRIGGER_TYPES:
-                continue
-            downstream_ids.add(source)
-
-    # Tool nodes connected to AI Agent's input-tools handle.
-    agent_ids = {n["id"] for n in nodes if n.get("type") in AI_AGENT_TYPES and n["id"] in downstream_ids}
-    for edge in edges:
-        target = edge.get("target")
-        source = edge.get("source")
-        handle = edge.get("targetHandle") or edge.get("target_handle") or ""
-        if target in agent_ids and handle == "input-tools" and source not in downstream_ids:
-            downstream_ids.add(source)
+    downstream_ids = collect_downstream_node_ids(trigger_node_id, nodes, edges)
 
     run_filter = {trigger_node_id} | downstream_ids
     filtered_nodes: List[Dict[str, Any]] = []

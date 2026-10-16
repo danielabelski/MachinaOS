@@ -797,6 +797,20 @@ reconcile; one that never reported ends `failed` with an unknown outcome. See
 
 ## Config Node Filtering
 
+Trigger-run graph construction first preserves the complete configuration
+dependency graph through `services/run_graph.py`. After collecting downstream
+work, it follows incoming configuration handles to a fixed point, including
+each teammate's Context, Skills, model and tools regardless of edge order.
+Configuration-only additions do not bring their unrelated outgoing main
+branches into the run, and sibling triggers remain independent listeners.
+Push, polling and cron runs share this selection with local deployments.
+The configuration nodes remain available for capability and conversation
+discovery; executable-node filtering below still excludes them from scheduling.
+
+This selection changes child-workflow inputs only, preserving parent command
+order and child identities. Existing children keep their recorded graph;
+future firings use the corrected selection after the worker is upgraded.
+
 Certain nodes provide configuration rather than executing:
 
 ```python
