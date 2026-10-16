@@ -78,7 +78,7 @@ Desktop code signing is deliberately absent for the first releases: `CSC_IDENTIT
 |------|---------------|--------|
 | bun | `oven-sh/setup-bun` v2.2.0 — reads the root `packageManager` pin (`bun@1.4.0`) | Immutable commit SHA |
 | Node.js | `node-version` input, default `22` — a CI-only convenience: bun runs vite / vitest / eslint on it via their node shebangs (open bun-runtime bugs in vitest and eslint); nothing shipped needs Node | `actions/setup-node` v6.5.0, immutable commit SHA; package cache disabled |
-| Python | hard-coded `3.12` (matches `.python-version`) | `actions/setup-python` v5.6.0, immutable commit SHA |
+| Python | hard-coded `3.12` (matches `.python-version`) | `actions/setup-python` v7.0.0, immutable commit SHA |
 | uv | `astral-sh/setup-uv` v8.1.0, cache disabled | Immutable commit SHA |
 
 `setup-node`'s `cache:` is intentionally omitted — its post-job cache save fails with a `Path Validation Error` in lanes that didn't run a JS install (CLI / backend test jobs), which would mark the whole job red even when every test passed. No dependency cache is configured for bun either (unchanged from the pnpm era).
