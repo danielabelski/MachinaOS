@@ -60,7 +60,9 @@ async def admitted(database, monkeypatch, version=1, *, tail="TAIL", request="or
     monkeypatch.setattr(database, "get_workflow", AsyncMock(return_value=SimpleNamespace(data={"nodes": nodes, "edges": edges})))
     context = {"workflow_id": "wf", "node_id": node_id, "node_type": "employeeJob" if version == 1 else "ai_employee",
         "execution_id": request, "session_id": "wf", "nodes": nodes, "edges": edges,
-        "outputs": {"gmail": email}, "parameter_snapshot": parameters, "user_id": "owner"}
+        "outputs": {"gmail": email}, "parameter_snapshot": parameters, "user_id": "owner",
+        # Prepare puts the plan it resolved from the admitted graph on the context.
+        **({"employee_team_plan": plan} if version == 2 else {})}
     resolver = ParameterResolver(database, AsyncMock(return_value=None))
     resolved, context, handled = await project_managed_gmail_parameters(database, node_id, parameters[node_id], context, resolver.resolve)
     assert handled

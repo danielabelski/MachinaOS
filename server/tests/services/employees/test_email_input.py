@@ -194,7 +194,9 @@ def intake_context(body, *, version=1):
     return params, {"workflow_id": "wf", "node_type": node["type"], "nodes": [
         {"id": "gmail", "type": "googleGmailReceive", "data": {"label": "Gmail"}}, node],
         "edges": [{"source": "gmail", "target": node["id"]}],
-        "outputs": {"gmail": {"subject": "Actual email", "body": body}}, "node_id": node["id"]}
+        "outputs": {"gmail": {"subject": "Actual email", "body": body}}, "node_id": node["id"],
+        # Prepare puts the plan it resolved from the admitted graph on the context.
+        **({"employee_team_plan": plan} if version == 2 else {})}
 
 
 @pytest.mark.parametrize("version", [1, 2])

@@ -101,8 +101,8 @@ async def project_managed_gmail_parameters(database: Any, node_id: str, paramete
     node_type = node.get("type") or context.get("node_type")
     if node_type == "employeeJob" and parameters.get("operation") == "intake":
         field = "mission"
-    elif ((node.get("data") or context.get("node_data") or {}).get("employee_recipe_version") == 2
-          and ((node.get("data") or context.get("node_data") or {}).get("employee_team_plan") or {}).get("lead_node_id") == node_id):
+    elif (context.get("employee_team_plan") or {}).get("lead_node_id") == node_id:
+        # Prepare resolved the plan from the generation's admitted graph.
         field = "prompt"
     else:
         return parameters, context, False

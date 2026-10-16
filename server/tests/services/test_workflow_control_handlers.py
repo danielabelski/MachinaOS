@@ -1454,3 +1454,45 @@ async def test_start_admits_the_employee_team_plan_on_its_lead(monkeypatch):
     admitted = {node["id"]: node["data"] for node in service.begin_generation.await_args.kwargs["nodes"]}
     assert admitted["wf:ai_employee:1"] == {"label": "Lead", "employee_recipe_version": 2, "employee_team_plan": plan}
     assert admitted["wf:aiAgent:1"] == {"label": "Talk"}
+
+
+@pytest.mark.asyncio
+async def test_deploy_admits_the_employee_team_plan_on_its_lead(monkeypatch):
+    """Start and the restart re-arm deploy through here, which sanitizes the graph again (#148)."""
+    plan = {"version": 2, "lead_node_id": "wf:ai_employee:1", "talk_node_id": "wf:aiAgent:1"}
+    workflow_service = SimpleNamespace(
+        is_workflow_deployed=lambda _workflow_id: False,
+        deploy_workflow=AsyncMock(return_value={"success": True, "triggers_setup": [], "deployment_id": "deployment"}),
+    )
+    broadcaster = SimpleNamespace(
+        lock_workflow=AsyncMock(return_value=True), unlock_workflow=AsyncMock(), update_node_status=AsyncMock(),
+        update_workflow_status=AsyncMock(), update_deployment_status=AsyncMock(),
+    )
+    monkeypatch.setattr("core.container.container", SimpleNamespace(workflow_service=lambda: workflow_service,
+                                                                    database=lambda: SimpleNamespace()))
+    monkeypatch.setattr("services.status_broadcaster.get_status_broadcaster", lambda: broadcaster)
+    monkeypatch.setattr("services.workflow_validator.validate_workflow", AsyncMock(return_value={"errors": []}))
+    monkeypatch.setattr("services.employees.store.get_by_workflow", AsyncMock(return_value=SimpleNamespace(team_plan=plan)))
+    monkeypatch.setattr(handlers, "_deployment_tasks", {})
+
+    result = await handlers.handle_deploy_workflow(
+        {
+            "workflow_id": "wf",
+            "nodes": [
+                # A plan the caller sends is dropped; the employee's is deployed.
+                {"id": "wf:ai_employee:1", "type": "ai_employee",
+                 "data": {"label": "Lead", "employee_recipe_version": 2, "employee_team_plan": {"version": 2, "lead_node_id": "forged"}}},
+                {"id": "wf:aiAgent:1", "type": "aiAgent", "data": {"label": "Talk"}},
+            ],
+            "edges": [],
+            "parameters_by_id": {},
+            "generation": 1,
+        },
+        None,
+    )
+    await handlers._deployment_tasks["wf"]
+
+    assert result["success"] is True
+    deployed = {node["id"]: node["data"] for node in workflow_service.deploy_workflow.await_args.kwargs["nodes"]}
+    assert deployed["wf:ai_employee:1"] == {"label": "Lead", "employee_recipe_version": 2, "employee_team_plan": plan}
+    assert deployed["wf:aiAgent:1"] == {"label": "Talk"}

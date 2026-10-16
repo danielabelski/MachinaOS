@@ -188,6 +188,7 @@ async def handle_deploy_workflow(data: Dict[str, Any], websocket: WebSocket) -> 
         load_node_parameters,
         persist_parameter_aliases,
     )
+    from services.employees.team_runtime import admit_team_plan
     from services.workflow_migrations import normalize_workflow_graph
     from services.workflow_sanitizer import sanitize_workflow_graph
 
@@ -205,7 +206,9 @@ async def handle_deploy_workflow(data: Dict[str, Any], websocket: WebSocket) -> 
         parameters_by_id,
     )
     safe_graph = sanitize_workflow_graph(normalization.graph_data())
-    nodes = list(safe_graph["nodes"])
+    # A hired team's plan is saved beside the graph, not in it. Start and the
+    # restart re-arm deploy through here, so their listeners carry it too.
+    nodes = await admit_team_plan(container.database(), str(workflow_id or ""), list(safe_graph["nodes"]))
     edges = list(safe_graph["edges"])
     normalized_parameters = normalization.node_parameters
     await import_legacy_context_receipts(

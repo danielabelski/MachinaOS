@@ -15,14 +15,13 @@ import pytest
 import nodes  # noqa: F401
 
 from models.employees import Employee
-from services.deployment.control import WorkflowControlService
 from services.employees.apps import get_app
 from services.employees.builder import BuildInputs, build_employee_graph
 from services.employees.hire_request import HireEmployeeRequest
 from services.employees.jobs import create_job
 from services.employees.llm import LLMChoice
 from services.employees.prompt import OwnerProfile
-from services.employees.team_runtime import admit_team_plan, employee_runtime_plan
+from services.employees.team_runtime import employee_runtime_plan
 from services.plugin import NodeContext
 from services.temporal.trigger_listener_workflow import _build_run_graph
 from services.workflow_migrations import normalize_workflow_graph
@@ -43,7 +42,8 @@ def inbox_assistant():
 
 @pytest.fixture
 async def started(real_database, monkeypatch):
-    """A hire saved the way commit_hire saves it, then admitted the way Start admits it."""
+    """A hire saved the way commit_hire saves it, then started through the real Start and deploy handlers."""
+    from services.deployment import handlers
     built = inbox_assistant()
     normalized = normalize_workflow_graph("7", built.nodes, built.edges, built.parameters)
     saved = sanitize_workflow_graph({**normalized.graph_data(), "owner_id": "owner"})
@@ -52,29 +52,48 @@ async def started(real_database, monkeypatch):
                              team_plan=built.team_plan, node_roles=built.node_roles))
         await session.commit()
     monkeypatch.setattr(real_database, "get_workflow", AsyncMock(return_value=SimpleNamespace(data=saved, slug="Leo_1")))
-    control, _ = await WorkflowControlService(real_database).begin_generation(
-        workflow_id="7", nodes=await admit_team_plan(real_database, "7", saved["nodes"]), edges=saved["edges"],
-        session_id="7", idempotency_key="start", graph_version=normalized.graph_version, owner_id="owner",
-        parameters=normalized.node_parameters)
-    return SimpleNamespace(database=real_database, saved=saved, control=control, roles=built.node_roles, plan=built.team_plan)
+    # Temporal and the status broadcasts are the only parts not run for real.
+    workflow_service = SimpleNamespace(
+        is_workflow_deployed=lambda _workflow_id: False,
+        deploy_workflow=AsyncMock(return_value={"success": True, "triggers_setup": [], "deployment_id": "deployment"}))
+    broadcaster = SimpleNamespace(
+        lock_workflow=AsyncMock(return_value=True), unlock_workflow=AsyncMock(), update_node_status=AsyncMock(),
+        update_workflow_status=AsyncMock(), update_deployment_status=AsyncMock())
+    monkeypatch.setattr("core.container.container", SimpleNamespace(database=lambda: real_database,
+                                                                    workflow_service=lambda: workflow_service))
+    monkeypatch.setattr("services.status_broadcaster.get_status_broadcaster", lambda: broadcaster)
+    monkeypatch.setattr("services.workflow_validator.validate_workflow", AsyncMock(return_value={"errors": []}))
+    monkeypatch.setattr(handlers, "_deployment_tasks", {})
+    monkeypatch.setattr(handlers, "_broadcast_control", AsyncMock(return_value={}))
+    monkeypatch.setattr(handlers, "_start_controller", AsyncMock(return_value=None))
+    monkeypatch.setattr(handlers, "_query_controller_state", AsyncMock(return_value=None))
+    result = await handlers.handle_start_workflow(
+        {"workflow_id": "7", "nodes": saved["nodes"], "edges": saved["edges"], "user_id": "owner",
+         "parameters_by_id": normalized.node_parameters, "expected_revision": 0, "idempotency_key": "start"}, None)
+    assert result["success"] is True, result
+    deployed = workflow_service.deploy_workflow.await_args.kwargs
+    return SimpleNamespace(database=real_database, saved=saved, control=await real_database.get_latest_workflow_control("7"),
+                           listeners={"nodes": deployed["nodes"], "edges": deployed["edges"]},
+                           roles=built.node_roles, plan=built.team_plan)
 
 
 def run(started, trigger, node_id):
-    """The context one agent gets in a run its trigger started."""
-    snapshot = started.control.graph_snapshot
+    """The context one agent gets in a run its trigger's deployed listener started."""
     nodes, edges = _build_run_graph(trigger_node_id=trigger, trigger_output={"subject": "Hello"},
-                                    nodes=snapshot["nodes"], edges=snapshot["edges"])
+                                    nodes=started.listeners["nodes"], edges=started.listeners["edges"])
     return {"workflow_id": "7", "generation": started.control.generation, "data_scope_id": started.control.data_scope_id,
             "execution_id": f"run-{node_id}", "session_id": "7", "user_id": "owner", "node_id": node_id,
             "nodes": nodes, "edges": edges, "outputs": {trigger: {"subject": "Hello"}},
-            "parameter_snapshot": snapshot["parameters"]}
+            "parameter_snapshot": started.control.graph_snapshot["parameters"]}
 
 
 async def test_start_admits_the_plan_the_saved_graph_cannot_hold(started):
     lead = started.roles["agent"]
     assert set(next(node for node in started.saved["nodes"] if node["id"] == lead)["data"]) == {"label"}
-    admitted = next(node for node in started.control.graph_snapshot["nodes"] if node["id"] == lead)["data"]
-    assert admitted["employee_recipe_version"] == 2 and admitted["employee_team_plan"] == started.plan
+    # The generation's snapshot and the listeners deployed from it both carry it.
+    for graph in (started.control.graph_snapshot, started.listeners):
+        admitted = next(node for node in graph["nodes"] if node["id"] == lead)["data"]
+        assert admitted["employee_recipe_version"] == 2 and admitted["employee_team_plan"] == started.plan
 
 
 async def test_a_trigger_run_resolves_the_plan_and_its_job_holds_the_delivery_nodes(started):

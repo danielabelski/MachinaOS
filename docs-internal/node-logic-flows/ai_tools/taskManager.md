@@ -126,10 +126,12 @@ recipient. The durable job retains the original request, parameters, workspace
 generation, and delivery identity across delegation, review, and retries.
 
 The saved graph keeps node data to UI fields, so the plan is saved on the
-employee row, and Start and Apply copy it onto the lead in the generation's
-snapshot (`team_runtime.admit_team_plan`). A run holds only the nodes its
-trigger reaches, so the runtime reads the plan, and a job takes its graph,
-from that whole snapshot (`team_runtime.admitted_graph`).
+employee row. Start and Apply copy it onto the lead in the generation's
+snapshot, and every deploy (Start and the restart re-arm) copies it onto the
+lead in the deployed listeners, which a deploy sanitizes again
+(`team_runtime.admit_team_plan`). A run holds only the nodes its trigger
+reaches, so the runtime reads the plan, and a job takes its graph, from that
+whole snapshot (`team_runtime.admitted_graph`).
 
 The acknowledgement confirms assignment only. Specialists submit work through
 Task Manager, and the lead reviews and accepts it. The runtime delivers the
