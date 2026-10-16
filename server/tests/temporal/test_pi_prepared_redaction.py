@@ -80,6 +80,7 @@ def prepared(monkeypatch):
     database = SimpleNamespace(
         get_node_parameters=AsyncMock(side_effect=lambda identifier: deepcopy(snapshot.get(identifier, {}))),
         get_user_settings=AsyncMock(return_value=None), get_workflow=AsyncMock(return_value=SimpleNamespace(data=graph)),
+        get_workflow_control_generation=AsyncMock(return_value=None),
     )
     monkeypatch.setattr("core.container.container", SimpleNamespace(
         database=lambda: database, auth_service=lambda: SimpleNamespace(),

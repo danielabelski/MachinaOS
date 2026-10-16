@@ -46,6 +46,7 @@ async def saved(database):
 
 
 async def test_v2_job_keeps_admitted_plan_after_saved_metadata_rollback(database, monkeypatch):
+    from models.database import WorkflowControlExecution
     from models.employees import Employee
     from services.employees.jobs import create_job
     from tests.services.employees.test_runtime_v2 import admitted
@@ -56,15 +57,22 @@ async def test_v2_job_keeps_admitted_plan_after_saved_metadata_rollback(database
     admitted_context["parameter_snapshot"]["send"] = {"recipient": "original"}
     async with database.reserved_session() as session:
         session.add(Employee(id="employee", workflow_id="7", owner_id="owner", hire_state="ready", team_plan={}, node_roles={}))
+        # The generation was admitted with the plan; the saved metadata rolled back since.
+        session.add(WorkflowControlExecution(id="workflow-control:7:4", workflow_id="7", generation=4, execution_id="origin",
+            root_execution_id="origin", data_scope_id="original-scope", status="running", idempotency_key="start",
+            graph_hash="admitted", graph_snapshot={"nodes": admitted_context["nodes"], "edges": [],
+                                                   "parameters": admitted_context["parameter_snapshot"]}))
         await session.commit()
     monkeypatch.setattr(database, "get_workflow", AsyncMock(return_value=SimpleNamespace(data={"nodes": [{"id": "unactivated"}], "edges": []})))
-    job = await create_job(database, NodeContext.from_legacy("talk", "chatAgent", admitted_context), mission="Original work",
+    # A Talk run holds only its own line; the job takes the generation's whole graph.
+    talk_run = {**admitted_context, "nodes": [node for node in admitted_context["nodes"] if node["id"] == "talk"]}
+    job = await create_job(database, NodeContext.from_legacy("talk", "chatAgent", talk_run), mission="Original work",
         lead_node_id="lead", delivery_node_ids=["chat"], dispatch=True)
     assert job.source["team_plan"] == plan
     assert job.source["generation"] == 4
     assert job.source["data_scope_id"] == "original-scope"
     assert job.source["parameters"]["send"]["recipient"] == "original"
-    assert "unactivated" not in {node["id"] for node in job.source["nodes"]}
+    assert {node["id"] for node in job.source["nodes"]} == {node["id"] for node in admitted_context["nodes"]}
 
 @pytest.mark.parametrize("status", ["queued", "running", "submitted", "skipped"])
 async def test_unreviewed_or_skipped_tasks_never_publish(database, runtime, status):

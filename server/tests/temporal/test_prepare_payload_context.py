@@ -28,6 +28,7 @@ def descriptor(monkeypatch):
     database = SimpleNamespace(
         get_node_parameters=AsyncMock(return_value={"provider": "openai", "model": "test-model", "api_key": "sk-test", "prompt": "hello"}),
         get_user_settings=AsyncMock(return_value=None),
+        get_workflow_control_generation=AsyncMock(return_value=None),
     )
     monkeypatch.setattr(
         "core.container.container",

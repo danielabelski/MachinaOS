@@ -128,8 +128,9 @@ def _identity(ctx: Any, mission: str) -> str:
 async def create_job(database: Any, ctx: Any, *, mission: str, lead_node_id: str, delivery_node_ids: list[str], dispatch: bool) -> EmployeeJob:
     from services.employees.store import get_by_workflow
     employee = await get_by_workflow(database, str(ctx.workflow_id))
-    from services.employees.team_runtime import employee_runtime_plan
-    captured_plan = await employee_runtime_plan(database, {**ctx.raw, "nodes": ctx.nodes, "node_id": lead_node_id})
+    from services.employees.team_runtime import admitted_graph, team_plan_in
+    admitted = await admitted_graph(database, ctx.raw)
+    captured_plan = team_plan_in(admitted, lead_node_id) if admitted else None
     plan = captured_plan or (employee.team_plan if employee else None)
     if not employee or not plan or plan.get("lead_node_id") != lead_node_id:
         raise ValueError("This employee does not have an approved team")
@@ -146,10 +147,15 @@ async def create_job(database: Any, ctx: Any, *, mission: str, lead_node_id: str
         raise EmployeeEmailInputLimit()
     identifier = _identity(ctx, original_mission)
     # Persist the original graph/parameters rather than consulting mutable
-    # recipients or templates when the review completes later.
-    nodes = ctx.nodes or (graph.data or {}).get("nodes", [])
-    edges = ctx.edges or (graph.data or {}).get("edges", [])
-    snapshot = ctx.raw.get("parameter_snapshot") or {}
+    # recipients or templates when the review completes later. A team job
+    # keeps its generation's whole admitted graph: the run that admits it
+    # reaches neither the delivery nodes nor, from Talk, the lead.
+    if captured_plan:
+        nodes, edges, snapshot = admitted["nodes"], admitted["edges"], admitted.get("parameters") or {}
+    else:
+        nodes = ctx.nodes or (graph.data or {}).get("nodes", [])
+        edges = ctx.edges or (graph.data or {}).get("edges", [])
+        snapshot = ctx.raw.get("parameter_snapshot") or {}
     parameters = {str(node["id"]): snapshot[str(node["id"])] if str(node["id"]) in snapshot else await database.get_node_parameters(str(node["id"])) or {} for node in nodes}
     from services.workflow_sanitizer import sanitize_runtime_payload
     parameters = sanitize_runtime_payload(parameters)

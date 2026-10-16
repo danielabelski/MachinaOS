@@ -20,13 +20,23 @@ def admitted():
             "inputs": {"trigger": {"recipient": "original"}}}, plan
 
 
+def generation(context):
+    """A database holding the generation's admitted graph and nothing saved."""
+    control = SimpleNamespace(graph_snapshot={"nodes": context["nodes"], "edges": context["edges"]})
+    return SimpleNamespace(get_workflow_control_generation=AsyncMock(return_value=control),
+                           get_session=AsyncMock(side_effect=AssertionError("must not read saved metadata")))
+
+
 async def test_plan_is_from_admitted_graph_even_after_saved_rollback():
     context, original = admitted()
-    database = SimpleNamespace(get_session=AsyncMock(side_effect=AssertionError("must not read saved metadata")))
-    assert await employee_runtime_plan(database, context) == original
+    database = generation(context)
+    # A run holds only what its trigger reaches; the plan names nodes beyond it.
+    run = {**context, "nodes": [node for node in context["nodes"] if node["id"] == "lead"]}
+    assert await employee_runtime_plan(database, run) == original
+    database.get_workflow_control_generation.assert_awaited_with("wf", 4)
     context["nodes"][0]["data"]["employee_team_plan"]["delivery_node_ids"].append("unactivated")
     with pytest.raises(ValueError, match="outside its admitted graph"):
-        await employee_runtime_plan(database, context)
+        await employee_runtime_plan(database, run)
 
 
 async def test_admission_preserves_original_outputs_and_review_reuses_job(monkeypatch):
@@ -53,7 +63,7 @@ async def test_intrinsic_talk_submission_ignores_model_destinations(monkeypatch)
     scope = {**context, "parent_node_id": "talk", "node_id": "builtin_task_manager_talk"}
     create = AsyncMock(return_value=SimpleNamespace(id="job", state="queued"))
     dispatch = AsyncMock()
-    monkeypatch.setattr("services.plugin.deps.get_database", lambda: object())
+    monkeypatch.setattr("services.plugin.deps.get_database", lambda: generation(context))
     monkeypatch.setattr("services.agent_team.get_agent_team_service", lambda: object())
     monkeypatch.setattr("services.employees.jobs.create_job", create)
     monkeypatch.setattr("services.employees.jobs.dispatch_job", dispatch)

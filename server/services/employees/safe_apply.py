@@ -37,6 +37,7 @@ async def apply_saved_changes(database: Any, workflow_id: str, *, owner_id: str,
     from services.workflow_validator import validate_workflow
     from services.deployment.control import _graph_hash
     from services.employees.events import employee_changed_now
+    from services.employees.team_runtime import admit_team_plan
     if not getattr(container.settings(), "employee_safe_apply_enabled", True):
         return {"success": False, "error": "safe_apply_disabled", "activation_state": "saved"}
     workflow = await database.get_workflow(workflow_id)
@@ -49,6 +50,8 @@ async def apply_saved_changes(database: Any, workflow_id: str, *, owner_id: str,
         return {"success": False, "error": "conflict"}
     identifier = f"apply:{workflow_id}:{key}"
     snapshot = deepcopy(workflow.data)
+    # A hired team's plan is saved beside the graph, not in it.
+    snapshot["nodes"] = await admit_team_plan(database, workflow_id, snapshot.get("nodes", []))
     parameters = {node["id"]: await database.get_node_parameters(node["id"]) or {} for node in snapshot.get("nodes", [])}
     from services.workflow_sanitizer import sanitize_runtime_payload
     snapshot["parameters"] = sanitize_runtime_payload(parameters)

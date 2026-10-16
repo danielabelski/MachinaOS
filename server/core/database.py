@@ -3050,6 +3050,18 @@ class Database:
             )
             return result.scalar_one_or_none()
 
+    async def get_workflow_control_generation(
+        self, workflow_id: str, generation: int
+    ) -> Optional[WorkflowControlExecution]:
+        async with self.get_session() as session:
+            result = await session.execute(
+                select(WorkflowControlExecution).where(
+                    WorkflowControlExecution.workflow_id == workflow_id,
+                    WorkflowControlExecution.generation == generation,
+                )
+            )
+            return result.scalar_one_or_none()
+
     async def list_latest_workflow_controls(
         self, workflow_ids: List[str]
     ) -> Dict[str, WorkflowControlExecution]:

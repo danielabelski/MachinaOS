@@ -428,3 +428,21 @@ async def test_rollback_cannot_clear_a_claim_replaced_during_external_resume(har
         assert request.state == "applying" and request.claim_token == "new-process"
     assert (await harness.database.get_latest_workflow_control("7")).graph_snapshot == newer
     assert harness.manager._deployments["7"].nodes == newer["nodes"]
+
+
+async def test_apply_admits_the_employee_team_plan_on_its_lead(harness):
+    """The saved graph keeps node data to UI fields; Apply copies the plan in (#148)."""
+    from models.employees import Employee
+    plan = {"version": 2, "lead_node_id": "7:ai_employee:1", "talk_node_id": "7:aiAgent:1"}
+    lead = {"id": "7:ai_employee:1", "type": "ai_employee", "data": {"label": "Lead"}}
+    saved = {**deepcopy(harness.after), "nodes": [*harness.after["nodes"], lead]}
+    await harness.database.save_workflow("7", "Maya", "Maya_7", saved)
+    async with harness.database.get_session() as session:
+        session.add(Employee(id="employee", workflow_id="7", owner_id="owner", hire_state="ready", team_plan=plan))
+        await session.commit()
+    result = await safe_apply.apply_saved_changes(harness.database, "7", owner_id="owner", key="team")
+    assert result == {"success": True, "activation_state": "running"}
+    snapshot = (await harness.database.get_latest_workflow_control("7")).graph_snapshot
+    admitted = next(node for node in snapshot["nodes"] if node["id"] == lead["id"])
+    assert admitted["data"] == {"label": "Lead", "employee_recipe_version": 2, "employee_team_plan": plan}
+    assert (await harness.database.get_workflow("7")).data == saved

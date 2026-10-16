@@ -63,6 +63,7 @@ def prepare(monkeypatch):
             }
         ),
         get_user_settings=AsyncMock(side_effect=lambda *_a, **_k: state.user_settings),
+        get_workflow_control_generation=AsyncMock(return_value=None),
     )
     monkeypatch.setattr(
         "core.container.container",

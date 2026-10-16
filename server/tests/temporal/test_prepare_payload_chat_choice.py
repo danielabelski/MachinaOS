@@ -48,6 +48,7 @@ def prepare(monkeypatch):
     database = SimpleNamespace(
         get_node_parameters=AsyncMock(return_value=dict(_NODE)),
         get_user_settings=AsyncMock(return_value=None),
+        get_workflow_control_generation=AsyncMock(return_value=None),
     )
     monkeypatch.setattr(
         "core.container.container",

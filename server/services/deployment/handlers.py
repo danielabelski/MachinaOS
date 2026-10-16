@@ -2053,6 +2053,7 @@ async def handle_start_workflow(data: Dict[str, Any], websocket: WebSocket) -> D
         load_node_parameters,
         persist_parameter_aliases,
     )
+    from services.employees.team_runtime import admit_team_plan
     from services.workflow_migrations import normalize_workflow_graph
     from services.workflow_sanitizer import sanitize_workflow_graph
 
@@ -2071,7 +2072,8 @@ async def handle_start_workflow(data: Dict[str, Any], websocket: WebSocket) -> D
         parameters_by_id,
     )
     safe_graph = sanitize_workflow_graph(normalization.graph_data())
-    admitted_nodes = list(safe_graph["nodes"])
+    # A hired team's plan is saved beside the graph, not in it.
+    admitted_nodes = await admit_team_plan(service.database, workflow_id, list(safe_graph["nodes"]))
     admitted_edges = list(safe_graph["edges"])
     from services.workflow_validator import validate_workflow
 

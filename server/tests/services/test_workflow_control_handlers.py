@@ -1402,3 +1402,55 @@ async def test_query_still_returns_none_for_a_real_outage(monkeypatch):
     monkeypatch.setattr(handlers, "_controller_handle", lambda _c: handle)
 
     assert await handlers._query_controller_state(_control("running", 1)) is None
+
+
+@pytest.mark.asyncio
+async def test_start_admits_the_employee_team_plan_on_its_lead(monkeypatch):
+    """The saved graph keeps node data to UI fields; Start copies the plan in (#148)."""
+    plan = {"version": 2, "lead_node_id": "wf:ai_employee:1", "talk_node_id": "wf:aiAgent:1"}
+    running = _control("running", 2)
+
+    async def transition(_value, **kwargs):
+        return _control("starting", 1) if kwargs["status"] == "starting" else running
+
+    async def broadcast(control, **_kwargs):
+        return {"state": control.status, "revision": control.revision}
+
+    service = SimpleNamespace(
+        database=SimpleNamespace(
+            get_workflow_control_by_idempotency_key=AsyncMock(return_value=None),
+            get_latest_workflow_control=AsyncMock(return_value=None),
+            update_workflow_run_data_scope=AsyncMock(return_value=True),
+        ),
+        begin_generation=AsyncMock(return_value=(_control("starting", 0), True)),
+        transition=AsyncMock(side_effect=transition),
+    )
+    monkeypatch.setattr(handlers, "_control_service", lambda: service)
+    monkeypatch.setattr(handlers, "_broadcast_control", broadcast)
+    monkeypatch.setattr(handlers, "_start_controller", AsyncMock(return_value="controller-run-1"))
+    monkeypatch.setattr(handlers, "handle_deploy_workflow", AsyncMock(return_value={"success": True}))
+    monkeypatch.setattr(handlers, "_await_deployment_setup", AsyncMock(return_value={"success": True}))
+    monkeypatch.setattr(handlers, "_query_controller_state", AsyncMock(return_value={"state": "running", "revision": 0}))
+    monkeypatch.setattr("services.workflow_validator.validate_workflow", AsyncMock(return_value={"errors": []}))
+    monkeypatch.setattr("services.employees.store.get_by_workflow", AsyncMock(return_value=SimpleNamespace(team_plan=plan)))
+
+    result = await handlers.handle_start_workflow(
+        {
+            "workflow_id": "wf",
+            "nodes": [
+                # A client cannot put a plan on a node; Start drops it and admits the employee's.
+                {"id": "wf:ai_employee:1", "type": "ai_employee", "data": {"label": "Lead", "employee_team_plan": {"version": 2}}},
+                {"id": "wf:aiAgent:1", "type": "aiAgent", "data": {"label": "Talk"}},
+            ],
+            "edges": [],
+            "parameters_by_id": {},
+            "expected_revision": 0,
+            "idempotency_key": "start-employee",
+        },
+        None,
+    )
+
+    assert result["success"] is True
+    admitted = {node["id"]: node["data"] for node in service.begin_generation.await_args.kwargs["nodes"]}
+    assert admitted["wf:ai_employee:1"] == {"label": "Lead", "employee_recipe_version": 2, "employee_team_plan": plan}
+    assert admitted["wf:aiAgent:1"] == {"label": "Talk"}

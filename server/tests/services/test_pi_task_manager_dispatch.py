@@ -49,7 +49,11 @@ async def runtime(monkeypatch):
              {"id": "coding", "type": "coding_agent", "data": {
                  "employee_recipe_version": 2, "employee_team_plan": plan}},
              {"id": "talk", "type": "chatAgent"}, {"id": "chat", "type": "chatReply"}]
+    edges = [{"source": "coding", "target": "parent", "targetHandle": "input-teammates"}]
+    parameters = {node["id"]: {"model": "admitted-model"} for node in nodes}
+    admitted = SimpleNamespace(graph_snapshot={"nodes": nodes, "edges": edges, "parameters": parameters})
     database = SimpleNamespace(
+        get_workflow_control_generation=AsyncMock(return_value=admitted),
         get_session=session, reserved_session=session,
         get_node_output_by_session=get_output,
         get_node_parameters=AsyncMock(return_value={"model": "mutated-model", "api_key": "secret"}),
@@ -88,9 +92,7 @@ async def runtime(monkeypatch):
              "tool_call_id": "recorded-call", "operation_id": "recorded-operation", "generation": 4,
              "data_scope_id": "original-data", "context_execution_id": "context-run",
              "context_session_id": "context-session", "session_id": "session",
-             "run_scope": "owner_chat", "nodes": nodes,
-             "edges": [{"source": "coding", "target": "parent", "targetHandle": "input-teammates"}],
-             "parameter_snapshot": {node["id"]: {"model": "admitted-model"} for node in nodes},
+             "run_scope": "owner_chat", "nodes": nodes, "edges": edges, "parameter_snapshot": parameters,
              "outputs": {"trigger": {"recipient": "original"}},
              "ai_service": object(), "database": database}
     monkeypatch.setattr("services.plugin.deps.get_ai_service", lambda: scope["ai_service"])

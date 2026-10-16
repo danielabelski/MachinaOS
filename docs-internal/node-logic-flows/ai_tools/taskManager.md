@@ -125,6 +125,12 @@ the admitted graph; model arguments cannot choose a different employee or
 recipient. The durable job retains the original request, parameters, workspace
 generation, and delivery identity across delegation, review, and retries.
 
+The saved graph keeps node data to UI fields, so the plan is saved on the
+employee row, and Start and Apply copy it onto the lead in the generation's
+snapshot (`team_runtime.admit_team_plan`). A run holds only the nodes its
+trigger reaches, so the runtime reads the plan, and a job takes its graph,
+from that whole snapshot (`team_runtime.admitted_graph`).
+
 The acknowledgement confirms assignment only. Specialists submit work through
 Task Manager, and the lead reviews and accepts it. The runtime delivers the
 reviewed result once to the original conversation or app, preserving approval

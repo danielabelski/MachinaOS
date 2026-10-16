@@ -310,11 +310,12 @@ async def collect_agent_connections(
         (node for node in (context.get("nodes") or []) if node.get("id") == node_id),
         None,
     )
-    if any((node.get("data") or {}).get("employee_recipe_version") == 2 for node in context.get("nodes", [])):
-        from services.employees.team_runtime import employee_runtime_plan
-        plan = await employee_runtime_plan(database, {**context, "node_id": node_id})
-        if plan and node_id == plan.get("talk_node_id") and not any(entry.get("node_type") == "taskManager" for entry in tool_data):
-            tool_data.append({"node_id": f"builtin_task_manager_{node_id}", "node_type": "taskManager", "parameters": {}, "label": "Task Manager", "builtin": True})
+    # An employee's Talk contact submits jobs to its team. Prepare resolved the
+    # plan from the generation's admitted graph: a Talk run never holds the lead
+    # that carries it.
+    plan = context.get("employee_team_plan") or {}
+    if node_id == plan.get("talk_node_id") and not any(entry.get("node_type") == "taskManager" for entry in tool_data):
+        tool_data.append({"node_id": f"builtin_task_manager_{node_id}", "node_type": "taskManager", "parameters": {}, "label": "Task Manager", "builtin": True})
     if (current_node or {}).get("type") in TEAM_LEAD_TYPES and not any(
         entry.get("node_type") == "taskManager" for entry in tool_data
     ):

@@ -220,21 +220,61 @@ def validate_managed_assignment(args, scope):
         raise ValueError("Employee job assignment depends_on must be a list of resolved task IDs")
 
 
-async def employee_runtime_plan(database, context):
-    """Resolve the off-canvas boundary from server-owned employee metadata."""
-    nodes = context.get("nodes", [])
+async def admit_team_plan(database, workflow_id: str, nodes: list) -> list:
+    """Put the employee's team plan on its lead in a graph being admitted.
+
+    The saved graph cannot hold it (``workflow_sanitizer`` keeps node data to
+    UI fields), so it is saved on the employee row beside the graph
+    (``store.commit_hire``, ``workflow_storage.mutate``). Start and Apply copy
+    it into the generation, which then runs the plan it was admitted with.
+    """
+    from services.employees.team_recipe import TEAM_LEAD_TYPE
+    if not any(node.get("type") == TEAM_LEAD_TYPE for node in nodes):
+        return nodes
+    from copy import deepcopy
+    from services.employees.store import get_by_workflow
+    employee = await get_by_workflow(database, str(workflow_id))
+    plan = (employee.team_plan if employee else None) or {}
+    if plan.get("version") != 2:
+        return nodes
+    return [{**node, "data": {**(node.get("data") or {}), "employee_recipe_version": 2, "employee_team_plan": deepcopy(plan)}}
+            if node.get("id") == plan.get("lead_node_id") else node for node in nodes]
+
+
+async def admitted_graph(database, context):
+    """The whole graph the run's generation admitted: its control snapshot.
+
+    A run holds only the nodes its trigger reaches, never a job's delivery
+    nodes and, for a Talk run, not the lead.
+    """
+    generation = int(context.get("generation") or 0)
+    if generation <= 0 or not context.get("workflow_id"):
+        return None
+    control = await database.get_workflow_control_generation(str(context["workflow_id"]), generation)
+    return control.graph_snapshot if control else None
+
+
+def team_plan_in(graph, node_id):
+    """The v2 plan an admitted graph carries, for its lead or Talk contact."""
+    nodes = graph.get("nodes") or []
     lead = next((node for node in nodes if (node.get("data") or {}).get("employee_recipe_version") == 2), None)
     if not lead:
         return None
     from copy import deepcopy
     plan = deepcopy((lead.get("data") or {}).get("employee_team_plan") or {})
-    if plan.get("version") != 2 or context.get("node_id") not in {plan.get("lead_node_id"), plan.get("talk_node_id")}:
+    if plan.get("version") != 2 or node_id not in {plan.get("lead_node_id"), plan.get("talk_node_id")}:
         return None
     ids = {node.get("id") for node in nodes}
     referenced = {plan.get("lead_node_id"), plan.get("talk_node_id"), *plan.get("delivery_node_ids", []), *plan.get("talk_delivery_node_ids", []), *(member.get("node_id") for member in plan.get("members", []))}
     if not referenced <= ids or plan.get("lead_node_id") != lead.get("id"):
         raise ValueError("Employee runtime plan references nodes outside its admitted graph")
     return plan
+
+
+async def employee_runtime_plan(database, context):
+    """Resolve the off-canvas boundary from the generation's admitted graph."""
+    graph = await admitted_graph(database, context)
+    return team_plan_in(graph, context.get("node_id")) if graph else None
 
 
 async def admit_employee_runtime_job(database, context, plan, mission, review=None):
