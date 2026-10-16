@@ -10,16 +10,20 @@
 
 ## Purpose
 
-AI agent pre-configured for payment processing and financial workflows.
-No first-party payment tools ship with OpenCompany yet, so users typically
-wire `httpRequest` against a payment provider (Stripe, Razorpay) as a tool.
+AI agent pre-configured for payment processing and financial workflows. The
+payment providers plug in as ordinary tools on its `input-tools` handle;
+there is no provider registry on the agent itself.
 
 ## What is unique to this node
 
-- **Intended tool set**: `httpRequest` against payment APIs.
-- **Intended skills**: no dedicated `server/skills/payments_agent/` folder
-  ships today -- the node is a naming / theming shell around
-  `SpecializedAgentBase` -> `execute_chat_agent`.
+- **Intended tool set**: the first-party payment tools
+  [`stripeAction`](../stripe/stripeAction.md) (Stripe CLI) and
+  [`dodoPaymentsAction`](../dodo_payments/dodoPaymentsAction.md) (Dodo
+  Payments SDK), or `httpRequest` against any other payment API.
+- **Intended skills**: `server/skills/payments_agent/` ships `stripe-skill`
+  and `dodo-payments-skill`, attached automatically when their tool is wired
+  to an agent (`nodes/visuals.json`). The node itself is a naming / theming
+  shell around `SpecializedAgentBase` -> `execute_chat_agent`.
 - **Frontend theming**: green dracula accent.
 
 ## Behaviour

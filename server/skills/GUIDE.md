@@ -29,7 +29,7 @@ server/skills/
 ├── gcloud/                   # gcloud-skill (Google Cloud CLI)
 ├── github/                   # github-skill (gh CLI)
 ├── language_agent/           # speech-skill, translation-skill
-├── payments_agent/           # stripe-skill
+├── payments_agent/           # stripe-skill, dodo-payments-skill
 ├── productivity_agent/       # Google Workspace + Microsoft 365 skills
 │     google-gmail-skill, google-calendar-skill, google-drive-skill,
 │     google-sheets-skill, google-tasks-skill, google-contacts-skill,

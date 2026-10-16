@@ -238,6 +238,9 @@ workflow/    — start / approvalGate ("ask me before sending")
 skill/       — masterSkill (skill/simple_memory is only an import shim for tool/simple_memory)
 browser/     — browser (installed Chrome/Edge/Chromium + browser-use CLI; Chrome for Testing opt-in, profiles, live view and user takeover)
 stripe/      — Stripe (CLI passthrough action + signed-webhook trigger)
+dodo_payments/ — Dodo Payments (dodopayments SDK: payments / subscriptions / customers / refunds /
+               checkout links / any endpoint via call + list_operations; Standard Webhooks trigger;
+               palette group "payments")
 vercel/      — Vercel (CLI deploy / inspect / list / custom passthrough)
 github/      — GitHub (gh CLI: clone / PRs / issues / custom; palette group "vcs")
 cloudflare/  — Cloudflare (cf CLI: command search / zones / DNS / GraphQL analytics / custom; palette group "deployment")

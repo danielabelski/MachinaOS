@@ -172,6 +172,11 @@ that a retired node remains registered.
 - [Text Chunker (`textChunker`)](./document/textChunker.md)
 - [Vector Store (`vectorStore`)](./document/vectorStore.md)
 
+### dodo_payments
+
+- [Dodo Payments (`dodoPaymentsAction`)](./dodo_payments/dodoPaymentsAction.md)
+- [Dodo Payments Receive (`dodoPaymentsReceive`)](./dodo_payments/dodoPaymentsReceive.md)
+
 ### email
 
 - [Email Read (`emailRead`)](./email/emailRead.md)
