@@ -66,7 +66,8 @@ class ChatThread(SQLModel, table=True):
 
 class ChatRun(SQLModel, table=True):
     __tablename__ = "chat_runs"
-    __table_args__ = (Index("ux_chat_runs_lane", "session_id", unique=True, sqlite_where=text(_LANE_WHERE)),)
+    __table_args__ = (Index("ux_chat_runs_lane", "session_id", unique=True,
+                            sqlite_where=text(_LANE_WHERE), postgresql_where=text(_LANE_WHERE)),)
 
     run_id: str = Field(primary_key=True, max_length=64)
     session_id: str = Field(index=True, max_length=255)

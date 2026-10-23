@@ -102,6 +102,22 @@ ParameterMutator = Callable[
 ]
 
 
+def _rebuild_chat_lane_index(sync_connection) -> None:
+    """Make PostgreSQL's ``ux_chat_runs_lane`` the partial index the model
+    declares. Shared databases created before the model named its PostgreSQL
+    condition got a plain ``UNIQUE(session_id)``, which refuses every run
+    after a conversation's first."""
+    definition = sync_connection.execute(text(
+        "SELECT indexdef FROM pg_indexes WHERE schemaname = current_schema() AND indexname = 'ux_chat_runs_lane'"
+    )).scalar()
+    if definition is not None and " WHERE " in definition:
+        return
+    index = next(index for index in ChatRun.__table__.indexes if index.name == "ux_chat_runs_lane")
+    if definition is not None:
+        index.drop(sync_connection)
+    index.create(sync_connection)
+
+
 def _workflow_context_node_ids(data: Any) -> set[str]:
     if not isinstance(data, dict):
         return set()
@@ -168,6 +184,8 @@ class Database:
                 from models.browser_owners import BrowserProfileOwner
                 for index in BrowserProfileOwner.__table__.indexes:
                     await conn.run_sync(lambda sync, index=index: index.create(sync, checkfirst=True))
+                if self.engine.dialect.name == "postgresql":
+                    await conn.run_sync(_rebuild_chat_lane_index)
 
             # Existing SQLite upgrades retain their exact backfills. PostgreSQL
             # starts with the current SQLModel schema; legacy SQLite data is
