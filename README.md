@@ -9,67 +9,87 @@
 
 **Self-improving AI employees, running on your own computer.**
 
-OpenCompany is an open-source operating system for AI employees. You hire an employee for a job, a Builder, a Grower, a Chief of Staff, connect it to your email, calendar, messages, code, and the rest of your tools, and press Start. It works in the background, on your machine, for as long as you want. And it gets better at the job the longer it works.
+OpenCompany is an open-source operating system for AI employees. It gives employees browsers, apps, tools, integrations, and access to your computer to complete work. Hire them to build and ship software, grow your business, answer customers, run operations, or research a topic.
 
-An AI employee is not one chatbot. It is a small team: a lead who understands the job, and a few specialist agents who each do one part of it well. The lead hands out the work, checks the results, and reports back to you. You build the team by dragging the pieces onto a canvas and connecting them. No code.
+Describe a job in plain words and connect the tools it needs. Each employee has a workspace, a routine, skills, and memory. A lead coordinates specialist AI agents to carry out the job, review their work, and bring you the result. You choose their access and ground rules, watch them work, and coach them as they gain experience and new abilities.
 
-Bring your own API keys, or run models locally for free. No subscription. No usage limits.
+**[Get started](#for-everyone)** · **[For technical readers](#for-technical-readers)** · **[Documentation](https://docs.opencompany.sh)** · **[Discord](https://discord.gg/c9pCJ7d8Ce)**
 
-**[Read the docs →](https://docs.opencompany.sh)**
+## For everyone
 
-## Quick Start
+### What could you hire an employee to do?
 
-Download the app for your computer and install it (these links always point at the [latest release](https://github.com/zeenie-ai/OpenCompany/releases/latest)):
+Hire employees for roles like these, then adapt their instructions and tools to your work.
 
-- **Windows**: [OpenCompany-windows-x64.exe](https://github.com/zeenie-ai/OpenCompany/releases/latest/download/OpenCompany-windows-x64.exe)
-- **macOS, Apple Silicon**: [OpenCompany-macos-arm64.dmg](https://github.com/zeenie-ai/OpenCompany/releases/latest/download/OpenCompany-macos-arm64.dmg)
-- **Linux**: [OpenCompany-linux-x86_64.AppImage](https://github.com/zeenie-ai/OpenCompany/releases/latest/download/OpenCompany-linux-x86_64.AppImage), or [OpenCompany-linux-amd64.deb](https://github.com/zeenie-ai/OpenCompany/releases/latest/download/OpenCompany-linux-amd64.deb) on Debian and Ubuntu
+| Employee | Example job |
+| --- | --- |
+| **Builder** | Build software, write and run code, work on pull requests, and use deployment tools. |
+| **Grower** | Research the market, create content, publish to connected channels, and manage community conversations. |
+| **Chief of Staff** | Manage email, calendars, documents, and tasks, and bring you a daily briefing. |
+| **Front Desk** | Answer customer questions, help with booking requests, and bring you cases that need your attention. |
+| **Researcher** | Browse the web, read documents, investigate a topic, and organize the findings. |
+| **Treasurer** | Track payment events and help manage payment operations through connected services. |
 
-Nothing else to install. On first launch the app sets itself up (a one-time download, a minute or two) and opens Home. Describe a job to hire your first employee; if no AI provider is connected yet, Home asks you to connect one, or you can add it yourself in Settings > Connectors. Switch to Dev mode for the workflow editor, where three example employees are listed in the workflow sidebar; open one to see how it is put together.
+These are roles you can configure. Home also offers four starter jobs: **Receptionist**, **Inbox assistant**, **Social media helper**, and **Daily briefer**. Pick one or describe your own. What an employee can do depends on the apps, tools, AI model, and instructions you give it.
 
-The builds are not code-signed yet, so macOS asks you to allow the app under System Settings > Privacy & Security, and Windows SmartScreen needs "More info > Run anyway".
+### Get started
 
-<details>
-<summary><b>Terminal install (servers and headless machines)</b></summary>
+Download and install the desktop app from the [latest release](https://github.com/zeenie-ai/OpenCompany/releases/latest):
 
-```bash
-curl -fsSL https://opencompany.sh/install.sh | bash    # macOS / Linux
-iwr -useb https://opencompany.sh/install.ps1 | iex      # Windows PowerShell
-company start
-```
+| Your computer | Download |
+| --- | --- |
+| Windows | [Windows installer](https://github.com/zeenie-ai/OpenCompany/releases/latest/download/OpenCompany-windows-x64.exe) |
+| macOS, Apple Silicon | [Mac installer](https://github.com/zeenie-ai/OpenCompany/releases/latest/download/OpenCompany-macos-arm64.dmg) |
+| Linux | [AppImage](https://github.com/zeenie-ai/OpenCompany/releases/latest/download/OpenCompany-linux-x86_64.AppImage) or [Debian / Ubuntu package](https://github.com/zeenie-ai/OpenCompany/releases/latest/download/OpenCompany-linux-amd64.deb) |
 
-The script installs bun, Python and uv when they are missing, then the `@zeenie-ai/opencompany` package. Open http://localhost:5678. Data lives in `~/.opencompany`, shared with the desktop app. See [SETUP.md](docs-internal/SETUP.md).
+The app downloads its supporting software on first launch, then opens Home.
 
-</details>
+1. **Connect an AI model.** Follow the prompt in Home or open **Settings > Connectors**. Use an AI provider account or connect a model running on your computer.
+2. **Describe the job.** For example: “Read my new emails, draft short replies in my style, and ask me before sending.”
+3. **Review the setup.** Check the employee's instructions, apps, routine, and ground rules. Ask for changes and connect any required apps.
+4. **Hire.** OpenCompany creates the employee and its team. Work starts once the required connections are ready; its page tells you if something is missing.
+5. **Work together.** Chat with the employee, follow its progress, review drafts, and open its Workspace to see reports and files.
 
-<details>
-<summary><b>Docker (self-hosting)</b></summary>
+You can hire and manage employees from Home without writing code. **Dev mode** opens the visual editor for people who want to customize how a team is put together.
 
-```bash
-git clone https://github.com/zeenie-ai/OpenCompany.git
-cd OpenCompany
-docker compose up -d --build
-```
+The builds are not code-signed yet. If your computer blocks the installer, macOS provides **System Settings > Privacy & Security**, and Windows SmartScreen provides **More info > Run anyway**.
 
-Builds the image from source and starts one container, with all data in the `opencompany-selfhost_data` volume. Open http://localhost:5678 and register the owner account. The port is published on this machine only. See [docker.md](docs-internal/docker.md).
+### How an employee works
 
-</details>
+[![Connect AI, describe a job, review the setup, hire, and coach your employee](docs/diagrams/how-it-works.svg)](docs/diagrams/how-it-works.svg)
 
-<details>
-<summary><b>Run from source (contributors)</b></summary>
+An employee takes a job through the steps needed to complete it: browsing websites, using connected apps, working with files, running code, and coordinating specialists. It can work when a message arrives, at a scheduled time, or when you ask it to. Its lead assigns work and reviews submissions. You can see progress, results, and requests for help on the employee's page.
 
-```bash
-git clone https://github.com/zeenie-ai/OpenCompany.git
-cd OpenCompany
-bun run build
-bun run dev
-```
+**You set the ground rules.** New hires ask before sending by default. Supported send actions appear as drafts for approval; browser use is restricted to reading while Ask first is on. You can review app-access requests, change access, and stop or resume the employee from Home. Keep the app running and your computer awake for background work.
 
-Needs bun 1.4+ and Python 3.12. See [SETUP.md](docs-internal/SETUP.md), [SCRIPTS.md](docs-internal/SCRIPTS.md) and [CONTRIBUTING.md](CONTRIBUTING.md).
+**You can watch and help.** The Workspace shows work on a canvas, in a browser, or on an Android screen. Take over the browser to sign in or help, then hand control back. The optional Android workspace currently runs on Windows x64; see the [mobile guide](docs/mobile-workspace.md).
 
-</details>
+### How employees get better at their jobs
 
-## See it in action
+- **Memory:** With memory enabled, employees can save useful facts, preferences, and decisions for later work.
+- **Coaching:** Give feedback in chat and refine the employee's instructions as you see results.
+- **Skills:** A skill is a written playbook, such as how to answer customers or prepare your weekly report. **Settings > Skills** manages the library used by new hires; existing employees can be given skills through chat.
+- **New abilities:** Ask an employee to add a tool or skill within its access rules. Use **Apply** to activate saved changes for future work; the change takes effect once its current work finishes.
+
+This is how employees improve: saved knowledge, clearer instructions, and better tools. OpenCompany does not retrain the underlying AI model.
+
+### Browsers, apps, tools, and your computer
+
+Employees combine the capabilities a job needs:
+
+- **Browser:** Research websites and work in web apps, with a live browser view where you can watch and take over when needed.
+- **Apps and integrations:** Work with email, calendars, documents, spreadsheets, messaging, payments, and development services. Connections include Google Workspace, Microsoft 365, WhatsApp, Telegram, Discord, X, Stripe, GitHub, Vercel, Cloudflare, and Google Cloud.
+- **Computer and tools:** Read and write files, write and run code, use the terminal, manage running programs, search the web, and work with a knowledge base. Speech and translation tools support work across languages.
+
+Connect the services a job needs in **Settings > Connectors**, then choose which apps and tools the employee can use to get the work done.
+
+### Your computer, your choice of AI
+
+The desktop app keeps employee data and encrypted local credentials on your computer. Work sent to a cloud AI provider or a connected service is processed by that service. You can also connect local AI through Ollama or LM Studio.
+
+OpenCompany is open source. Bring your own AI provider keys or use a local model; provider and connected-service charges and limits still apply. A local model uses your computer's hardware.
+
+### See it in action
 
 **Hiring your first employee, end to end ↓**
 
@@ -83,71 +103,76 @@ https://github.com/user-attachments/assets/035a2293-0837-4969-8b9d-8d680e023b89
 
 https://github.com/user-attachments/assets/3d25e9a3-f7b9-4760-8b9a-6de1e5a19cad
 
-## How It Works
+## For technical readers
 
-[![How OpenCompany Works](docs/diagrams/how-it-works.svg)](https://raw.githubusercontent.com/zeenie-ai/OpenCompany/main/docs/diagrams/how-it-works.svg)
+### Run from source
 
-1. **Hire.** Describe the job in plain words on the Home screen, or start from a ready-made bundle in Settings > Plugins. OpenCompany drafts the new employee's setup (the apps it uses, when it works, what it checks with you first); adjust it and press Hire. Or switch to Dev mode and drop an AI Employee onto the canvas.
-2. **Build the team.** In Dev mode, connect a few specialist agents to it and give each one the tools for its part of the job: email, browser, code, messaging, payments, and so on.
-3. **Start.** The team runs in the background and wakes up when something happens: a new email, a customer message, a scheduled time. If you ask it to, it shows you each reply to approve before it goes out.
-4. **Review.** Watch it work from its card on Home or on the canvas, open its Workspace to see the things it has made, read what it remembers, and change how it does things by editing its skills in plain text.
+Requires **Bun 1.4+** and **Python 3.12**. The build command installs dependencies and prepares the application.
 
-[![Default workflows that ship with OpenCompany](docs/diagrams/default-workflows.svg)](https://raw.githubusercontent.com/zeenie-ai/OpenCompany/main/docs/diagrams/default-workflows.svg)
+```bash
+git clone https://github.com/zeenie-ai/OpenCompany.git
+cd OpenCompany
+bun install
+bun run build
+bun run dev
+```
 
-## The Employees
+See [Setup](docs-internal/SETUP.md), the [scripts reference](docs-internal/SCRIPTS.md), and [CONTRIBUTING.md](CONTRIBUTING.md) for development and validation commands.
 
-Each of these is a team you can assemble from the pieces in the box. Rename them, swap the specialists, or invent your own.
+### Install on a server
 
-**Builder** — builds and ships things.
-Writes and runs code, keeps dev servers alive, opens pull requests, deploys, and manages your cloud. The team: a lead, a coder, and a release specialist with GitHub, Vercel, Cloudflare, and Google Cloud.
+For macOS or Linux:
 
-**Grower** — grows the company.
-Publishes to your channels, keeps your community alive, and watches the market. The team: a lead, a publisher for X, WhatsApp channels, Telegram, and Discord, and an analyst with social-media data and web search. Runs on a schedule so the cadence holds without you.
+```bash
+curl -fsSL https://opencompany.sh/install.sh | bash
+company start
+```
 
-**Chief of Staff** — runs your day.
-Reads and answers mail, keeps the calendar, files, sheets, tasks, and contacts in order, and hands you a summary each morning. The team: a lead and workspace specialists for Google Workspace and Microsoft 365. Wakes on every new email.
+For Windows PowerShell:
 
-**Front Desk** — answers customers.
-Replies on WhatsApp, WhatsApp Business, Telegram, and Discord, in the customer's language and in voice if you like, and escalates what it cannot resolve. The team: a lead, a support specialist, and a language specialist.
+```powershell
+iwr -useb https://opencompany.sh/install.ps1 | iex
+company start
+```
 
-**Researcher** — finds things out.
-Browses, searches, scrapes, reads documents and images, and files what it learned into a knowledge base the whole company can ask. The team: a lead, a scout with a browser and search, and a librarian who indexes.
+The installer provisions Bun, Python, and uv when missing, then installs `@zeenie-ai/opencompany`. Open the URL printed by the CLI (the default app URL is http://localhost:5678). Data defaults to `~/.opencompany`, shared with the desktop app; source development uses the repository's `.opencompany` directory. See [Setup](docs-internal/SETUP.md) for configuration and [.env.template](.env.template) for environment variables.
 
-**Treasurer** — handles payments.
-Runs payment operations through Stripe and reacts the moment a payment event happens. The team: a lead and a payments specialist.
+### Self-host with Docker
 
-## How They Get Better
+```bash
+git clone https://github.com/zeenie-ai/OpenCompany.git
+cd OpenCompany
+docker compose up -d --build
+```
 
-- **They remember.** An employee keeps facts, preferences, and decisions in a memory you can open and edit.
-- **They pick up where they left off.** Every new message, task, or scheduled run continues the same conversation instead of starting from zero. When the conversation gets long, the employee writes itself a summary and carries on from it.
-- **They add tools when they need them.** Ask an employee on its Talk page to take on something new, and it can add a tool or learn a skill from your library, within the rules you hired it with (nothing that sends or spends while it asks you first). A new tool works in that conversation right away; press Apply on its page to make an addition part of all its work.
-- **They check their own work.** The lead reviews every result from the team and sends it back if it is not right, before it ever reaches you.
-- **You coach them.** Skills are short plain-text playbooks. Edit one and the employee follows it on its next turn. Settings > Skills keeps your library of them, and every new hire starts with the ones you have switched on.
+Compose builds one container from source, persists state in the `opencompany-selfhost_data` volume, and publishes the app on the host's loopback interface. Open the default app URL above and register the owner account. See the [Docker guide](docs-internal/docker.md) for configuration, optional browser dependencies, and authentication.
 
-Nothing here is a black box. What an employee learns lives in its memory, its notes, its skills, and the pieces on its canvas, and you can read or change all of it. OpenCompany never retrains a model.
+### How the employee OS is built
 
-## What Is in the Box
+OpenCompany's employee OS brings together the runtime, workspaces, browser access, app integrations, tools, memory, and skills employees need to complete jobs. The React interface offers Home for hiring and daily work, plus a React Flow editor for configuring teams. The Python backend represents an employee as a workflow containing a lead, specialist agents, tools, conversation context, memory, and skills. Home's hiring flow creates this structure for you.
 
-- **Connections** to Gmail, Google Calendar, Drive, Sheets, Tasks, Contacts, Microsoft 365, any email account, WhatsApp, WhatsApp Business, Telegram, Discord, X, Stripe, GitHub, Vercel, Cloudflare, Google Cloud, your Android phone, a browser, web search, scrapers, and a knowledge base: 140+ tools in all.
-- **Models** from OpenAI, Anthropic, Google, xAI, DeepSeek, Kimi, Mistral, Groq, Cerebras, Sarvam, and OpenRouter, or run local models for free with Ollama, LM Studio, or any OpenAI-compatible server such as llama.cpp or vLLM.
-- **A Browser AI Agent and live browser workspace** in Home and Dev mode: give it a task beside the browser or through employee chat, watch it work, take control to sign in or help, then hand control back. It uses your installed Chrome, Edge or Chromium in a dedicated OpenCompany profile and preserves existing Browser nodes. Direct tasks have their own recent history and Cancel control. [Browser runtime](docs-internal/browser.md) | [Workspace interface](docs-internal/browser_workspace.md).
-- **1Password credential bindings** for supported API keys and configured website logins. Local access uses desktop authorization; distributed deployments use scoped service accounts. Website passwords are filled privately while browser observations are paused. MFA and multi-step login use human takeover. [Credential setup and compatibility](docs-internal/onepassword_credentials.md).
-- **Speech and translation**, so employees can listen, talk, and work in other languages.
-- **A local Android phone workspace** on Windows x64: set up a persistent emulator, watch it live, use it yourself, or let an AI agent use the **Android** tool. Optional setup requires SDK license acceptance; iOS is not yet supported. [Setup, controls and troubleshooting](docs/mobile-workspace.md).
-- **Built-in skills** that ship ready to use, and a place to drop your own.
-- **Built to keep running.** Employees survive restarts and catch up on missed schedules. For newly started Temporal generations, Stop lets current work finish, retains its result, and Resume continues with the next pending action. Home, chat and canvas use the same control. [Stop and Resume behavior](docs-internal/temporal-workflow-control.md). Local credentials remain encrypted on your machine. Multi-machine Browser deployments require PostgreSQL, shared storage, external Temporal and 1Password bindings; an unavailable browser keeps its owner and waits for recovery. [Deployment, migration and release checks](docs-internal/browser_agent_deployment.md).
-- **A canvas you will want to look at**, in a light, dark or mid-century Atomic theme.
+- **Delegation:** The lead assigns tasks to connected teammates. Task records track assignment, submission, review, and completion. See [employee teams](docs-internal/employee_teams.md) and [agent delegation](docs-internal/agent_delegation.md).
+- **Context and memory:** Stored conversations preserve working context; a separate memory tool holds facts an agent chooses to save. Team members have their own context and memory. See [agent context](docs-internal/agent_context_flow.md) and [compaction](docs-internal/memory_compaction.md).
+- **Execution:** Temporal supports durable background work, event handling, and schedules. Stop allows admitted work to finish; Resume releases pending work. See [Temporal architecture](docs-internal/TEMPORAL_ARCHITECTURE.md) and [Stop / Resume semantics](docs-internal/temporal-workflow-control.md).
+- **Models:** Native provider adapters support cloud services and local models, with named OpenAI-compatible endpoints for other servers. See the [LLM SDK](docs-internal/native_llm_sdk.md).
+- **Extensions:** Backend node plugins declare their schemas and behavior; the interface renders their configuration. See the [plugin recipe](server/nodes/README.md) and [plugin system](docs-internal/plugin_system.md).
 
-## For Developers
+The editor includes three example workflows: **AI Assistant**, **AI Employee**, and **Claude Assistant**. They are examples to inspect and customize, separate from Home's starter jobs. [View their structure](docs/diagrams/default-workflows.svg).
 
-Adding a tool, a model provider, a skill, or an integration is one plugin folder on the backend; the interface renders it automatically.
+### Technical documentation
 
-- **[CONTRIBUTING.md](CONTRIBUTING.md)** — codebase map, architecture diagrams, contribution recipes
-- **[server/nodes/README.md](server/nodes/README.md)** — 5-minute plugin recipe
-- **[docs-internal/](docs-internal/)** — architecture deep dives
-- **[CLAUDE.md](CLAUDE.md)** — project memory for AI-assisted contributions
-- **Hosted docs:** https://docs.opencompany.sh/
-- **DeepWiki:** https://deepwiki.com/zeenie-ai/OpenCompany
+| If you want to… | Start here |
+| --- | --- |
+| Understand the codebase or contribute | [CONTRIBUTING.md](CONTRIBUTING.md) |
+| Extend tools, triggers, or integrations | [Node plugins](server/nodes/README.md) |
+| Run the browser and configure its workspace | [Browser runtime](docs-internal/browser.md), [workspace interface](docs-internal/browser_workspace.md) |
+| Set up 1Password bindings | [Credential setup and compatibility](docs-internal/onepassword_credentials.md) |
+| Deploy browser workers across machines | [Deployment requirements and recovery](docs-internal/browser_agent_deployment.md) |
+| Work on the desktop application | [Desktop architecture](docs-internal/desktop_app.md) |
+| Explore architecture and source-backed diagrams | [Internal docs](docs-internal/), [diagram index](docs/diagrams/README.md) |
+| Use repository guidance for AI-assisted contributions | [CLAUDE.md](CLAUDE.md) |
+
+Further reading: [hosted documentation](https://docs.opencompany.sh/) · [DeepWiki](https://deepwiki.com/zeenie-ai/OpenCompany).
 
 ## Contributing
 

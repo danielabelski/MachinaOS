@@ -1,7 +1,7 @@
 # OpenCompany - Claude Documentation
 
 ## Project Overview
-This is a React Flow-based workflow automation platform implementing n8n-inspired architectural patterns. The project has undergone a comprehensive refactoring to implement modern INodeProperties interface system with full TypeScript compliance and code cleanup.
+OpenCompany is an open-source operating system for self-improving AI employees. Employees use browsers, apps, tools, integrations, and the computer to complete work. Home lets people describe a job, review its setup, hire an employee, and work with it through chat and a shared Workspace. Hiring assembles a lead and specialist agents automatically. The React Flow editor in Dev mode exposes the underlying workflows, tools, context, memory, and skills for technical customization. Public documentation should preserve the employee OS vision, explain it in plain language, and keep development and infrastructure details in a separate technical section.
 
 ## Documentation Reference
 

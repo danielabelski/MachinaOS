@@ -1,4 +1,6 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1800 540" width="100%" preserveAspectRatio="xMidYMid meet" font-family="ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Monaco, Consolas, monospace">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1800 540" width="100%" preserveAspectRatio="xMidYMid meet" role="img" aria-labelledby="title description" font-family="ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Monaco, Consolas, monospace">
+  <title id="title">OpenCompany: an operating system for AI employees</title>
+  <desc id="description">AI employees use browsers, apps, tools, integrations, and the computer to complete work. Connect an AI model, describe a job, review the setup, hire an employee, and coach it as it works. Sources: client/src/features/home/hire/HireView.tsx, client/src/features/home/genui/HireDraftPanel.tsx, client/src/features/home/employee/EmployeeChat.tsx, server/services/employees/hire.py, server/services/employees/team_recipe.py, server/services/employees/policy.py.</desc>
   <!-- Palette: OpenCompany dark-theme tokens (client/src/themes/dark.css surfaces/fg + light.css Dracula accents) -->
   <defs>
     <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
@@ -26,78 +28,73 @@
 
   <!-- Header -->
   <text class="title" x="900" y="46" text-anchor="middle">How OpenCompany Works</text>
-  <text class="sub" x="900" y="74" text-anchor="middle">Hire AI employees, connect them to your apps, run everything on your own computer.</text>
+  <text class="sub" x="900" y="74" text-anchor="middle">An operating system for AI employees to work with browsers, apps, tools, and your computer.</text>
 
-  <!-- Step 1: Pick your blocks -->
+  <!-- Step 1: Connect AI -->
   <rect class="panel p-purple" x="43" y="110" width="266" height="140" rx="10"/>
   <circle class="accent-purple" cx="176" cy="142" r="15"/>
   <text x="176" y="148" text-anchor="middle" font-size="16" font-weight="700" fill="#0d0f13">1</text>
-  <text class="h2" x="176" y="172" text-anchor="middle">Pick your blocks</text>
-  <text class="sub" x="176" y="196" text-anchor="middle">Drag nodes from the palette -</text>
-  <text class="sub" x="176" y="214" text-anchor="middle">140+ blocks: AI Employee, Chat,</text>
-  <text class="sub" x="176" y="232" text-anchor="middle">Telegram, Gmail, and more</text>
+  <text class="h2" x="176" y="172" text-anchor="middle">Connect AI</text>
+  <text class="sub" x="176" y="196" text-anchor="middle">Connect your AI provider</text>
+  <text class="sub" x="176" y="214" text-anchor="middle">or a model running</text>
+  <text class="sub" x="176" y="232" text-anchor="middle">on your computer</text>
 
   <!-- Arrow 1 -> 2 -->
-  <text class="label" x="357" y="173" text-anchor="middle">drag</text>
   <path class="conn" d="M 313 185 L 399 185" marker-end="url(#arrow)"/>
 
-  <!-- Step 2: Connect them -->
+  <!-- Step 2: Describe the job -->
   <rect class="panel p-purple" x="405" y="110" width="266" height="140" rx="10"/>
   <circle class="accent-purple" cx="538" cy="142" r="15"/>
   <text x="538" y="148" text-anchor="middle" font-size="16" font-weight="700" fill="#0d0f13">2</text>
-  <text class="h2" x="538" y="172" text-anchor="middle">Connect them</text>
-  <text class="sub" x="538" y="196" text-anchor="middle">Wire trigger &#8594; AI Agent &#8594; reply.</text>
-  <text class="sub" x="538" y="214" text-anchor="middle">Attach Context, Memory,</text>
-  <text class="sub" x="538" y="232" text-anchor="middle">Skills and Tools to the agent</text>
+  <text class="h2" x="538" y="172" text-anchor="middle">Describe the job</text>
+  <text class="sub" x="538" y="196" text-anchor="middle">Tell Home what you need:</text>
+  <text class="sub" x="538" y="214" text-anchor="middle">answer customers, draft replies,</text>
+  <text class="sub" x="538" y="232" text-anchor="middle">research, or build something</text>
 
   <!-- Arrow 2 -> 3 -->
-  <text class="label" x="719" y="173" text-anchor="middle">wire</text>
   <path class="conn" d="M 675 185 L 761 185" marker-end="url(#arrow)"/>
 
-  <!-- Step 3: Add your keys -->
+  <!-- Step 3: Review the setup -->
   <rect class="panel p-purple" x="767" y="110" width="266" height="140" rx="10"/>
   <circle class="accent-purple" cx="900" cy="142" r="15"/>
   <text x="900" y="148" text-anchor="middle" font-size="16" font-weight="700" fill="#0d0f13">3</text>
-  <text class="h2" x="900" y="172" text-anchor="middle">Add your keys</text>
-  <text class="sub" x="900" y="196" text-anchor="middle">Click the key icon, paste a</text>
-  <text class="sub" x="900" y="214" text-anchor="middle">provider key, pick a model</text>
-  <text class="sub" x="900" y="232" text-anchor="middle">(or run one locally, free)</text>
+  <text class="h2" x="900" y="172" text-anchor="middle">Review the setup</text>
+  <text class="sub" x="900" y="196" text-anchor="middle">Choose its apps and routine.</text>
+  <text class="sub" x="900" y="214" text-anchor="middle">Set instructions and ground rules.</text>
+  <text class="sub" x="900" y="232" text-anchor="middle">Connect the accounts it needs.</text>
 
   <!-- Arrow 3 -> 4 -->
-  <text class="label" x="1081" y="173" text-anchor="middle">configure</text>
   <path class="conn" d="M 1037 185 L 1123 185" marker-end="url(#arrow)"/>
 
-  <!-- Step 4: Test it, then start it -->
+  <!-- Step 4: Hire your employee -->
   <rect class="panel p-purple" x="1129" y="110" width="266" height="140" rx="10"/>
   <circle class="accent-purple" cx="1262" cy="142" r="15"/>
   <text x="1262" y="148" text-anchor="middle" font-size="16" font-weight="700" fill="#0d0f13">4</text>
-  <text class="h2" x="1262" y="172" text-anchor="middle">Test it, then start it</text>
-  <text class="sub" x="1262" y="196" text-anchor="middle">Run tests one node in place.</text>
-  <text class="sub" x="1262" y="214" text-anchor="middle">Start deploys the whole workflow</text>
-  <text class="sub" x="1262" y="232" text-anchor="middle">(the button becomes Pause)</text>
-  <text class="label" x="1262" y="272" text-anchor="middle">runs on a schedule, on an event, or in real time</text>
+  <text class="h2" x="1262" y="172" text-anchor="middle">Hire your employee</text>
+  <text class="sub" x="1262" y="196" text-anchor="middle">Its team is built for you.</text>
+  <text class="sub" x="1262" y="214" text-anchor="middle">Once connected, it can work</text>
+  <text class="sub" x="1262" y="232" text-anchor="middle">on messages or a schedule.</text>
 
   <!-- Arrow 4 -> 5 -->
-  <text class="label" x="1443" y="173" text-anchor="middle">Run or Start</text>
   <path class="conn" d="M 1399 185 L 1485 185" marker-end="url(#arrow)"/>
 
-  <!-- Step 5: Watch it work -->
+  <!-- Step 5: Review and coach -->
   <rect class="panel p-purple" x="1491" y="110" width="266" height="140" rx="10"/>
   <circle class="accent-purple" cx="1624" cy="142" r="15"/>
   <text x="1624" y="148" text-anchor="middle" font-size="16" font-weight="700" fill="#0d0f13">5</text>
-  <text class="h2" x="1624" y="172" text-anchor="middle">Watch it work</text>
-  <text class="sub" x="1624" y="196" text-anchor="middle">Answers appear in the Chat /</text>
-  <text class="sub" x="1624" y="214" text-anchor="middle">Console panel at the bottom</text>
-  <text class="sub" x="1624" y="232" text-anchor="middle">of the screen</text>
+  <text class="h2" x="1624" y="172" text-anchor="middle">Review and coach</text>
+  <text class="sub" x="1624" y="196" text-anchor="middle">Chat, review drafts, and</text>
+  <text class="sub" x="1624" y="214" text-anchor="middle">open work in the Workspace.</text>
+  <text class="sub" x="1624" y="232" text-anchor="middle">Give feedback and refine skills.</text>
 
   <!-- Value band 1: integrations -->
   <rect class="panel p-green" x="43" y="304" width="1714" height="78" rx="10"/>
-  <text class="h1" x="900" y="336" text-anchor="middle">Connect the apps you already use</text>
-  <text class="sub" x="900" y="364" text-anchor="middle">Gmail &#183; Calendar &#183; Drive &#183; Sheets &#183; Microsoft 365 &#183; Telegram &#183; WhatsApp &#183; Discord &#183; X &#183; Stripe &#183; GitHub &#183; Vercel &#183; Cloudflare &#183; Google Cloud &#183; AWS &#183; browser &#183; web search &#183; Python &#183; JavaScript + more</text>
+  <text class="h1" x="900" y="336" text-anchor="middle">Give employees the tools to complete work</text>
+  <text class="sub" x="900" y="364" text-anchor="middle">Browsers &#183; apps &#183; integrations &#183; files &#183; code &#183; terminal &#183; search &#183; messaging &#183; calendars &#183; payments</text>
 
   <!-- Value band 2: local-first -->
   <rect class="panel p-cyan" x="43" y="407" width="1714" height="92" rx="10"/>
-  <text class="h1" x="900" y="437" text-anchor="middle">Everything runs on your computer</text>
-  <text class="sub" x="900" y="463" text-anchor="middle">Your API keys, your data, your conversations - never sent to OpenCompany servers.</text>
-  <text class="sub" x="900" y="485" text-anchor="middle">Free local AI via Ollama, LM Studio, or any OpenAI-compatible server such as llama.cpp.</text>
+  <text class="h1" x="900" y="437" text-anchor="middle">Run on your own computer. Choose your AI.</text>
+  <text class="sub" x="900" y="463" text-anchor="middle">The desktop app keeps employee data locally. Cloud AI and connected apps process the work you send them.</text>
+  <text class="sub" x="900" y="485" text-anchor="middle">Use your provider keys or a local model. Provider and connected-service charges and limits apply.</text>
 </svg>

@@ -1,6 +1,8 @@
 # Contributing to OpenCompany
 
-Welcome! This guide is a contributor's map to the codebase. It tells you *where things live* and *where to start reading* when you want to add a feature. For the full architecture tour, use the [DeepWiki badge](https://deepwiki.com/zeenie-ai/OpenCompany) on the README or browse [docs-internal/](docs-internal/).
+OpenCompany is an open-source operating system for AI employees that use browsers, apps, tools, integrations, and the computer to complete work. The workflow editor and execution engine power those employees behind the scenes. For installation and everyday use, start with the [README's guide for everyone](README.md#for-everyone).
+
+This guide is a contributor's map to the codebase. It tells you *where things live* and *where to start reading* when you want to add a feature. For the full architecture tour, use [DeepWiki](https://deepwiki.com/zeenie-ai/OpenCompany) or browse [docs-internal/](docs-internal/).
 
 ## Contribution Workflow
 
