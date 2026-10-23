@@ -1,6 +1,6 @@
 # RFC-0005 — Event OS: Event-Driven AI Employees on Temporal
 
-- **Status:** Accepted, 2026-10-23 (owner decisions in §3). Implementation is phased (§24); nothing in it has landed yet.
+- **Status:** Accepted, 2026-10-23 (owner decisions in §3). Implementation is phased (§24). Phase 0 landed on 2026-10-23 (§24.4); Phase 1 is next.
 - **Created:** 2026-10-23
 - **Scope:** the path from every event source to every effect:
   - `server/services/events/` and `server/routers/webhook.py`;
@@ -1056,6 +1056,22 @@ No Temporal payload can exceed a limit (C1), and the body is never broadcast.
 ### 24.3 Patch markers
 
 A marker becomes `deprecate_patch` one release after no open history can lack it. That only becomes true through Phase 10's upgrade or a periodic rollover. It is removed one release later. No marker is ever deleted in one step.
+
+### 24.4 Progress
+
+**Phase 0 landed on 2026-10-23**, one commit per item. Where an item differs from §24.2, the difference is noted.
+
+| Item | Commit | Notes |
+|---|---|---|
+| 0.1 Webhook routing and auth | db55d4e9 | Route table in `nodes/trigger/webhook_trigger/_routes.py`. The expected header value is read from the saved node parameters. It is blocked from snapshots, Temporal input and workflow export. |
+| 0.2 Scoped task events | daddf460 | The broadcast frame is an identity-only envelope. |
+| 0.3 Body cap | 1ebfd5d9 | `WEBHOOK_MAX_BODY_BYTES` lives in `.env.template` and is read through `core.env_defaults`. Poll events are not capped yet; that moves to Phase 3. |
+| 0.4 Start once per generation | b4656c22 | A runtime-mutation ledger claim alone; no `rearm` flag, no deterministic run id. |
+| 0.5 Telegram backlog | 40c73daf | No age limit, because customer messages are never dropped (E11 overflow policy). |
+| 0.6 PostgreSQL chat lane | fff57583 | |
+| 0.7 Discord public ingress | 2f9a2aa8 | New registry `register_public_ingress_path`. |
+| 0.8 Twitter receive | edf29a76 | Refused at Start and on a canvas Run rather than ported. A port needs paid X API access to test. |
+| 0.9 Broadcast audience | 7745ca14 | `emit`'s `broadcast` has no default. No client read any channel or provider frame, so those are no longer broadcast, and no audience-scoped broadcast was needed. |
 
 ## 25. Defaults chosen and open items
 
