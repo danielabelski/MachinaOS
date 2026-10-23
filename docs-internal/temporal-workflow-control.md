@@ -652,8 +652,10 @@ the control plane is hardened against Temporal's per-run event-history ceiling
   in-process collectors for non-canary trigger types, and the paused posture
   (admission, trigger pause flags, cron schedule pause). Re-arm is idempotent:
   controller `register_trigger` is keyed by listener id, legacy listener
-  starts use `USE_EXISTING`, and cron schedule creation preserves server-owned
-  pause state. Listener and Schedule ids use the slug the generation's Start
+  starts use `USE_EXISTING`, cron schedule creation preserves server-owned
+  pause state, and a Start node fires once per generation (its first fire
+  records a `generation_start` claim in the runtime mutation ledger, which
+  every later deploy of the same generation finds; RFC-0004 C4). Listener and Schedule ids use the slug the generation's Start
   recorded in its snapshot (`workflow_slug`), not the saved one, so a rename
   while it runs cannot give the re-arm a second set of ids. That slug stays
   taken while the generation lives (`next_available_slug` skips it), and a

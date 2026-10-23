@@ -545,8 +545,28 @@ class DeploymentManager:
         return TriggerInfo(node_id, "cron", job_id=schedule_id)
 
     async def _fire_start_trigger(self, node: Dict, workflow_id: str) -> TriggerInfo:
-        """Fire a start trigger immediately."""
+        """Fire a start trigger, once per generation.
+
+        A generation is deployed again whenever the backend restarts and
+        re-arms it, and the Start node's run must not run again each time
+        (RFC-0004 C4). The first fire records a claim in the runtime
+        mutation ledger; a later deploy of the same generation finds it and
+        skips. Deploys outside a generation (0) fire every time, as before.
+        """
         node_id = node["id"]
+        generation = self._deployments[workflow_id].generation
+        if generation > 0:
+            _, first_fire = await self.database.run_runtime_mutation(
+                resource_type="generation_start",
+                resource_id=f"{workflow_id}:g{generation}",
+                operation="fire",
+                mutation_id=f"start:{workflow_id}:g{generation}:{node_id}",
+                mutate=lambda _session: {"node_id": node_id},
+            )
+            if not first_fire:
+                logger.info("Start node already fired for this generation",
+                            workflow_id=workflow_id, generation=generation, node_id=node_id)
+                return TriggerInfo(node_id, "start")
         params = await self.database.get_node_parameters(node_id) or {}
 
         initial_data_str = params.get("initial_data", "{}")
