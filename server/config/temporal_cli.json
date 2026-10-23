@@ -1,0 +1,14 @@
+{
+  "_comment": "The Temporal CLI whose `server start-dev` runs every install's Temporal dev server (services/temporal/_install.py). Asset keys are <os>_<arch> in the CLI release's own spellings. Bump the version, server_version and every asset's file and sha256 together, copying them from the release's checksums.txt. A database created by another server minor is deleted at the next start, and the install begins on an empty Temporal database (RFC-0005 E16).",
+  "version": "1.9.1",
+  "server_version": "1.32.0",
+  "base": "https://github.com/temporalio/cli/releases/download/v{version}/",
+  "assets": {
+    "linux_amd64": { "file": "temporal_cli_1.9.1_linux_amd64.tar.gz", "sha256": "09a0326a51db84d02735e53542b9ebd8c4758daf47482a9ab0abce15844e60d5" },
+    "linux_arm64": { "file": "temporal_cli_1.9.1_linux_arm64.tar.gz", "sha256": "6c57c352d52fc3df34412376fd9ba6f74b7e3ace8e426e6cba8600156d36a145" },
+    "darwin_amd64": { "file": "temporal_cli_1.9.1_darwin_amd64.tar.gz", "sha256": "48cdd6c84c56e27ae8e4d9a47052b89289a9c552dee029b49dd312c6fb72873f" },
+    "darwin_arm64": { "file": "temporal_cli_1.9.1_darwin_arm64.tar.gz", "sha256": "41e0425378fcb4fb5766340b97435e20fe47bbff2d7bf644ec2d51f7662b7c56" },
+    "windows_amd64": { "file": "temporal_cli_1.9.1_windows_amd64.zip", "sha256": "babb65844835045c91fb98930fe10b81de28db80c8c609180473d2c0b18c7589" },
+    "windows_arm64": { "file": "temporal_cli_1.9.1_windows_arm64.zip", "sha256": "709dd23d856020b318676064ea0141adc35eae3716360265481b13e54988e12f" }
+  }
+}

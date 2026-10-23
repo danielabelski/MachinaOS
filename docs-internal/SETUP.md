@@ -155,7 +155,7 @@ the arrangement is [desktop_host_contract.md](./desktop_host_contract.md).
 
 ### Temporal Server (Distributed Execution)
 - Provides durable workflow execution with per-node retry and horizontal scaling
-- Official `temporal` CLI downloaded by `pooch` from `https://temporal.download/cli/archive/latest` on `company build` (or first backend boot with Temporal enabled)
+- Official `temporal` CLI, the release pinned in `server/config/temporal_cli.json` and checked against its SHA-256, downloaded by `pooch` on `company build` (or first backend boot with Temporal enabled)
 - Backend-owned: the FastAPI lifespan starts `temporal server start-dev` via `TemporalServerRuntime.ensure_started()` when `TEMPORAL_ENABLED` and the configured address is loopback (external clusters are detected via TCP probe and left alone) — SQLite at `~/.opencompany/temporal.db`
 - Ports: gRPC `TEMPORAL_FRONTEND_GRPC_PORT`, Web UI `TEMPORAL_UI_PORT` (values in `.env.template`)
 - Embedded worker runs inside the Python backend (`TemporalWorkerManager` + `TemporalWorkerPool`, built by `services/temporal/lifecycle.py`; `main.py` only schedules `run_temporal_lifecycle`)

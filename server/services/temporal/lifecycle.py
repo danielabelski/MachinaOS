@@ -136,18 +136,16 @@ def _set_phase(app_state: Any, phase: str) -> None:
 
 
 def _temporal_binary_present() -> bool:
-    """True when the pooch-managed ``temporal`` CLI is already on disk.
+    """True when the pinned ``temporal`` CLI is already on disk.
 
-    Distinguishes a first-run download (~114 MB, tens of seconds) from a
-    plain spawn so the readiness phase can say which one is happening.
+    Distinguishes a first-run download (tens of seconds) from a plain
+    spawn so the readiness phase can say which one is happening. A CLI of
+    another version does not count: the pinned one is downloaded first.
     """
     try:
-        from core.paths import package_dir
+        from services.temporal._install import binary_installed
 
-        root = package_dir("temporal")
-        if not root.is_dir():
-            return False
-        return any(p.is_file() and p.name.startswith("temporal") for p in root.rglob("temporal*"))
+        return binary_installed()
     except Exception:  # noqa: BLE001 — never let a probe break the connect loop
         return True
 

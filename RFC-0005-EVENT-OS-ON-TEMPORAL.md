@@ -98,6 +98,7 @@ OpenCompany's AI employees should run like the processes of an operating system 
 | E13 | **Fleet upgrades.** Releases reach all hosted instances together in a fixed weekly maintenance window. (§21) |
 | E14 | **Telemetry.** Hosted instances report metrics and errors centrally, never content. (§18.5) |
 | E15 | **The Linux model** draws on all three diagrams: the kernel map, the network stack and the storage stack. |
+| E16 | **A new Temporal server starts from new.** The Temporal CLI is pinned (RFC-0004 D1). A database the pinned server minor did not create is deleted with the old CLI, and the install starts on an empty Temporal database. No migration code: generations whose controller is gone fail (`controller_execution_missing`), and owners Reset and Start their employees. The first pinned release does this on every install. (Decided 2026-10-23; §24.4) |
 
 ### 3.2 RFC-0004 decisions this RFC implements
 
@@ -843,7 +844,7 @@ A per-employee `employee_timeline` view joins ingress, deliveries, turns, outbox
 The peaks are scaled from a 20-employee model: 2,600 turns/day, about 35k Temporal actions/day and 8-10 actions/s at peak. At tier L the owner's LLM provider limits bind before Temporal does, and the class floors decide who waits.
 
 **Tier S hardening.** The CLI documentation warns that the dev server "is not intended for production use" and skips some HTTP security checks. Tier S therefore:
-- pins the CLI version and checksum (RFC-0004 D1);
+- pins the CLI version and checksum (RFC-0004 D1), and deletes a database from another server minor rather than migrating it (E16);
 - persists to `--db-filename` with the WAL pragmas already set (`_runtime.py:153-158`);
 - binds to 127.0.0.1 only;
 - sets the namespace retention to 7 days;
@@ -1072,6 +1073,18 @@ A marker becomes `deprecate_patch` one release after no open history can lack it
 | 0.7 Discord public ingress | 2f9a2aa8 | New registry `register_public_ingress_path`. |
 | 0.8 Twitter receive | edf29a76 | Refused at Start and on a canvas Run rather than ported. A port needs paid X API access to test. |
 | 0.9 Broadcast audience | 7745ca14 | `emit`'s `broadcast` has no default. No client read any channel or provider frame, so those are no longer broadcast, and no audience-scoped broadcast was needed. |
+
+**Phase 1** (started 2026-10-24). The owner's decisions of 2026-10-23 set its order and scope:
+- **Order:** pinned CLI, CI, fixture recorder, replay gate, golden identity test, then the temporalio upgrade from 1.30.0 to 1.34.0 (RFC-0004 D5).
+- **Fresh start:** E16, with no migration code.
+- **CI:** the whole server suite runs on Linux, Windows and macOS with the pinned CLI.
+- **Fixtures:** a release-pipeline check fails a release that has no `fixtures/<version>/`.
+
+Commit hashes are filled in when the phase ends.
+
+| Step | Commit | Notes |
+|---|---|---|
+| 1.1 Pinned CLI | — | CLI v1.9.1 (server 1.32.0) is pinned in `server/config/temporal_cli.json` and verified with pooch's `known_hash`. It is installed under `packages/temporal/<version>/`, and every other CLI file there is deleted. `_install.prepare_database` deletes a `temporal.db` without the pinned server minor's marker. **Release note:** the first release with the pin starts every install on an empty Temporal database, so every employee needs Reset and Start. |
 
 ## 25. Defaults chosen and open items
 

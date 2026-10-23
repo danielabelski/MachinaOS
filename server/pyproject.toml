@@ -58,9 +58,9 @@ dependencies = [
     "pyyaml>=6.0",
 
     # Temporal CLI installer (services/temporal/_install.py).
-    # pooch: cross-platform binary download + cache (extracts the
-    # ``temporal`` CLI from the official URL at
-    # https://temporal.download/cli/archive/latest).
+    # pooch: cross-platform binary download + cache (fetches the
+    # ``temporal`` CLI release pinned in config/temporal_cli.json and
+    # checks it against the pinned SHA-256).
     "pooch>=1.8.2",
 
     # Media metadata (services/media/inspect.py). Pure Python, zero native

@@ -268,7 +268,7 @@ FileNotFoundError: temporal binary not found at ...
 ```
 or pooch fails to download during `company start`.
 
-**Root cause**: The official `temporal` CLI archive is downloaded by `pooch` to `<DATA_DIR>/packages/temporal/` (= `~/.opencompany/packages/temporal/` by default, on every OS — via `core.paths.package_dir("temporal")`) during `company build` step [6/6]. If the build was skipped or interrupted, or if network access to `temporal.download` was blocked, the binary is missing.
+**Root cause**: The official `temporal` CLI release pinned in `server/config/temporal_cli.json` is downloaded by `pooch` to `<DATA_DIR>/packages/temporal/<version>/` (= `~/.opencompany/packages/temporal/<version>/` by default, on every OS — via `core.paths.package_dir("temporal")`) during `company build` step [6/6]. If the build was skipped or interrupted, or if network access to `github.com` was blocked, the binary is missing. A download whose SHA-256 differs from the pin fails rather than extracting.
 
 **Fix**:
 ```bash
@@ -280,7 +280,9 @@ uv run python -m services.temporal._install
 company build
 ```
 
-If pooch keeps failing, check connectivity to `https://temporal.download/cli/archive/latest?platform=<os>&arch=<arch>` (the URL the docs document at https://docs.temporal.io/develop/python/set-up-your-local-python). Behind a corporate proxy, set `HTTPS_PROXY` in your environment before running.
+If pooch keeps failing, check connectivity to the release URL in `server/config/temporal_cli.json` (`https://github.com/temporalio/cli/releases/download/v<version>/...`). Behind a corporate proxy, set `HTTPS_PROXY` in your environment before running.
+
+**Every employee shows Failed after an upgrade** (`controller_execution_missing`). This is expected once, after an upgrade to a release that pins a new Temporal server minor. Before the dev server starts, the backend deletes a `temporal.db` the pinned server did not create (`services/temporal/_install.py::prepare_database`; RFC-0005 E16), so no controller survives. Reset and Start each employee. Reset clears its chat thread and Context, and nothing from the old Temporal database can be recovered.
 
 ---
 

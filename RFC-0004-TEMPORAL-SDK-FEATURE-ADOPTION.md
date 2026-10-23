@@ -39,8 +39,8 @@ The RFC makes 18 decisions in five phases. Phase 0 fixes defects without changin
 
 | # | Decision | Status |
 |---|---|---|
-| D1 | Pin the Temporal CLI per OpenCompany release (exact version and per-platform SHA-256, versioned path); record the server version beside each `temporal.db`; refuse a database created by a different server minor | Proposed |
-| D2 | How an install moves an existing `temporal.db` to a newer server | Owner |
+| D1 | Pin the Temporal CLI per OpenCompany release (exact version and per-platform SHA-256, versioned path); record the server version beside each `temporal.db`; delete a database created by a different server minor and start empty (owner, 2026-10-23; RFC-0005 E16) | Done (RFC-0005 Phase 1) |
+| D2 | How an install moves an existing `temporal.db` to a newer server | Owner: it does not; the database is deleted (Q3) |
 | D3 | Which server durable installs run on: pinned dev server with SQLite, PostgreSQL, or Temporal Cloud | Owner |
 | D4 | Set namespace retention and the needed dynamic config explicitly instead of relying on dev-server defaults | Proposed |
 | D5 | Upgrade temporalio 1.30.0 to 1.34.0, behind the replay gate of D10 | Proposed |
@@ -277,7 +277,7 @@ Today no install changes server version by itself, because the cached binary is 
 
 - Pin `version = 1.9.1` (server 1.32.0) and the per-platform SHA-256 from that release's `checksums.txt` in a committed file. The versioned URL is `https://temporal.download/assets/temporalio/cli/releases/download/v1.9.1/temporal_cli_1.9.1_<os>_<arch>.<zip|tar.gz>`; it returns the same bytes and ETag as the GitHub asset and `checksums.txt` sits beside it. This URL shape is observed behavior, not documented; the documented fallback is the GitHub release asset.
 - Download with `pooch.retrieve(known_hash="sha256:...")` into a versioned directory and file name, so an upgrade keeps the old binary for rollback.
-- Write `temporal.db.server.json` (server version, CLI version, creation time) when the database is created, and refuse to start the dev server on a different server **minor**; patch releases of the same minor are allowed, so security fixes can ship.
+- Write `temporal.db.server.json` (server version, CLI version, creation time) when the database is created, and refuse to start the dev server on a different server **minor**; patch releases of the same minor are allowed, so security fixes can ship. *Owner, 2026-10-23:* a different minor, or a database without the marker, deletes the database instead of refusing, and the install starts empty (RFC-0005 E16).
 - Apply the same pin to the Docker image (replace the copy-once volume step with a versioned path) and the desktop bundle.
 - Record the pin in `cli/` predeploy checks so CI downloads the same binary.
 
@@ -653,7 +653,7 @@ The owner answered on 2026-10-16. Further answers came on 2026-10-23 while desig
 |---|---|---|---|---|
 | Q1 | Upgrade contract (D10): must runs that are open or paused survive an upgrade to the next release? | Always (N-1 replay gate) / Within a release line; major releases may require Reset / Any release may require Reset | Always, for N-1; a release that cannot honour it must say so and use D2 option B | Always, for N-1 (2026-10-16) |
 | Q2 | Server for durable installs (D3) | Pinned dev server with SQLite everywhere / PostgreSQL for Docker and VM / also support Temporal Cloud | Pinned dev server on desktop; PostgreSQL for Docker and VM; Cloud later | 2026-10-16: pinned dev server with SQLite. Superseded on 2026-10-23 (RFC-0005 E1-E3): one instance per owner with free Temporal only, no Temporal Cloud. The dev server runs up to about 100 employees; above that, a hosted instance runs the open-source server on its own PostgreSQL. Hosted instances use PostgreSQL for the app database |
-| Q3 | Moving an existing database (D2) | Keep its binary / recreate and re-arm / PostgreSQL | Recreate and re-arm on desktop, with notice | Keep the install's current server; moving is opt-in (2026-10-16). RFC-0005 §20 defines the dev-server-to-full-server move as a re-arm in the maintenance window |
+| Q3 | Moving an existing database (D2) | Keep its binary / recreate and re-arm / PostgreSQL | Recreate and re-arm on desktop, with notice | Superseded on 2026-10-23 (RFC-0005 E16). Every install moves to the pinned server, and nothing is migrated: a database without a marker or from another server minor is deleted together with the old CLI, the install starts empty, and owners Reset and Start their employees. Before that, on 2026-10-16: keep the install's current server; moving is opt-in. RFC-0005 §20 defines the dev-server-to-full-server move as a re-arm in the maintenance window |
 | Q4 | Failed runs (D12) | Temporal Failed / Completed plus `RunOutcome` | Temporal Failed | Temporal Failed (2026-10-16) |
 | Q5 | Bugs in workflow code (D12) | Stuck and visible until a fix / fail fast | Stuck and visible | Open |
 | Q6 | LLM step budget (D11) | A total budget per step (for example 30 min) / unlimited with alerts / unlimited for outages, capped for timeouts | A total budget, with longer attempts for local models | A total budget per step (2026-10-16) |
@@ -673,7 +673,7 @@ The owner answered on 2026-10-16. Further answers came on 2026-10-23 while desig
 | Gate | Check |
 |---|---|
 | AG1 | The CLI download URL names an exact version and `known_hash` is set; a test fails on "latest" |
-| AG2 | Starting with a database created by another server minor refuses with a clear message |
+| AG2 | Starting with a database created by another server minor, or by no recorded server, deletes it and starts empty (owner, 2026-10-23) |
 | AG3 | Retention is set to the configured value after namespace creation (integration test) |
 | AG4 | A metrics endpoint or buffer exists; the alert table's signals are emitted in a test run |
 | AG5 | `TemporalReportedProblems` turns a failing workflow task into "needs attention" in the status view |

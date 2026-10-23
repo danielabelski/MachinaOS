@@ -1,10 +1,11 @@
 """Temporal server lifecycle.
 
 Single supervisor subclass: :class:`TemporalServerRuntime`. Spawns the
-official ``temporal`` CLI (downloaded by :mod:`services.temporal._install`
-from https://temporal.download/cli/archive/latest) with the
-``server start-dev`` subcommand against a SQLite db. Matches the local
-dev install method documented at
+official ``temporal`` CLI (the release pinned in
+``server/config/temporal_cli.json``, downloaded by
+:mod:`services.temporal._install`) with the ``server start-dev``
+subcommand against a SQLite db. Matches the local dev install method
+documented at
 https://docs.temporal.io/develop/python/set-up-your-local-python.
 
 Uses the singleton accessor pattern (``Class.get_instance()``) from
@@ -55,10 +56,11 @@ class TemporalServerRuntime(BaseProcessSupervisor):
     """Temporal dev server, supervised via BaseProcessSupervisor.
 
     Spawns ``temporal server start-dev`` against a SQLite db at
-    ``settings.temporal_sqlite_path``. The ``temporal`` CLI binary is
-    downloaded by :func:`services.temporal._install.ensure_temporal_binaries`
-    from the official URL at
-    https://temporal.download/cli/archive/latest.
+    ``settings.temporal_sqlite_path``. The pinned ``temporal`` CLI binary
+    is downloaded by
+    :func:`services.temporal._install.ensure_temporal_binaries`, and
+    :func:`services.temporal._install.prepare_database` deletes a
+    database the pinned server minor did not create before each spawn.
 
     Path is env-driven via ``settings.temporal_sqlite_path``, resolved
     relative to ``settings.data_dir`` unless already absolute.
@@ -89,12 +91,16 @@ class TemporalServerRuntime(BaseProcessSupervisor):
     # ---- BaseProcessSupervisor overrides ---------------------------------
 
     async def _pre_spawn(self) -> None:
-        from services.temporal._install import ensure_temporal_binaries
+        from services.temporal._install import ensure_temporal_binaries, prepare_database
 
         self._binaries = await ensure_temporal_binaries(self.settings)
         # Ensure the parent dir for the SQLite file exists before
         # ``temporal server start-dev`` opens it.
         self._sqlite_path.parent.mkdir(parents=True, exist_ok=True)
+        # The server must never open a database another server minor
+        # created: such a database is deleted here and the install starts
+        # on an empty one (RFC-0005 E16).
+        await asyncio.to_thread(prepare_database, self._sqlite_path)
 
     def binary_path(self) -> Path:
         # ``_pre_spawn`` (called by ``BaseProcessSupervisor._do_start``
@@ -114,7 +120,9 @@ class TemporalServerRuntime(BaseProcessSupervisor):
         #                    paused deployments resume when the server
         #                    and workers come back; the debug-only
         #                    ``TEMPORAL_TERMINATE_RUNNING_ON_STARTUP``
-        #                    sweep (default false) is the one exception.
+        #                    sweep (default false) is the one exception,
+        #                    and a database from another server minor is
+        #                    deleted in ``_pre_spawn`` instead of opened.
         #   --metrics-port   0 disables the Prometheus endpoint
         #   --log-level      warn keeps the supervisor log readable
         #   --namespace      default namespace bootstrapped at start

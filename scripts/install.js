@@ -161,7 +161,7 @@ if (uvVersion) {
 // Temporal binary: downloaded eagerly during install (step [6/6])
 // by ``python -m services.temporal._install``, the same call that
 // ``company build`` already makes. The pooch cache
-// (~/.cache/OpenCompany/...)
+// (<DATA_DIR>/packages/temporal/<pinned version>/)
 // makes re-runs sub-second. Done eagerly because
 // ``TemporalServerRuntime._pre_spawn`` unconditionally calls
 // ``ensure_temporal_binaries`` -- the runtime always uses the
@@ -268,8 +268,8 @@ try {
   }
   run(`uv pip install --python "${cliVenvPython}" --quiet -e .`, ROOT);
 
-  // Eagerly fetch the official Temporal CLI binary (~90 MB tarball
-  // from temporal.download/cli/archive/latest). Same call ``company
+  // Eagerly fetch the official Temporal CLI binary (the release pinned
+  // in server/config/temporal_cli.json). Same call ``company
   // build`` step [6/6] makes. The runtime supervisor unconditionally
   // uses this pooch-cached copy via
   // ``TemporalServerRuntime._pre_spawn`` -- it ignores any system
