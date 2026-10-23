@@ -20,6 +20,7 @@ from services.status_broadcaster import register_service_refresh
 from services.ws_handler_registry import (
     register_oauth_callback_path,
     register_option_loader,
+    register_public_ingress_path,
     register_router,
     register_ws_handlers,
 )
@@ -43,6 +44,9 @@ register_ws_handlers(WS_HANDLERS)
 # POST /api/discord/interactions[/{account_id}] and GET /api/discord/callback.
 register_router(discord_router, name="discord")
 register_oauth_callback_path("discord", "/api/discord/callback")
+# Discord calls the interactions endpoint without a session cookie; the route
+# verifies Ed25519 over the raw body and fails closed without a public key.
+register_public_ingress_path("/api/discord/interactions", name="discord")
 
 register_option_loader("discordAccounts", load_accounts)
 register_option_loader("discordGuilds", load_guilds)

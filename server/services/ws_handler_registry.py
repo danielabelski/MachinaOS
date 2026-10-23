@@ -1,6 +1,6 @@
 """Plugin self-registration registries.
 
-Four sibling concerns share this file because they're the same pattern
+Five sibling concerns share this file because they're the same pattern
 (idempotent dict + collision check) for the same audience (plugin
 ``__init__.py`` modules wiring themselves into the framework):
 
@@ -26,9 +26,15 @@ Four sibling concerns share this file because they're the same pattern
    path)`` so :func:`services.oauth_utils.get_redirect_uri` can derive
    the full redirect URI at runtime without a cross-folder import.
 
+5. **Public ingress paths** — ``register_public_ingress_path(path,
+   name="<plugin>")`` for a plugin route that a provider calls without a
+   session cookie and that authenticates each request itself (Discord's
+   signed interactions). Read by ``middleware.auth.AuthMiddleware``.
+
 No hardcoded plugin names anywhere in the central router or main.py.
-Adding a new plugin's WS / HTTP / option-loader / oauth-callback
-surface is one registration call inside that plugin's package.
+Adding a new plugin's WS / HTTP / option-loader / oauth-callback /
+public-ingress surface is one registration call inside that plugin's
+package.
 """
 
 from __future__ import annotations
@@ -87,6 +93,7 @@ _WS_REGISTRY: IdempotentRegistry[str, WSHandler] = IdempotentRegistry("ws_handle
 _ROUTER_REGISTRY: IdempotentRegistry[str, APIRouter] = IdempotentRegistry("router")
 _OPTION_LOADER_REGISTRY: IdempotentRegistry[str, LoadOptionsFn] = IdempotentRegistry("option_loader")
 _OAUTH_CALLBACK_PATHS: IdempotentRegistry[str, str] = IdempotentRegistry("oauth_callback_path")
+_PUBLIC_INGRESS_PATHS: IdempotentRegistry[str, str] = IdempotentRegistry("public_ingress_path")
 
 
 # ---- WebSocket handlers --------------------------------------------------
@@ -237,3 +244,22 @@ def get_oauth_callback_path(provider: str) -> str:
 def list_registered_oauth_providers() -> List[str]:
     """For diagnostics / startup logging."""
     return sorted(_OAUTH_CALLBACK_PATHS.keys())
+
+
+# ---- Public ingress paths -----------------------------------------------
+
+
+def register_public_ingress_path(path: str, *, name: str) -> None:
+    """Publish a route a provider calls without a session cookie.
+
+    The route itself must authenticate every request (a signature over
+    the raw body, failing closed), because the auth middleware lets the
+    path and everything below it through. Same idempotency contract as
+    the other registries, keyed by ``name``.
+    """
+    _PUBLIC_INGRESS_PATHS.register(name, path.rstrip("/"))
+
+
+def is_public_ingress_path(path: str) -> bool:
+    """Whether ``path`` is a registered public ingress path or below one."""
+    return any(path == public or path.startswith(public + "/") for public in _PUBLIC_INGRESS_PATHS.values())

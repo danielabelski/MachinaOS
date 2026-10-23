@@ -138,6 +138,36 @@ class TestGating:
         assert response.status_code == 200
 
 
+class TestPublicIngressPaths:
+    """Plugin routes a provider calls without a session cookie, published with
+    ``register_public_ingress_path``. Each route authenticates the request
+    itself; Discord's interactions endpoint verifies Ed25519 over the body."""
+
+    def test_discord_interactions_are_public_and_its_callback_is_not(self):
+        import nodes.discord  # noqa: F401 -- registers its public ingress path
+
+        middleware = AuthMiddleware(app=FastAPI())
+        assert middleware._is_public_path("/api/discord/interactions")
+        assert middleware._is_public_path("/api/discord/interactions/account-1")
+        assert not middleware._is_public_path("/api/discord/interactionsX")
+        assert not middleware._is_public_path("/api/discord/callback")
+
+    async def test_a_post_without_a_cookie_reaches_the_route(self, user_auth, settings, overridden_container):
+        import nodes.discord  # noqa: F401 -- registers its public ingress path
+
+        overridden_container(settings=settings, user_auth=user_auth)
+        app = FastAPI()
+        app.add_middleware(AuthMiddleware)
+
+        @app.post("/api/discord/interactions")
+        async def interactions():  # pragma: no cover - exercised via HTTP
+            return {"reached": True}
+
+        async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://test") as http:
+            response = await http.post("/api/discord/interactions")
+        assert response.status_code == 200
+
+
 class TestPublicSurfaceInvariant:
     """Every mounted router must sit under a gated prefix, or be explicitly
     public. Without this, the GET-exclusion rule turns any new non-`/api`

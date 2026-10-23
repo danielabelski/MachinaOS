@@ -183,6 +183,12 @@ public key is stored → PING answers PONG → anything else defers (type 5, or
 type 6 for a component so the existing message is edited) and fans out in a
 background task whose reference is held, since the loop keeps only a weak one.
 
+Discord calls the endpoint without a session cookie, so the plugin registers
+`/api/discord/interactions` with `register_public_ingress_path`, and
+`AuthMiddleware` lets it (and the per-account paths below it) through with
+login on. The signature check above is what authenticates each request;
+`/api/discord/callback` stays behind the login.
+
 Per-account paths exist so the server never trial-verifies against every stored
 public key, which would be both a timing oracle and an availability multiplier.
 

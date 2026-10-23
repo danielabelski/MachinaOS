@@ -456,7 +456,7 @@ These seven are the core self-contained-folder set; newer concerns have
 their own generic `register_*` entrypoints in the same spirit —
 `services.events.register_webhook_source`,
 `services.ws_handler_registry.register_option_loader` /
-`register_oauth_callback_path`,
+`register_oauth_callback_path` / `register_public_ingress_path`,
 `services.deployment.canary_registry.register_canary_trigger_type`,
 `services.deployment.poll_registry.register_poll_coroutine_factory`,
 `services.plugin.edge_walker.register_master_skill_expander`, and

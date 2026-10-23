@@ -7,6 +7,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 
 from core.auth_cookies import get_session_token
 from core.container import container
+from services.ws_handler_registry import is_public_ingress_path
 
 logger = logging.getLogger(__name__)
 
@@ -94,4 +95,6 @@ class AuthMiddleware(BaseHTTPMiddleware):
             if path.startswith(prefix):
                 return True
 
-        return False
+        # Plugin routes that authenticate each request themselves
+        # (services.ws_handler_registry.register_public_ingress_path).
+        return is_public_ingress_path(path)
