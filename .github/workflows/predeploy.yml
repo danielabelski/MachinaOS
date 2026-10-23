@@ -1,6 +1,7 @@
 # Reusable validation workflow. Called by ci.yml and release.yml.
 # Jobs: build-and-lint (client build, lint, tests, JS dependency audit),
-# backend-tests, cli-tests, test-build-start (cross-OS build + start smoke test).
+# backend-tests (cross-OS, with the pinned Temporal CLI), cli-tests,
+# test-build-start (cross-OS build + start smoke test).
 
 name: Predeploy
 
@@ -48,26 +49,48 @@ jobs:
         working-directory: desktop
         run: bun run audit:deps
 
+  # The whole server suite runs on every OS the desktop app ships for, with
+  # the Temporal CLI the app pins, so the real-server tests (TEMPORAL_TEST_CLI)
+  # run instead of skipping.
   backend-tests:
-    name: Backend tests
-    runs-on: ubuntu-latest
+    name: Backend tests (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+          # Replay tests run workflow code from older commits (git show).
+          fetch-depth: 0
       - uses: ./.github/actions/setup
       - name: Lockfile is current
+        if: runner.os == 'Linux'
         working-directory: server
         # server/uv.lock is what the desktop build installs with --frozen;
         # a stale lock would ship a different dependency tree than CI tested.
         run: uv lock --check
       - name: Audit Python dependencies
+        if: runner.os == 'Linux'
         working-directory: server
         run: |
           uv export --locked --all-extras --no-hashes --no-emit-project --output-file "${RUNNER_TEMP}/opencompany-audit.txt" > /dev/null
           uvx --from pip-audit==2.10.1 pip-audit --strict --disable-pip --no-deps -r "${RUNNER_TEMP}/opencompany-audit.txt"
+      - name: Pinned Temporal CLI
+        working-directory: server
+        shell: bash
+        # The app's own installer (server/config/temporal_cli.json, checked
+        # against its SHA-256) into a throwaway data directory.
+        env:
+          DATA_DIR: ${{ runner.temp }}/opencompany-data
+        run: |
+          uv sync
+          uv run python -c "import asyncio, os; from services.temporal._install import ensure_temporal_binaries; cli = asyncio.run(ensure_temporal_binaries())['temporal']; open(os.environ['GITHUB_ENV'], 'a', encoding='utf-8').write(f'TEMPORAL_TEST_CLI={cli}\n')"
       - name: pytest
         working-directory: server
+        shell: bash
         run: |
           bun --cwd=pi install --frozen-lockfile
           bun --cwd=pi run build

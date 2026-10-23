@@ -422,6 +422,28 @@ def test_predeploy_checks_executor_types(predeploy_yml: dict, sidecar_pkg: dict)
     assert f"bun run --filter {SIDECAR_PKG_NAME} typecheck" in commands
 
 
+def test_backend_tests_run_on_every_os_with_the_pinned_temporal_cli(predeploy_yml: dict):
+    """RFC-0005 Phase 1: the whole server suite runs on Linux, Windows and
+    macOS, and its real-server tests get the CLI the app pins, installed by
+    the app's own installer, as ``TEMPORAL_TEST_CLI``. Without it every one
+    of them skips. Two replay tests run workflow code from older commits
+    with ``git show``, so the checkout carries full history.
+    """
+    job = predeploy_yml["jobs"]["backend-tests"]
+    assert job["runs-on"] == "${{ matrix.os }}"
+    assert job["strategy"]["fail-fast"] is False
+    assert set(job["strategy"]["matrix"]["os"]) == {"ubuntu-latest", "windows-latest", "macos-latest"}
+    checkout = job["steps"][0]
+    assert checkout["uses"].startswith("actions/checkout@")
+    assert checkout["with"]["fetch-depth"] == 0
+    names = [step.get("name") for step in job["steps"]]
+    cli = _step_by_name(job, "Pinned Temporal CLI")
+    assert cli is not None, "backend-tests must install the pinned Temporal CLI"
+    assert "ensure_temporal_binaries" in cli["run"]
+    assert "TEMPORAL_TEST_CLI=" in cli["run"] and "GITHUB_ENV" in cli["run"]
+    assert names.index("Pinned Temporal CLI") < names.index("pytest")
+
+
 # ---------------------------------------------------------------------------
 # Release publication — package.json, release.yml, preinstall.js
 # ---------------------------------------------------------------------------

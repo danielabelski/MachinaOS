@@ -1085,6 +1085,7 @@ Commit hashes are filled in when the phase ends.
 | Step | Commit | Notes |
 |---|---|---|
 | 1.1 Pinned CLI | — | CLI v1.9.1 (server 1.32.0) is pinned in `server/config/temporal_cli.json` and verified with pooch's `known_hash`. It is installed under `packages/temporal/<version>/`, and every other CLI file there is deleted. `_install.prepare_database` deletes a `temporal.db` without the pinned server minor's marker. **Release note:** the first release with the pin starts every install on an empty Temporal database, so every employee needs Reset and Start. |
+| 1.2 CI | — | `backend-tests` runs on ubuntu, windows and macos with full history. The app's installer puts the pinned CLI into a throwaway `DATA_DIR` and exports it as `TEMPORAL_TEST_CLI`, so the real-server tests run instead of skipping. Locally on Windows, all 8 of those items passed against the pinned binary. The first CI run on macOS is the first on that OS. |
 
 ## 25. Defaults chosen and open items
 

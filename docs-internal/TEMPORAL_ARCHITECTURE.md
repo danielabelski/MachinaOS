@@ -770,6 +770,13 @@ Activities are controlled fixtures. Set `TEMPORAL_TEST_CLI` to a provisioned
 native Temporal executable to run the owner-routing, Continue-As-New,
 cancellation/cleanup and SDK replay gate. Old replay fixtures remain required.
 
+CI's `backend-tests` job sets `TEMPORAL_TEST_CLI` to the pinned CLI on Linux,
+Windows and macOS. To run these tests locally against that same binary, install it into a
+scratch data directory, never your own:
+`DATA_DIR=<scratch> uv run python -m services.temporal._install`. Then run pytest with
+`TEMPORAL_TEST_CLI=<the printed path>` and the same `DATA_DIR`, because the
+tests' child processes write under it.
+
 What the user sees is documented in [Mobile workspace](../docs/mobile-workspace.md#resetting-phone-tasks)
 and [Browser workspace](browser_workspace.md#direct-browser-tasks).
 

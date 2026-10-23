@@ -617,8 +617,9 @@ The native integration gate in
 orchestration and two owner workers against a native Temporal test server.
 It covers an absent owner, owner routing with worker pools disabled,
 Continue-As-New, cancellation waiting for cleanup, artifact preservation and
-SDK replay. Set `TEMPORAL_TEST_CLI` to a native Temporal binary to enable it;
-the Activities are controlled fixtures and access no external accounts.
+SDK replay. Set `TEMPORAL_TEST_CLI` to a native Temporal binary to enable it.
+CI sets it to the pinned CLI on every OS; see TEMPORAL_ARCHITECTURE.md for a
+local run. The Activities are controlled fixtures and access no external accounts.
 Existing replay fixtures continue to cover unversioned graph, agent and
 invocation histories.
 
