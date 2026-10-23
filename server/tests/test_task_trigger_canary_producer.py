@@ -54,8 +54,8 @@ class TestTaskTriggerProducerCanaryEmit:
         assert _EVENTS_EMIT_PATTERN.search(src), (
             "_broadcast_task_event must call "
             "services.events.dispatch.emit(envelope, ...) — the canary "
-            "CloudEvents path Signals running TriggerListenerWorkflow "
-            "consumers AND broadcasts to FE on the task_completed wire key."
+            "CloudEvents path Signals the running consumers of the task's "
+            "own workflow."
         )
         assert not _SEND_CUSTOM_EVENT_PATTERN.search(src), (
             "_broadcast_task_event must NOT call "
@@ -163,6 +163,49 @@ class TestTaskTriggerProducerCanaryEmit:
         assert envelope.data["team_id"] == "team-1"
         assert envelope.data["root_execution_id"] == "root-1"
         assert envelope.data["trace_id"] == "call-1"
+
+    @pytest.mark.asyncio
+    async def test_delivery_is_scoped_and_the_broadcast_carries_identity_only(self, monkeypatch):
+        """A completion reaches only its own workflow's taskTrigger (RFC-0004
+        H11). The WebSocket broadcast reaches every socket, so it carries the
+        task's identity and never the child agent's answer or error."""
+        from nodes.agent import _events
+        from services import status_broadcaster
+        from services.events import dispatch as dispatch_mod
+
+        emit_calls: List[Any] = []
+        frames: List[Any] = []
+
+        async def fake_emit(event, **kwargs):
+            emit_calls.append({"event": event, **kwargs})
+            return event
+
+        class _Broadcaster:
+            async def broadcast(self, frame):
+                frames.append(frame)
+
+        monkeypatch.setattr(dispatch_mod, "emit", fake_emit)
+        monkeypatch.setattr(status_broadcaster, "get_status_broadcaster", lambda: _Broadcaster())
+
+        await _events.broadcast_agent_task_completed(
+            task_id="task-4",
+            agent_name="writer",
+            agent_node_id="agent-4",
+            parent_node_id="lead-1",
+            workflow_id="wf-4",
+            result="the customer's private answer",
+            event_id="task-4:completed",
+            lifecycle_data={"team_id": "team-4", "trace_id": "call-4"},
+        )
+
+        assert emit_calls[0]["event"].workflow_id == "wf-4"
+        assert emit_calls[0]["broadcast"] is False
+        assert len(frames) == 1
+        assert frames[0]["type"] == "task_completed"
+        envelope = frames[0]["data"]
+        assert envelope["id"] == "task-4:completed"
+        assert envelope["type"] == "com.opencompany.agent.task.completed"
+        assert envelope["data"] == {"task_id": "task-4", "status": "completed", "team_id": "team-4", "workflow_id": "wf-4"}
 
     def test_temporal_completion_emits_after_authoritative_state_read(self):
         """Temporal parity: retries/requeues are decided before taskTrigger."""

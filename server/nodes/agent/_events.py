@@ -10,13 +10,15 @@ wrappers below live with the agent plugin folder so the 3 callsites in
 dispatcher) import from ``nodes.agent._events`` rather than building
 the wire frame inline.
 
-Delivery: a single ``dispatch.emit`` call. ``dispatch.emit`` Signals
-running :class:`TriggerListenerWorkflow` consumers via Temporal
-Visibility AND broadcasts the same envelope to in-process WS clients on
-the ``task_completed`` wire-routing key — one canonical path. Pre-Wave-13
-this also called ``broadcaster.send_custom_event`` for the legacy
-collector path; that's dead since taskTrigger is canary-registered and
-the deployment manager skips ``setup_event_trigger`` for canary types.
+Delivery: ``dispatch.emit`` Signals the running consumers of the task's
+own workflow (the envelope's ``workflow_id`` scopes the Visibility
+query), so a completion never fires another workflow's taskTrigger.
+The WebSocket frame on the ``task_completed`` key carries the task's
+identity only: the broadcast reaches every connected socket, and the
+Task Manager panel needs just the team id to refresh. Pre-Wave-13 this
+also called ``broadcaster.send_custom_event`` for the legacy collector
+path; that's dead since taskTrigger is canary-registered and the
+deployment manager skips ``setup_event_trigger`` for canary types.
 """
 
 from __future__ import annotations
@@ -93,18 +95,16 @@ async def _broadcast_task_event(
     event_id: Optional[str] = None,
     lifecycle_data: Optional[dict[str, Any]] = None,
 ) -> None:
-    """Single delivery path: build the envelope, route through
-    :func:`services.events.dispatch.emit`.
+    """Build the envelope and route it through
+    :func:`services.events.dispatch.emit` to the consumers of
+    ``workflow_id`` only, then broadcast the task's identity.
 
-    ``emit`` does two things in one call: (a) Visibility query for
-    running :class:`TriggerListenerWorkflow` consumers tagged with
-    ``EventType='com.opencompany.agent.task.completed'`` and signals each;
-    (b) direct in-process WS broadcast on the ``task_completed`` wire
-    key so any FE consumers receive the envelope. Payload shape in
-    ``data`` is exactly what the taskTrigger filter reads.
+    The envelope's ``data`` is exactly what the taskTrigger filter reads.
+    It holds the child agent's answer or error, so it is not broadcast.
     """
     from services.events.dispatch import emit
     from services.events.envelope import WorkflowEvent
+    from services.status_broadcaster import get_status_broadcaster
 
     payload: dict[str, Any] = {
         "task_id": task_id,
@@ -131,7 +131,22 @@ async def _broadcast_task_event(
     # delivered immediately before a worker failure/retry.
     if event_id:
         envelope.id = event_id
-    await emit(envelope, wire_routing_key=_WIRE_ROUTING_KEY)
+    envelope.workflow_id = workflow_id
+    await emit(envelope, wire_routing_key=_WIRE_ROUTING_KEY, broadcast=False)
+
+    identity = WorkflowEvent.task_completed(
+        task_id=task_id,
+        status="completed" if status == "completed" else "error",
+        agent=agent_name,
+        data={
+            "task_id": task_id,
+            "status": status,
+            "team_id": (lifecycle_data or {}).get("team_id"),
+            "workflow_id": workflow_id,
+        },
+    )
+    identity.id = envelope.id
+    await get_status_broadcaster().broadcast({"type": _WIRE_ROUTING_KEY, "data": identity.model_dump(mode="json")})
 
 
 __all__ = [

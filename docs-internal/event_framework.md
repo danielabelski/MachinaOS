@@ -119,6 +119,15 @@ never ride `emit` or the broadcast at all: `services/chat/hub.py` delivers
 them only to sockets subscribed to the session
 ([chat_protocol.md](./chat_protocol.md)).
 
+Second producer: delegated-task completion (`nodes/agent/_events.py`,
+`com.opencompany.agent.task.completed`). Without the scope, one workflow's
+finished task fired every deployed workflow's `taskTrigger` (RFC-0004 H11).
+The envelope is emitted with `broadcast=False`, because its data holds the
+child agent's answer or error. The `task_completed` WebSocket frame is a
+second envelope of the same type and id whose data is only `task_id`,
+`status`, `team_id` and `workflow_id`, which is all the Task Manager panel
+reads to refresh.
+
 Worker is embedded in the FastAPI process (the `main.py` lifespan schedules
 `run_temporal_lifecycle` from `services/temporal/lifecycle.py` as one
 `asyncio.create_task()` named `temporal-init`; that module owns the connect loop and the
