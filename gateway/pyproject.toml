@@ -5,6 +5,9 @@ name = "opencompany-gateway-checks"
 version = "0"
 requires-python = ">=3.12"
 dependencies = [
+    # Security floor for httpx's CA bundle: <2026.10.19 bundles emSign root
+    # CAs whose intermediate CA keys were compromised (GHSA-6q48-6c7w-9gw2).
+    "certifi>=2026.10.19",
     "httpx>=0.28",
     "pytest>=8.3",
     "pyyaml>=6.0",

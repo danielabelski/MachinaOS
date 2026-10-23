@@ -17,7 +17,17 @@ dependencies = [
 
     # HTTP/WebSocket
     "httpx>=0.28.0",
-    "aiohttp>=3.11.0",
+    # Security floor: <2026.10.19 bundles emSign root CAs whose intermediate
+    # CA keys were compromised (GHSA-6q48-6c7w-9gw2). httpx, and the LLM SDKs
+    # built on it, verify TLS against this bundle; declared explicitly because
+    # it only arrives transitively. Do not lower without checking that advisory.
+    "certifi>=2026.10.19",
+    # Security floor: <3.14.4 carries eight advisories, the worst being
+    # unbounded memory and CPU use (GHSA-2g87-pp6c-29x5), no initial header
+    # timeout (GHSA-5wr8-gcqf-gqf3) and multipart file-descriptor exhaustion
+    # (GHSA-9xw5-w5jj-pvcg). Do not lower without checking aiohttp's 3.14.4
+    # advisories.
+    "aiohttp>=3.14.4",
     # Security floor: GHSA-54p9-h82j-f925 fixes the 6.7.0-6.9.0 reference
     # leak. Keep the compatible 6.x API for aiohttp/yarl consumers.
     "multidict>=6.9.1,<7",
@@ -31,8 +41,12 @@ dependencies = [
     "orjson>=3.9.0",
 
     # Tracing / benchmarking (OpenTelemetry — industry standard)
-    "opentelemetry-api>=1.27.0",
-    "opentelemetry-sdk>=1.27.0",
+    # Security floor: <1.45.1 carries GHSA-xcq7-p3pf-p88h (CVE-2026-114603),
+    # unbounded tracestate parsing in the API. The SDK pins the API to its
+    # own version, so both floors move together. Do not lower without
+    # checking that advisory.
+    "opentelemetry-api>=1.45.1",
+    "opentelemetry-sdk>=1.45.1",
 
     # YAML parsing (for SKILL.md files + Temporal config rendering)
     "pyyaml>=6.0",
@@ -57,7 +71,13 @@ dependencies = [
     # metadata (was already shipping transitively via qrcode[pil]) — and for
     # services/media/image_fit.py budget resizing.
     "openpyxl>=3.1.0",
-    "pillow>=10.0.0",
+    # Security floor: <13.0.0 carries 39 advisories, among them heap overflows
+    # in the JPEG decoder (GHSA-8g5g-8vmr-9782) and the TIFF writer
+    # (GHSA-332p-7hrc-92wf), stale image storage reused by multi-frame loaders
+    # (GHSA-v9pv-5gc8-w2m6) and argument injection into Ghostscript
+    # (GHSA-w889-685w-c8fh). image_fit.py decodes images that come from
+    # outside. Do not lower without checking Pillow's 13.0.0 advisories.
+    "pillow>=13.0.0",
     # Multipart parsing for the workspace upload route. Already present
     # transitively via mcp; declared explicitly so it survives that
     # dependency changing.
@@ -220,7 +240,11 @@ dependencies = [
 # ``uv sync`` keeps it installed by default in contributor checkouts.
 docs = [
     "beautifulsoup4>=4.12.0",
-    "pypdf>=5.0.0",
+    # Security floor: <6.21.1 carries seven advisories where a crafted PDF
+    # loops forever or exhausts memory (among them GHSA-39mj-jf6j-2qj3 and
+    # GHSA-cgf9-327m-v77c) and one on unvalidated JPEG data
+    # (GHSA-5hx5-vpf9-5wcv). Do not lower without checking them.
+    "pypdf>=6.21.1",
 ]
 local-embeddings = [
     # Optional because the model + torch stack is large. The embedding node and
