@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Any, Dict, List, Mapping, Optional
 
 from core.logging import get_logger
+from services.llm.observation import observe_response, observe_sdk_request, observe_stage
 from services.llm.protocol import (
     ContentBlock,
     decode_binary_state,
@@ -61,6 +62,7 @@ class AnthropicProvider:
         extra_headers: Optional[Mapping[str, str]] = None,
         extra_body: Optional[Mapping[str, Any]] = None,
     ) -> LLMResponse:
+        observe_stage("request_encoding")
         system, api_msgs = self._split_system(messages)
         policy = self._model_policy(model)
 
@@ -148,6 +150,7 @@ class AnthropicProvider:
         else:
             stream_ctx = self._client.messages.stream(**params)
 
+        observe_sdk_request(self)
         async with stream_ctx as stream:
             if on_event is not None:
                 # The SDK's helper events carry each delta once (the raw
@@ -164,6 +167,7 @@ class AnthropicProvider:
                         if delta:
                             await on_event(StreamEvent("reasoning", delta))
             resp = await stream.get_final_message()
+        observe_response(resp)
         return self._normalize(resp, model)
 
     # ------------------------------------------------------------------

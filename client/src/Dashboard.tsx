@@ -181,7 +181,7 @@ const DashboardContent: React.FC = () => {
   // run in the app shell (app/AppShell), so they hold on either screen.
 
   // ReactFlow state management (local state for performance)
-  const { nodes, setNodes, onNodesChange, edges, setEdges, onEdgesChange } =
+  const { nodes, setNodes, onNodesChange, edges, setEdges, onEdgesChange, flush: flushCanvas } =
     useWorkflowCanvas(theme.constants.debounceDelay.workflowUpdate);
 
   // ReactFlow instance for viewport control (n8n pattern - per-workflow viewport)
@@ -258,7 +258,7 @@ const DashboardContent: React.FC = () => {
     return false;
   }, [canvasLock.locked, canvasLock.reason]);
   const [globalModelDefaults, setGlobalModelDefaults] = React.useState<{ provider: string; model: string } | null>(null);
-  const { onDragOver, onDrop, handleComponentDragStart } = useDragAndDrop({ nodes, setNodes, edges, setEdges, saveNodeParameters, globalModelDefaults, workflowId: currentWorkflow?.id ?? 'new', screenToFlowPosition: reactFlowInstance.screenToFlowPosition });
+  const { onDragOver, onDrop, handleComponentDragStart } = useDragAndDrop({ nodes, setNodes, edges, setEdges, saveNodeParameters, globalModelDefaults, workflowId: currentWorkflow?.id ?? 'new', screenToFlowPosition: reactFlowInstance.screenToFlowPosition, flushCanvas });
   // Palette drop creates nodes AND persists their default parameters —
   // an HTML5 drop that React Flow's nodesDraggable/Connectable cannot
   // block, so it goes through the shared guard.
@@ -273,6 +273,7 @@ const DashboardContent: React.FC = () => {
   const { onConnect, onEdgesDelete } = useAutoSkillEdges({
     baseOnConnect,
     baseOnEdgesDelete,
+    flushCanvas,
     nodes,
     edges,
     setNodes,
@@ -1303,7 +1304,7 @@ const DashboardContent: React.FC = () => {
             {/* Docked Canvas sidebar — persistent content viewer at the
                 rightmost edge. Owns its own state (canvasDockStore);
                 auto-opens on canvas_updated for the current workflow. */}
-            <CanvasDock nodes={nodes} />
+            <CanvasDock nodes={nodes} flushCanvas={flushCanvas} />
           </div>
         </div>
 

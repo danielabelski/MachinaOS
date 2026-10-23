@@ -11,6 +11,7 @@ import { WebSocketProvider, WorkflowControlMutationSupersededError, useWebSocket
 import { useAppStore } from '../../store/useAppStore';
 import { useNodeStatusStore } from '../../stores/nodeStatusStore';
 import { useWorkflowControlStore } from '../../stores/workflowControlStore';
+import { useLlmWaitStore } from '../../stores/llmWaitStore';
 
 // Exercise the installed PartySocket implementation; only its network peer
 // is simulated. Remote code 1000 and native error events really reconnect.
@@ -83,6 +84,7 @@ describe('WebSocket recovery and ownership', () => {
     NativeSocket.instances = [];
     NativeSocket.autoSnapshots = true;
     useAppStore.setState({ currentWorkflow: null });
+    useLlmWaitStore.getState().resetSession();
     auth.isAuthenticated = true;
     auth.isLoading = false;
   });
@@ -91,6 +93,21 @@ describe('WebSocket recovery and ownership', () => {
     vi.restoreAllMocks();
     vi.unstubAllGlobals();
     vi.useRealTimers();
+  });
+
+  it('projects actual diagnostic frames without replacing terminal execution status', async () => {
+    await mount(); await open();
+    useNodeStatusStore.getState().setStatus('diagnostic', 'agent', { status: 'success', data: { phase: 'completed' } });
+    const wait = { execution_key: 'e:agent', request_id: 'a:1', seq: 1, state: 'waiting', stage: 'sdk_request',
+      elapsed_ms: 5000, runtime_behavior_version: 1, execution_id: 'e', root_execution_id: 'root', scope: 'workspace', workspace_epoch: 1 };
+    act(() => latest().message({ type: 'node_status', workflow_id: 'diagnostic', node_id: 'agent', data: { llm_wait: wait } }));
+    expect(useNodeStatusStore.getState().allStatuses.diagnostic.agent.status).toBe('success');
+    expect(Object.values(useLlmWaitStore.getState().byWorkflow.diagnostic)[0].state).toBe('waiting');
+    act(() => latest().message({ type: 'node_status', workflow_id: 'diagnostic', node_id: 'agent', data: { llm_wait: { ...wait, state: 'cleared', seq: 2 } } }));
+    act(() => latest().message({ type: 'node_status', workflow_id: 'diagnostic', node_id: 'agent', data: { llm_wait: { ...wait, seq: 999 } } }));
+    expect(Object.values(useLlmWaitStore.getState().byWorkflow.diagnostic)[0].state).toBe('cleared');
+    act(() => latest().message({ type: 'node_status', workflow_id: 'diagnostic', node_id: 'agent', data: { llm_wait: null } }));
+    expect(useNodeStatusStore.getState().allStatuses.diagnostic.agent.status).toBe('success');
   });
 
   it.each(['canvas', 'employee'])('reconciles a stale %s Start after Hire without submitting another mutation', async (surface) => {

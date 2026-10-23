@@ -161,6 +161,8 @@ class ChatUnifier:
         call goes there with the gateway key, attribution headers and, inside
         a Temporal activity, a replay-cache namespace (services/gateway).
         """
+        from services.llm.observation import observe_stage
+        observe_stage("routing")
         provider_id = split_provider_ref(provider)[0]
         spec = get_provider(provider_id)
         streams = on_event is not None and self._streams(provider_id)
@@ -168,6 +170,7 @@ class ChatUnifier:
         api_key = route.api_key if route is not None else self._resolve_credential(provider, api_key)
         entry: Optional[_ClientEntry] = None
         try:
+            observe_stage("client_acquisition")
             entry = await self._acquire_client(
                 spec, api_key, provider_ref=provider, sdk_max_retries=sdk_max_retries, route=route
             )
@@ -185,11 +188,15 @@ class ChatUnifier:
                 kwargs["effort"] = effort
             if route is not None:
                 kwargs.update(_gateway_request_extras(route))
+            observe_stage("sdk_request")
             response = await entry.client.chat(messages, **kwargs)
+            observe_stage("delivery", finish_reason=response.finish_reason,
+                          input_tokens=response.usage.input_tokens, output_tokens=response.usage.output_tokens)
             if on_event is not None and not streams:
                 await _replay_response(response, on_event)
             return response
         except LLMError as error:
+            observe_stage("normalization", provider_request_id=error.request_id)
             # Raised by provider logic rather than the SDK, e.g. a 2xx that
             # carried an error body instead of a completion. Logged whether
             # or not it is translated: agent steps take it untranslated, and
@@ -202,6 +209,7 @@ class ChatUnifier:
             raise error.as_node_error() from error
         except spec.sdk_exception_types + (httpx.TransportError, httpx.HTTPStatusError) as e:
             error = _provider_failure(provider, e)
+            observe_stage("normalization", provider_request_id=error.request_id)
             if route is not None:
                 _explain_gateway_failure(error, e)
             self._log_failure("LLM provider request failed", error, entry, provider)
@@ -239,6 +247,7 @@ class ChatUnifier:
             raise error.as_node_error() from error
         finally:
             if entry is not None:
+                observe_stage("client_release")
                 await self._release_client(entry)
 
     async def fetch_models(self, *, provider: str, api_key: str) -> List[str]:
@@ -388,6 +397,7 @@ class ChatUnifier:
         # The base-URL row is keyed by the full reference, so each named
         # endpoint reads its own URL while sharing one registration.
         ref = provider_ref or spec.name
+        from services.llm.observation import observe_stage
         if route is not None:
             # A gateway call goes to the gateway, never to a saved base URL.
             proxy_url: Optional[str] = route.base_url
@@ -399,6 +409,7 @@ class ChatUnifier:
                 # the URL row the SDK would default to api.openai.com.
                 raise NodeUserError(unconfigured)
         model_prefix = route.model_prefix if route is not None else ""
+        observe_stage("client_acquisition", route_source="gateway" if route is not None else "saved_proxy" if proxy_url else "provider_default")
         factory_kwargs = {
             "api_key": api_key,
             "proxy_url": proxy_url,
@@ -408,6 +419,7 @@ class ChatUnifier:
         if model_prefix:
             factory_kwargs["model_prefix"] = model_prefix
         if not self._client_cache_size:
+            observe_stage("client_construction", cache_hit=False)
             return _ClientEntry(
                 client=spec.factory(**factory_kwargs),
                 leases=1 if acquire else 0,
@@ -422,13 +434,16 @@ class ChatUnifier:
             model_prefix=model_prefix,
         )
         evicted: Optional[_ClientEntry] = None
+        observe_stage("client_lock")
         async with self._cache_lock:
             cached = self._client_cache.get(key)
             if cached is not None:
+                observe_stage("client_acquisition", cache_hit=True)
                 self._client_cache.move_to_end(key)
                 if acquire:
                     cached.leases += 1
                 return cached
+            observe_stage("client_construction", cache_hit=False)
             entry = _ClientEntry(
                 client=spec.factory(**factory_kwargs),
                 leases=1 if acquire else 0,

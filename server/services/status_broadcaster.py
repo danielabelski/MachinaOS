@@ -85,6 +85,8 @@ class StatusBroadcaster:
 
         # Per-workflow status cache for snapshot/resync
         self._workflow_statuses: Dict[str, Dict[str, Any]] = {}
+        from services.llm_wait import LLMWaitRegistry
+        self._llm_waits = LLMWaitRegistry()
 
         # Current state for all status types
         self._status: Dict[str, Any] = {
@@ -136,7 +138,10 @@ class StatusBroadcaster:
         logger.info(f"[StatusBroadcaster] Client connected. Total: {len(self._connections)}")
 
         try:
-            await websocket.send_json({"type": "initial_status", "data": self._status})
+            snapshot = dict(self._status)
+            if self._llm_waits.records:
+                snapshot["llm_waits"] = self._llm_waits.snapshot()
+            await websocket.send_json({"type": "initial_status", "data": snapshot})
         except Exception as e:
             logger.error(f"[StatusBroadcaster] Failed to send initial status: {e}")
 
@@ -232,6 +237,13 @@ class StatusBroadcaster:
         - All tasks complete or cancel together
         - Proper exception handling via ExceptionGroup
         """
+        if message.get("type") == "workflow_control_status":
+            data = message.get("data") or {}
+            if data.get("state") == "running":
+                self._llm_waits.resume_generation(str(message.get("workflow_id") or ""), data.get("generation"))
+            if data.get("state") in {"pausing", "paused", "resetting", "ready", "failed", "completed"}:
+                await self.close_llm_waits(str(message.get("workflow_id") or ""), scope="generation",
+                    root_execution_id=data.get("root_execution_id"), generation=data.get("generation"))
         if shared and message.get("type") in {"browser_updated", "browser_profiles_updated"}:
             from services.distributed_notifications import publish
             await publish(message)
@@ -689,6 +701,28 @@ class StatusBroadcaster:
     # Node Status Updates
     # =========================================================================
 
+    async def publish_llm_wait(self, delta, *, from_relay=False):
+        from services.chat.relay import active_relay
+        from services.llm_wait import validate_wait
+        validated = validate_wait(delta)
+        if validated is None:
+            return False
+        relay = active_relay() if not from_relay else None
+        if relay is not None:
+            relay.offer_llm_wait(validated)
+            return True
+        accepted = self._llm_waits.apply(validated)
+        if accepted is None:
+            return False
+        await self.broadcast({"type": "node_status", "workflow_id": accepted["workflow_id"], "node_id": accepted["node_id"],
+            "data": {"llm_wait": accepted}})
+        return True
+
+    async def close_llm_waits(self, workflow_id, **scope):
+        for delta in self._llm_waits.close(workflow_id, **scope):
+            await self.broadcast({"type": "node_status", "workflow_id": workflow_id, "node_id": delta["node_id"],
+                "data": {"llm_wait": delta}})
+
     async def update_node_status(
         self,
         node_id: str,
@@ -708,6 +742,9 @@ class StatusBroadcaster:
             f"[BROADCAST] update_node_status: node={node_id}, status={status}, workflow={workflow_id}, connections={len(self._connections)}"
         )
         incoming_data = dict(data or {})
+        if status in {"success", "error", "idle", "cancelled"} and (incoming_data.get("execution_id") or incoming_data.get("execution_key")):
+            await self.close_llm_waits(str(workflow_id or ""), node_id=node_id,
+                execution_id=incoming_data.get("execution_id"), execution_key=incoming_data.get("execution_key"))
         previous = self._status["nodes"].get(node_id) or {}
         # The cache is historically keyed by node id.  Never inherit sticky
         # capability fields from a different workflow that happens to reuse
@@ -1270,7 +1307,10 @@ class StatusBroadcaster:
 
     def get_status(self) -> Dict[str, Any]:
         """Get the full current status."""
-        return self._status.copy()
+        snapshot = self._status.copy()
+        if self._llm_waits.records:
+            snapshot["llm_waits"] = self._llm_waits.snapshot()
+        return snapshot
 
     def get_android_status(self) -> Dict[str, Any]:
         """Get Android connection status."""

@@ -40,6 +40,7 @@ import { resolveNodeDescription } from '../../lib/nodeSpec';
 import { useAppStore } from '../../store/useAppStore';
 import { usePanelResize } from '../../hooks/usePanelResize';
 import { ConsoleChat } from './ConsoleChat';
+import { LlmWaitNote } from './LlmWaitNote';
 
 // ---------------------------------------------------------------------------
 // Persisted prefs (localStorage)
@@ -363,6 +364,7 @@ const ConsolePanel: React.FC<ConsolePanelProps> = ({
               </Badge>
             )}
           </span>
+          <LlmWaitNote workflowId={chatSessionId} />
         </div>
       </div>
 

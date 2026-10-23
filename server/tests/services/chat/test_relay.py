@@ -172,6 +172,113 @@ async def test_a_backend_that_never_answers_costs_only_the_queued_events():
     assert relay.dropped == 1
 
 
+def llm_wait(**changes):
+    return {"workflow_id": "wf", "node_id": "agent", "execution_key": "execution", "request_id": "request",
+        "execution_id": "run", "root_execution_id": "root", "runtime_behavior_version": 1,
+        "seq": 1, "state": "waiting", "stage": "sdk_request", "elapsed_ms": 5000,
+        "scope": "generation", "generation": 2, **changes}
+
+
+async def test_diagnostic_clear_survives_chat_queue_overflow():
+    connection = FakeConnection()
+    relay = ChatRelay(connector(connection), queue_size=1, batch_size=10)
+    relay.start()
+    relay.offer_llm_wait(llm_wait())
+    await until(lambda: connection.frames)
+    offer(relay, "started")
+    offer(relay, "step.started")
+    relay.offer_llm_wait(llm_wait(seq=2, state="cleared"))
+    assert relay.dropped == 1
+    await relay.close()
+    diagnostics = [item["data"] for item in connection.items() if item["kind"] == "llm_wait"]
+    assert [(item["seq"], item["state"]) for item in diagnostics] == [(1, "waiting"), (2, "cleared")]
+
+
+async def test_failed_diagnostic_clear_is_reconciled_after_reconnect():
+    class FailClear(FakeConnection):
+        async def send_str(self, data):
+            if any(item.get("data", {}).get("state") == "cleared" for item in json.loads(data)["items"]):
+                raise ConnectionError("lost the clear")
+            await super().send_str(data)
+    broken, healthy = FailClear(), FakeConnection()
+    relay = ChatRelay(connector(broken, healthy), queue_size=1, batch_size=10, retry_delays=(0,))
+    relay.start()
+    relay.offer_llm_wait(llm_wait())
+    await until(lambda: broken.frames)
+    relay.offer_llm_wait(llm_wait(seq=2, state="cleared"))
+    relay.offer_llm_wait(llm_wait(request_id="concurrent", execution_key="other"))
+    await until(lambda: healthy.frames)
+    await relay.close()
+    assert {item["data"]["request_id"]: item["data"]["state"] for item in healthy.items()} == {
+        "request": "cleared", "concurrent": "waiting"}
+    assert relay.dropped == 0
+
+
+async def test_reconnect_snapshots_sent_states_and_terminal_tombstones():
+    first, second = FakeConnection(), FakeConnection()
+    relay = ChatRelay(connector(first, second), queue_size=1, batch_size=10, retry_delays=(0,))
+    relay.start()
+    relay.offer_llm_wait(llm_wait())
+    relay.offer_llm_wait(llm_wait(request_id="concurrent", execution_key="other"))
+    await until(lambda: first.frames)
+    relay.offer_llm_wait(llm_wait(seq=2, state="cleared"))
+    await until(lambda: any(item["data"]["state"] == "cleared" for item in first.items()))
+    await first.close()
+    await until(lambda: second.frames)
+    relay.offer_llm_wait(llm_wait(seq=100))
+    await relay.close()
+    assert {item["data"]["request_id"]: (item["data"]["seq"], item["data"]["state"])
+            for item in second.items()} == {"request": (2, "cleared"), "concurrent": (1, "waiting")}
+
+
+async def test_clear_during_send_remains_dirty_until_its_own_send():
+    entered, release = asyncio.Event(), asyncio.Event()
+    class InFlight(FakeConnection):
+        async def send_str(self, data):
+            if not self.frames:
+                entered.set()
+                await release.wait()
+            await super().send_str(data)
+    connection = InFlight()
+    relay = ChatRelay(connector(connection), queue_size=1, batch_size=10)
+    relay.start()
+    relay.offer_llm_wait(llm_wait())
+    await entered.wait()
+    relay.offer_llm_wait(llm_wait(seq=2, state="cleared"))
+    release.set()
+    await relay.close()
+    assert [(item["data"]["seq"], item["data"]["state"]) for item in connection.items()] == [
+        (1, "waiting"), (2, "cleared")]
+
+
+def test_diagnostic_capacity_preserves_unsent_clears_and_existing_requests():
+    cache = relay_module._LLMWaitCache(limit=2)
+    assert cache.offer(llm_wait())
+    assert cache.offer(llm_wait(request_id="second"))
+    cache.sent(cache.batch())
+    assert cache.offer(llm_wait(seq=2, state="cleared"))
+    assert not cache.offer(llm_wait(request_id="third"))
+    assert cache.offer(llm_wait(request_id="second", seq=2, state="cleared"))
+    cache.sent(cache.batch()[:1])
+    assert cache.offer(llm_wait(request_id="third"))
+    assert len(cache.records) == 2
+    assert not cache.offer(llm_wait(request_id="second", seq=100))
+    assert {item["request_id"] for _, item in cache.batch()} == {"second", "third"}
+
+
+def test_diagnostic_cache_filters_private_fields_invalid_inputs_and_expired_records():
+    now = [0]
+    cache = relay_module._LLMWaitCache(limit=1, ttl=10, clock=lambda: now[0])
+    assert not cache.offer(llm_wait(seq=True))
+    assert cache.offer(llm_wait(prompt="private", api_key="secret", headers={"Authorization": "secret"}))
+    _, item = cache.batch()[0]
+    assert not {"prompt", "api_key", "headers"}.intersection(item)
+    assert not cache.offer(llm_wait(seq=1, state="cleared"))
+    now[0] = 11
+    assert not cache.pending() and not cache.records
+    assert cache.offer(llm_wait(request_id="new"))
+
+
 # ---- routing ------------------------------------------------------------------
 
 
@@ -347,6 +454,28 @@ class Loopback(FakeConnection):
 
     async def send_str(self, data: str) -> None:
         self.replies.append(await handle_chat_run_publish(json.loads(data), self._socket))
+
+
+async def test_reconnected_diagnostic_snapshot_clears_the_backend_warning(monkeypatch):
+    from services.status_broadcaster import StatusBroadcaster
+    broadcaster = StatusBroadcaster()
+    monkeypatch.setattr("services.status_broadcaster.get_status_broadcaster", lambda: broadcaster)
+    class LostClear(Loopback):
+        async def send_str(self, data):
+            if any(item.get("data", {}).get("state") == "cleared" for item in json.loads(data)["items"]):
+                raise ConnectionError("clear lost before backend received it")
+            await super().send_str(data)
+    broken, recovered = LostClear(), Loopback()
+    relay = ChatRelay(connector(broken, recovered), queue_size=1, batch_size=10, retry_delays=(0,))
+    relay.start()
+    relay.offer_llm_wait(llm_wait())
+    await until(lambda: broken.replies)
+    assert broadcaster.get_status()["llm_waits"][0]["state"] == "waiting"
+    relay.offer_llm_wait(llm_wait(seq=2, state="cleared"))
+    await until(lambda: recovered.replies)
+    await relay.close()
+    assert broadcaster.get_status()["llm_waits"][0]["state"] == "cleared"
+    assert all(reply["refused"] == 0 for reply in recovered.replies)
 
 
 async def test_a_worker_run_reaches_a_backend_subscriber_in_order(hub):

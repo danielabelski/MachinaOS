@@ -10,6 +10,7 @@ import json
 from typing import Any, Dict, List, Mapping, Optional
 
 from core.logging import get_logger
+from services.llm.observation import observe_response, observe_sdk_request, observe_stage
 from services.llm.protocol import (
     ContentBlock,
     LLMError,
@@ -190,6 +191,7 @@ class OpenAIProvider:
         extra_headers: Optional[Mapping[str, str]] = None,
         extra_body: Optional[Mapping[str, Any]] = None,
     ) -> LLMResponse:
+        observe_stage("request_encoding")
         model = self._clean_model(model)
         policy = self._model_policy(model, thinking)
         if policy["use_responses"] and (
@@ -257,8 +259,12 @@ class OpenAIProvider:
         self._add_request_extras(params, extra_headers, extra_body)
 
         if on_event is not None:
-            return self._normalize(await self._stream_completion(params, on_event), model)
+            resp = await self._stream_completion(params, on_event)
+            observe_response(resp)
+            return self._normalize(resp, model)
+        observe_sdk_request(self)
         resp = await self._client.chat.completions.create(**params)
+        observe_response(resp)
         return self._normalize(resp, model)
 
     async def _stream_completion(self, params: Dict[str, Any], on_event: StreamSink) -> Any:
@@ -272,6 +278,7 @@ class OpenAIProvider:
         from openai.lib.streaming.chat._completions import ChatCompletionStreamState
 
         state = ChatCompletionStreamState()
+        observe_sdk_request(self)
         stream = await self._client.chat.completions.create(
             **params, stream=True, stream_options={"include_usage": True}
         )
@@ -339,8 +346,12 @@ class OpenAIProvider:
                 ]
         self._add_request_extras(params, extra_headers, extra_body)
         if on_event is not None:
-            return self._normalize_responses(await self._stream_response(params, on_event), model)
+            response = await self._stream_response(params, on_event)
+            observe_response(response)
+            return self._normalize_responses(response, model)
+        observe_sdk_request(self)
         response = await self._client.responses.create(**params)
+        observe_response(response)
         return self._normalize_responses(response, model)
 
     async def _stream_response(self, params: Dict[str, Any], on_event: StreamSink) -> Any:
@@ -349,6 +360,7 @@ class OpenAIProvider:
         helper, whose final read raises for an incomplete or failed response
         that a plain ``create`` returns."""
         final: Any = None
+        observe_sdk_request(self)
         stream = await self._client.responses.create(**params, stream=True)
         async for event in stream:
             kind = getattr(event, "type", "")

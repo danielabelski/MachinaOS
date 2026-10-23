@@ -45,6 +45,7 @@ import {
   useCurrentWorkflowStatuses,
 } from '../stores/nodeStatusStore';
 import { useWorkflowControlStore } from '../stores/workflowControlStore';
+import { parseLlmWait, waitIsCurrent, useLlmWaitStore } from '../stores/llmWaitStore';
 
 // Generate unique request ID
 const generateRequestId = (): string => {
@@ -846,6 +847,9 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const isMountedRef = useRef(true);
   const authenticatedRef = useRef(isAuthenticated);
   authenticatedRef.current = isAuthenticated;
+  useEffect(() => {
+    if (!isAuthenticated) useLlmWaitStore.getState().resetSession();
+  }, [isAuthenticated]);
   const stopHeartbeatRef = useRef<(() => void) | null>(null);
   const pendingRequestsRef = useRef<Map<string, PendingRequest>>(new Map());
   // Generic broadcast subscribers ({type -> Set<handler>}) for events
@@ -1028,6 +1032,15 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         case 'initial_status':
         case 'full_status':
           if (data) {
+            if (Array.isArray(data.llm_waits)) {
+              for (const entry of data.llm_waits) {
+                const wait = parseLlmWait(entry);
+                if (wait && typeof entry.workflow_id === 'string' && typeof entry.node_id === 'string'
+                  && waitIsCurrent(wait, workflowControlStatusesRef.current[entry.workflow_id])) {
+                  useLlmWaitStore.getState().apply(entry.workflow_id, entry.node_id, wait);
+                }
+              }
+            }
             if (data.android) setAndroidStatus(data.android);
             if (data.whatsapp) setWhatsappStatus(data.whatsapp);
             if (data.twitter) setTwitterStatus(data.twitter);
@@ -1368,6 +1381,19 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ chi
           break;
 
         case 'node_status':
+          // Diagnostic deltas never imply that a finished node is executing.
+          if (data && Object.prototype.hasOwnProperty.call(data, 'llm_wait')) {
+            const wait = parseLlmWait(data.llm_wait);
+            const wfId = message.workflow_id;
+            if (wait && wfId && node_id && waitIsCurrent(wait, workflowControlStatusesRef.current[wfId])) {
+              useLlmWaitStore.getState().apply(wfId, node_id, wait);
+            }
+            break;
+          }
+          if (message.workflow_id && typeof data?.data?.execution_key === 'string'
+            && ['success', 'error', 'idle'].includes(data?.status)) {
+            useLlmWaitStore.getState().closeExecution(message.workflow_id, data.data.execution_key);
+          }
           // Per-workflow node status storage (n8n pattern)
           // Store status under workflow_id -> node_id structure
           if (node_id) {

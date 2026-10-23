@@ -237,6 +237,8 @@ class PiCodingAgentWorkflow(AgentWorkflow):
             ("provider", "model", "system_message", "temperature", "max_tokens", "thinking_config", "effort")}
         config.update(principal=str(context.get("user_id") or "owner"),
             tool_mode=payload.get("tool_mode", "connected"))
+        if payload.get("runtime_behavior_version") == 1:
+            config["runtime_behavior_version"] = 1
         self._pi_request = {"turn": iteration, "scope": scope,
             "context_digest": canonical_digest(llm_payload["messages"]),
             "config_digest": canonical_digest(config),

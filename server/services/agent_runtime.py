@@ -40,6 +40,7 @@ from services.llm.protocol import (
     valid_retry_delay,
 )
 from services.tool_identity import DuplicateToolNameError
+from services.llm.observation import observed_native_step, observe_stage
 from services.tool_output import bound_tool_output, tool_output_is_capped
 
 logger = get_logger(__name__)
@@ -97,6 +98,7 @@ def add_usage(total: Usage, current: Optional[Usage]) -> Usage:
     )
 
 
+@observed_native_step
 async def run_native_llm_step(
     chat_unifier,
     *,
@@ -130,6 +132,7 @@ async def run_native_llm_step(
     definitions = [_tool_definition(tool) for tool in (tools or ())]
     # Hydrate once, outside the retry loop, on throwaway copies — refs stay
     # the durable form; bytes exist only for this provider call.
+    observe_stage("hydration")
     prepared = await hydrate_image_blocks(
         filter_empty_messages(messages), provider=provider, model=model
     )
@@ -166,6 +169,7 @@ async def run_native_llm_step(
                 "llm_retry_wait", provider=error.provider, category=error.category.value,
                 attempt=attempt + 1, next_attempt=attempt + 2, delay_seconds=delay,
             )
+            observe_stage("retry_wait")
             await asyncio.sleep(delay)
 
     raise AssertionError("native LLM retry loop exhausted unexpectedly")
@@ -225,6 +229,7 @@ async def run_native_agent_loop(
         Callable[[List[Message]], Awaitable[None]]
     ] = None,
     tool_output_limit: Optional[int] = None,
+    observer_payload: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
     """Run the shared buffered native tool-agent loop.
 
@@ -274,6 +279,7 @@ async def run_native_agent_loop(
                 thinking=thinking,
                 tools=current_tools,
                 context_management=context_management,
+                **({"observer_payload": {**observer_payload, "iteration": iteration}} if observer_payload else {}),
             )
         except BaseException as exc:
             if isinstance(exc, asyncio.CancelledError):

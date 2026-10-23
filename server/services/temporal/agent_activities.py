@@ -522,6 +522,8 @@ async def _execute_native_llm_step(payload: Dict[str, Any]) -> Dict[str, Any]:
     if emitter is not None:
         emitter.begin()
 
+    from services.llm.observation import observe_stage
+    observe_stage("authentication")
     api_key = await _resolve_activity_api_key(payload)
     try:
         response = await _await_with_llm_heartbeats(
@@ -599,6 +601,7 @@ async def _execute_native_llm_step(payload: Dict[str, Any]) -> Dict[str, Any]:
     # ``messages`` above IS the argument handed to ``ChatUnifier.chat`` —
     # nothing is rebuilt, inferred, or re-typed, so the stored conversation
     # cannot drift from the request.
+    observe_stage("persistence")
     await _save_conversation(
         payload,
         sent=[dict(message_to_wire(message)) for message in messages],
@@ -696,6 +699,16 @@ async def _save_conversation(
 
 @activity.defn(name="agent.execute_llm_step")
 async def execute_llm_step(payload: Dict[str, Any]) -> Dict[str, Any]:
+    if payload.get("runtime_behavior_version") != 1:
+        return await _execute_llm_step_body(payload)
+    from core.logging import log_context
+    from services.llm.observation import observed_attempt
+    async with observed_attempt(payload):
+        async with log_context(**(payload.get("attribution") or {})):
+            return await _execute_llm_step_body(payload)
+
+
+async def _execute_llm_step_body(payload: Dict[str, Any]) -> Dict[str, Any]:
     """Run one LLM turn with bound tools and return the structured response.
 
     The single LLM-step activity. There is exactly one implementation: the
@@ -914,6 +927,8 @@ async def broadcast_agent_progress(payload: Dict[str, Any]) -> Dict[str, Any]:
             **({"phase": phase} if phase else {}),
             **capability_data,
         }
+        if payload.get("llm_wait_execution_key"):
+            lifecycle_data["execution_key"] = payload["llm_wait_execution_key"]
         if status == "error":
             lifecycle_data.update({
                 key: payload[key]
@@ -1155,7 +1170,21 @@ async def prepare_agent_payload(context: Dict[str, Any]) -> Dict[str, Any]:
     context["parameter_snapshot"] = snapshot
     connection_database = ParameterSnapshotDatabase(database, snapshot)
     db_params = snapshot.get(node_id) if node_id in snapshot else await database.get_node_parameters(node_id) or {}
+    from services.agent_runtime_policy import runtime_context
+    frozen_runtime = runtime_context(db_params)
+    # Policy is read before model options/templates/invocation merging. A
+    # parent's policy never opts its delegated child in.
+    context.pop("runtime_behavior_version", None)
+    context.update(frozen_runtime)
     parameters = {**(context.get("node_data") or {}), **db_params}
+    parameters.pop("runtime_behavior_version", None)
+    parameters.update(frozen_runtime)
+    if frozen_runtime:
+        from services.browser_resources import validate_saved_browser_resources
+        await validate_saved_browser_resources(database, str(workflow_id or ""), str(context.get("user_id") or "owner"),
+            {"nodes": context.get("nodes") or [], "edges": context.get("edges") or []}, {**snapshot, node_id: db_params})
+        from services.runtime_tool_context import fill_runtime_workspace
+        await fill_runtime_workspace(database, context)
     if node_type == "browser_agent":
         from services.browser_agent_recipe import BROWSER_AGENT_ROLE
         # Delegation's compatibility remap puts its mission in node_data's
@@ -1546,6 +1575,9 @@ async def prepare_agent_payload(context: Dict[str, Any]) -> Dict[str, Any]:
     if progressive_skill_tool:
         effective_tool_data.append(progressive_skill_tool)
     for tool_info in unique_node_bindings(effective_tool_data):
+        if frozen_runtime:
+            from services.runtime_tool_context import bind_runtime_context
+            tool_info = bind_runtime_context(tool_info, context, node_id)
         try:
             built = await node_tools(ai_service, tool_info)
         except Exception as e:  # noqa: BLE001 — defensive: skip a broken tool
@@ -1751,7 +1783,17 @@ async def prepare_agent_payload(context: Dict[str, Any]) -> Dict[str, Any]:
     if node_type == "browser_agent" and len([tool for tool in tools_payload if tool.get("node_type") == "browser"]) != 1:
         raise ApplicationError("Connect one enabled Browser tool", type="NodeUserError", non_retryable=True)
 
+    observer_config = {}
+    if frozen_runtime:
+        from services.llm.observation import warning_seconds
+        observer_config["llm_warning_seconds"] = warning_seconds()
+
     prepared = {
+        **frozen_runtime,
+        **observer_config,
+        **({"workspace_dir": context.get("workspace_dir") or ""} if frozen_runtime else {}),
+        **({"agent_label": next((str((node.get("data") or {}).get("label") or node_type)
+            for node in nodes if node.get("id") == node_id), node_type)} if frozen_runtime else {}),
         # The chat run this agent works for (stops when the owner presses
         # Stop), and, for the agent that answers it, where its text streams.
         "chat_run_id": chat_run_id_of(context),
@@ -1907,6 +1949,9 @@ async def refresh_agent_tools(payload: Dict[str, Any]) -> Dict[str, Any]:
             continue
         if database:
             tool_info["parameters"] = await database.get_node_parameters(str(tool_info["node_id"])) or {}
+        if payload.get("runtime_behavior_version") == 1:
+            from services.runtime_tool_context import bind_runtime_context
+            tool_info = bind_runtime_context(tool_info, payload, str(invoking_agent_id or ""))
         try:
             built = await node_tools(ai_service, tool_info)
         except Exception as e:  # noqa: BLE001 — skip one, keep building the batch

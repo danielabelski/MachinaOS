@@ -62,6 +62,7 @@ from services.llm.config import (
     resolve_temperature as native_resolve_temperature,
 )
 from services.agent_runtime import AgentToolSpec, run_native_agent_loop
+from services.runtime_tool_context import native_observer_options, bind_runtime_context
 from services.tool_output import resolve_tool_output_limit
 
 
@@ -925,6 +926,9 @@ class AIService:
         model = "unknown"
 
         # EARLY LOG: Entry point for debugging
+        from services.runtime_tool_context import prepare_native_runtime
+        parameters, context, skill_data, tool_data = await prepare_native_runtime(
+            database or self.database, node_id, parameters, context, skill_data, tool_data, workflow_id=workflow_id)
         logger.debug(
             f"[AIAgent] execute_agent called: node_id={node_id}, workflow_id={workflow_id}, skill_count={len(skill_data) if skill_data else 0}, tool_count={len(tool_data) if tool_data else 0}"
         )
@@ -1224,7 +1228,7 @@ class AIService:
                     config["employee_job_id"] = context.get("employee_job_id")
                     config["team_task_id"] = context.get("team_task_id")
                     config["team_execution_id"] = context.get("team_execution_id")
-                    for scope_key in ("data_scope_id", "context_execution_id", "context_session_id", "session_id", "graphVersion", "outputs", "pi_harness_version"):
+                    for scope_key in ("data_scope_id", "context_execution_id", "context_session_id", "session_id", "graphVersion", "outputs", "pi_harness_version", "runtime_behavior_version"):
                         if scope_key in context:
                             config[scope_key] = context[scope_key]
                     config["nodes"] = context.get("nodes", [])
@@ -1382,6 +1386,7 @@ class AIService:
                     }
                     if tool_info["node_id"] in bound:
                         continue
+                    tool_info = bind_runtime_context(tool_info, context or {}, node_id)
                     try:
                         built = await node_tools(self, tool_info)
                     except Exception as exc:  # noqa: BLE001 — log + skip one tool
@@ -1461,6 +1466,7 @@ class AIService:
 
             final_state = await run_native_agent_loop(
                 self.chat_unifier,
+                **native_observer_options(context, node_id, workflow_id, provider, model),
                 provider=provider,
                 api_key=api_key,
                 model=model,
@@ -1688,6 +1694,9 @@ class AIService:
         logger.debug(
             f"[ChatAgent] execute_chat_agent called: node_id={node_id}, workflow_id={workflow_id}, skill_count={len(skill_data) if skill_data else 0}, tool_count={len(tool_data) if tool_data else 0}"
         )
+        from services.runtime_tool_context import prepare_native_runtime
+        parameters, context, skill_data, tool_data = await prepare_native_runtime(
+            database or self.database, node_id, parameters, context, skill_data, tool_data, workflow_id=workflow_id)
 
         async def broadcast_status(phase: str, details: Dict[str, Any] = None):
             if broadcaster:
@@ -2001,7 +2010,7 @@ class AIService:
                         config["employee_job_id"] = context.get("employee_job_id")
                         config["team_task_id"] = context.get("team_task_id")
                         config["team_execution_id"] = context.get("team_execution_id")
-                        for scope_key in ("data_scope_id", "context_execution_id", "context_session_id", "session_id", "graphVersion", "outputs", "pi_harness_version"):
+                        for scope_key in ("data_scope_id", "context_execution_id", "context_session_id", "session_id", "graphVersion", "outputs", "pi_harness_version", "runtime_behavior_version"):
                             if scope_key in context:
                                 config[scope_key] = context[scope_key]
                         config["nodes"] = context.get("nodes", [])
@@ -2129,6 +2138,7 @@ class AIService:
                         }
                         if tool_info["node_id"] in bound:
                             continue
+                        tool_info = bind_runtime_context(tool_info, context or {}, node_id)
                         try:
                             built = await node_tools(self, tool_info)
                         except Exception as exc:  # noqa: BLE001
@@ -2178,6 +2188,7 @@ class AIService:
 
                 final_state = await run_native_agent_loop(
                     self.chat_unifier,
+                    **native_observer_options(context, node_id, workflow_id, provider, model),
                     provider=provider,
                     api_key=api_key,
                     model=model,
@@ -2212,6 +2223,7 @@ class AIService:
             else:
                 final_state = await run_native_agent_loop(
                     self.chat_unifier,
+                    **native_observer_options(context, node_id, workflow_id, provider, model),
                     provider=provider,
                     api_key=api_key,
                     model=model,

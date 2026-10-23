@@ -13,6 +13,7 @@ import type { WorkspaceTab } from '@/components/workspace/WorkspaceTabs';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useWorkspaceSteps, type StepSurface, type WorkspaceStep } from './steps';
+import { LlmWaitNote } from '@/components/ui/LlmWaitNote';
 
 const DONE: Record<StepSurface, string> = {
   browser: 'bg-action-save-border',
@@ -59,6 +60,7 @@ export function WorkspaceTimeline({
 
   return (
     <div className="flex min-w-0 flex-col gap-2.5">
+      <LlmWaitNote workflowId={workflowId} />
       {steps.length > 0 && (
         <div ref={bar} role="list" aria-label="Steps" className="flex h-3.5 items-center gap-0.75 overflow-x-auto [scrollbar-width:none]">
           {steps.map((item, index) => (

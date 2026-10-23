@@ -88,7 +88,9 @@ class GeminiProvider:
         # route (checked on LiteLLM 1.103.4); never sent here.
         del extra_body
         from google.genai import types
+        from services.llm.observation import observe_stage
 
+        observe_stage("request_encoding")
         system_instruction, contents = self._split_system_and_contents(messages)
 
         config: Dict[str, Any] = {
@@ -128,11 +130,22 @@ class GeminiProvider:
             # base URL stays.
             config["http_options"] = types.HttpOptions(headers=dict(extra_headers))
 
+        from services.llm.observation import observing
+        transport = "unknown"
+        if observing():
+            try:
+                selector = getattr(getattr(self._client, "_api_client", None), "_use_aiohttp", None)
+                if callable(selector):
+                    transport = "aiohttp" if selector() else "httpx"
+            except Exception:
+                pass
+        observe_stage("sdk_request", transport=transport)
         resp = await self._client.aio.models.generate_content(
             model=model,
             contents=contents,
             config=types.GenerateContentConfig(**config),
         )
+        observe_stage("normalization", provider_request_id=getattr(resp, "response_id", None))
         return self._normalize(resp, model)
 
     # ------------------------------------------------------------------

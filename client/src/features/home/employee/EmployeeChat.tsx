@@ -47,6 +47,7 @@ import { EmployeeAccess } from './EmployeeAccess';
 import { GiveTeam } from './GiveTeam';
 import { EmployeeWork } from './EmployeeWork';
 import { FirstDay } from './FirstDay';
+import { LlmWaitNote } from '@/components/ui/LlmWaitNote';
 import type { EmployeeControl } from './useEmployeeControl';
 
 /** What to say first, on a new hire's first day. */
@@ -106,6 +107,7 @@ function Notices({
       )}
       {employee.pending_changes && <PendingChangesNotice employee={employee} />}
       <EmployeeWork key={employee.workflow_id} employee={employee} />
+      <LlmWaitNote workflowId={employee.workflow_id} />
       <GiveTeam workflowId={employee.workflow_id} available={employee.can_give_team} />
       <EmployeeAccess workflowId={employee.workflow_id} name={name} pendingOnly />
       {employee.browser_request && <BrowserNotice employee={employee} />}

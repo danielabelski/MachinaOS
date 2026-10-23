@@ -47,6 +47,7 @@ References:
 from __future__ import annotations
 
 import asyncio
+import hashlib
 import json
 from datetime import timedelta
 from typing import Any, Dict, List, Optional
@@ -988,6 +989,12 @@ class AgentWorkflow:
         self._execution_id = task_scope_execution_id
         self._root_execution_id = root_execution_id
         self._provider = str(payload.get("provider") or "")
+        if payload.get("runtime_behavior_version") == 1:
+            # Delegated siblings may inherit the same root execution ID.
+            # Their own workflow chain keeps diagnostic completion separate.
+            self._llm_wait_execution_key = hashlib.sha256(json.dumps([
+                root_execution_id, execution_id, agent_node_id, workflow.info().workflow_id,
+            ], separators=(",", ":")).encode()).hexdigest()[:32]
 
         # The provider-visible name is the dispatch key. Duplicate names fail
         # before the first billed LLM call and identify every conflicting
@@ -1170,6 +1177,11 @@ class AgentWorkflow:
             # only provider-neutral JSON tool definitions.
             visible_tools = [t for t in tools if not t.get("llm_hidden")]
             llm_payload = {
+                **({"runtime_behavior_version": 1, "llm_warning_seconds": payload.get("llm_warning_seconds", 5),
+                    "agent_label": payload.get("agent_label") or payload.get("node_type") or "Agent",
+                    "runtime_scope": {"execution_key": self._llm_wait_execution_key, **{key: context[key] for key in
+                    ("generation", "native_workspace_version", "workspace_epoch", "invocation_id", "thread_id", "turn_id") if key in context}}}
+                   if payload.get("runtime_behavior_version") == 1 else {}),
                 "node_id": payload["node_id"],
                 "workflow_id": agent_workflow_id,
                 "provider": payload["provider"],
@@ -2156,6 +2168,7 @@ class AgentWorkflow:
                     call=call,
                 )
                 tool_payload = {
+                    **({"runtime_behavior_version": 1} if payload.get("runtime_behavior_version") == 1 else {}),
                     "node_id": tool_info["tool_node_id"],
                     "node_type": tool_info["node_type"],
                     "node_data": tool_node_data,
@@ -2453,6 +2466,8 @@ class AgentWorkflow:
                                     call_index,
                                 )
                                 refresh_payload = {
+                                    **({"runtime_behavior_version": 1, "workspace_dir": payload.get("workspace_dir") or ""}
+                                       if payload.get("runtime_behavior_version") == 1 else {}),
                                     "operations": ops_from_tool,
                                     "agent_node_type": payload.get("node_type") or context.get("node_type"),
                                     **call_metadata,
@@ -3229,6 +3244,8 @@ class AgentWorkflow:
                     "execution_id": getattr(self, "_execution_id", None),
                     "root_execution_id": getattr(self, "_root_execution_id", None),
                     "provider": getattr(self, "_provider", None),
+                    **({"llm_wait_execution_key": self._llm_wait_execution_key}
+                       if getattr(self, "_llm_wait_execution_key", None) else {}),
                     **({"status": status} if status else {}),
                     **(extra or {}),
                 }

@@ -19,6 +19,9 @@ broadcast to its sockets.
   the sessions those belonged to, so their subscribers take a fresh snapshot
   instead of reading a stream with a hole in it. An event is a courtesy: the
   rows are the record.
+- **Model wait diagnostics.** A separate bounded latest-state cache keeps
+  clear tombstones through failed sends and replays its snapshot on reconnect.
+  It never consumes chat queue capacity or changes provider calls.
 - **Internal only.** The backend takes ``chat_run_publish`` from
   ``/ws/internal`` alone (the worker token, ``services/authz``) and refuses
   it on a client's socket.
@@ -27,7 +30,8 @@ broadcast to its sockets.
 from __future__ import annotations
 
 import asyncio
-from collections import deque
+import time
+from collections import OrderedDict, deque
 from contextlib import suppress
 from typing import Any, AsyncIterator, Awaitable, Callable, Deque, Dict, List, Mapping, Optional, Protocol, Set
 
@@ -54,6 +58,8 @@ RELAYED_BROADCASTS: Mapping[str, str] = {
 MAX_ITEMS = 500
 _MAX_ID = 256
 _RETRY_DELAYS_S = (0.5, 1.0, 2.0, 5.0, 10.0)
+_WAIT_CACHE_LIMIT = 4096
+_WAIT_CACHE_TTL = 3600.0
 
 
 class RelayConnection(Protocol):
@@ -73,6 +79,73 @@ def _dumps(value: Any) -> str:
     return orjson.dumps(value, default=to_jsonable_python).decode()
 
 
+class _LLMWaitCache:
+    """Latest safe state per request, independent of the lossy chat queue.
+
+    A clear is a terminal tombstone. Retain sent states for reconnects;
+    never evict an unsent clear to admit another request.
+    """
+
+    def __init__(self, *, limit=_WAIT_CACHE_LIMIT, ttl=_WAIT_CACHE_TTL, clock=time.monotonic):
+        self.limit, self.ttl, self.clock = limit, ttl, clock
+        self.records = OrderedDict()
+        self.dirty = set()
+
+    def _prune(self):
+        now = self.clock()
+        for key, (updated, _) in list(self.records.items()):
+            if now - updated > self.ttl:
+                self.records.pop(key, None)
+                self.dirty.discard(key)
+
+    def offer(self, raw):
+        from services.llm_wait import validate_wait
+        item = validate_wait(raw)
+        if item is None:
+            return False
+        self._prune()
+        key = tuple(item[field] for field in ("workflow_id", "node_id", "execution_key", "request_id"))
+        previous = self.records.get(key)
+        if previous and (previous[1]["seq"] >= item["seq"] or previous[1]["state"] == "cleared"):
+            return False
+        if previous is None and len(self.records) >= self.limit:
+            evict = next((candidate for candidate, (_, value) in self.records.items()
+                          if value["state"] == "cleared" and candidate not in self.dirty), None)
+            if evict is None:
+                # Existing requests can still clear at capacity. A refused
+                # new request has never published a wait that needs clearing.
+                return False
+            self.records.pop(evict)
+        self.records[key] = (self.clock(), item)
+        self.records.move_to_end(key)
+        self.dirty.add(key)
+        return True
+
+    def reconnect(self):
+        self._prune()
+        self.dirty.update(self.records)
+
+    def batch(self, limit=MAX_ITEMS):
+        self._prune()
+        result = []
+        for key, (_, value) in self.records.items():
+            if key in self.dirty:
+                result.append((key, value))
+                if len(result) >= limit:
+                    break
+        return result
+
+    def sent(self, batch):
+        for key, item in batch:
+            current = self.records.get(key)
+            if current is not None and current[1]["seq"] == item["seq"]:
+                self.dirty.discard(key)
+
+    def pending(self):
+        self._prune()
+        return bool(self.dirty)
+
+
 class ChatRelay:
     """Sends this process's chat events to the backend, in order."""
 
@@ -89,6 +162,7 @@ class ChatRelay:
         self._batch_size = max(1, min(int(batch_size), MAX_ITEMS - 1))
         self._retry_delays = retry_delays
         self._queue: Deque[Dict[str, Any]] = deque()
+        self._llm_waits = _LLMWaitCache()
         #: Sessions that lost an event since their last resync went out.
         self._lost: Set[str] = set()
         self._loop: Optional[asyncio.AbstractEventLoop] = None
@@ -131,6 +205,24 @@ class ChatRelay:
     def offer_broadcast(self, wire_key: str, data: Mapping[str, Any], *, session_id: Optional[str] = None) -> None:
         self._offer({"kind": "broadcast", "type": wire_key, "data": dict(data), "session_id": session_id})
 
+    def offer_llm_wait(self, delta: Mapping[str, Any]) -> None:
+        from services.llm_wait import validate_wait
+        item = validate_wait(dict(delta))
+        if item is None or self._loop is None or self._closing:
+            return
+        try:
+            running = asyncio.get_running_loop()
+        except RuntimeError:
+            running = None
+        if running is self._loop:
+            self._offer_llm_wait(item)
+        else:
+            self._loop.call_soon_threadsafe(self._offer_llm_wait, item)
+
+    def _offer_llm_wait(self, item):
+        if not self._closing and self._llm_waits.offer(item):
+            self._notify()
+
     def _offer(self, item: Dict[str, Any]) -> None:
         if self._loop is None or self._closing:
             self._drop([item])
@@ -172,7 +264,7 @@ class ChatRelay:
     async def _run(self) -> None:
         attempt = 0
         while True:
-            if self._closing and not self._queue:
+            if self._closing and not self._queue and not self._llm_waits.pending():
                 return
             try:
                 connection = await self._connect()
@@ -191,6 +283,7 @@ class ChatRelay:
             if attempt:
                 logger.info("Chat relay reached the backend", attempts=attempt + 1)
             attempt = 0
+            self._llm_waits.reconnect()
             reader = asyncio.create_task(self._drain(connection))
             try:
                 await self._pump(connection, reader)
@@ -209,11 +302,20 @@ class ChatRelay:
     async def _pump(self, connection: RelayConnection, reader: asyncio.Task) -> None:
         assert self._wake is not None
         while True:
+            diagnostic_batch = self._llm_waits.batch()
+            if diagnostic_batch:
+                await connection.send_str(_dumps({"type": WIRE_TYPE,
+                    "items": [{"kind": "llm_wait", "data": item} for _, item in diagnostic_batch]}))
+                # Updates made while send_str yielded remain pending. A failed
+                # send never consumes diagnostic state; reconnect replays it.
+                self._llm_waits.sent(diagnostic_batch)
             if not self._queue and not self._lost:
+                if self._llm_waits.pending():
+                    continue
                 if self._closing:
                     return
                 self._wake.clear()
-                if self._queue or self._closing:
+                if self._queue or self._closing or self._llm_waits.pending():
                     continue
                 waiter = asyncio.ensure_future(self._wake.wait())
                 done, _ = await asyncio.wait({waiter, reader}, return_when=asyncio.FIRST_COMPLETED)
@@ -410,6 +512,13 @@ async def handle_chat_run_publish(data: Dict[str, Any], websocket: Any) -> Dict[
                 hub.publish(**event)
             elif kind == "broadcast" and (message := _broadcast(item)) is not None:
                 await get_status_broadcaster().broadcast(message)
+            elif kind == "llm_wait":
+                from services.llm_wait import validate_wait
+                delta = validate_wait(item.get("data"))
+                if delta is None:
+                    refused += 1
+                    continue
+                await get_status_broadcaster().publish_llm_wait(delta, from_relay=True)
             elif kind == "resync" and isinstance(item.get("session_ids"), list):
                 for session_id in item["session_ids"]:
                     if _identifier(session_id):

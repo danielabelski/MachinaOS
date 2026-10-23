@@ -96,10 +96,14 @@ async def reset(workflow_id: str, request_id: str) -> dict:
     # A failed cleanup keeps its admission fence. Resume that operation even
     # when the user's Retry Reset has a new transport request identity.
     request_id = (state or {}).get("reset_request_id") or request_id
-    return await _controller_update(
+    result = await _controller_update(
         workflow_id, WorkspaceTaskControllerWorkflow.reset, request_id,
         update_id="reset:" + uuid4().hex,
     )
+    if state is not None:
+        from services.llm_wait import close_diagnostic_waits
+        await close_diagnostic_waits(workflow_id, scope="workspace", workspace_epoch=state.get("epoch", 0))
+    return result
 
 
 async def cancel_legacy_invocations(workflow_id: str) -> int:
@@ -205,6 +209,9 @@ async def submit(principal: str, workflow_id: str, node_id: str, prompt: str, su
         "context": context,
         "admission_epoch": (admission or {}).get("epoch", 0),
     }
+    from services.agent_runtime_policy import runtime_behavior_version
+    if runtime_behavior_version(params):
+        context.update(invocation_id=run_id, workspace_epoch=payload["admission_epoch"])
     if node["type"] == "coding_agent":
         from services.workflow_sanitizer import sanitize_runtime_payload
         snapshot = {saved_node["id"]: await database.get_node_parameters(saved_node["id"]) or {}
@@ -293,6 +300,9 @@ async def status(principal: str, workflow_id: str, node_id: str, submission_id: 
     handle = temporal_client().get_workflow_handle(invocation_id(principal, workflow_id, node_id, submission_id))
     try:
         if cancel:
+            from services.llm_wait import close_diagnostic_waits
+            await close_diagnostic_waits(workflow_id, scope="workspace",
+                invocation_id=invocation_id(principal, workflow_id, node_id, submission_id))
             await _cancel_and_wait(handle)
         result = await handle.query(NodeInvocationWorkflow.describe)
     except RPCError as exc:

@@ -6,7 +6,7 @@ import pytest
 from fastapi import HTTPException
 
 from routers import agents
-from tests.nodes._agent_builder_harness import (
+from tests.nodes._agent_builder_harness import (  # noqa: F401 -- pytest registers imported fixtures
     builder_fixture, database_fixture, save_graph, saved,
 )
 

@@ -151,3 +151,24 @@ async def test_browser_delegation_without_saved_role_uses_browser_default(descri
         "invocation": {"task": "Read issues"}})
     assert result["system_message"] == BROWSER_AGENT_ROLE
     assert result["user_prompt"] == "Read issues"
+
+
+async def test_parent_and_node_data_cannot_upgrade_legacy_child(descriptor):
+    result = await prepare_agent_payload({**_CONTEXT, "runtime_behavior_version": 1,
+        "node_data": {"runtime_behavior_version": 1}})
+    assert "runtime_behavior_version" not in result
+    assert "llm_warning_seconds" not in result
+
+
+@pytest.mark.parametrize("captured_version", [0, 1])
+async def test_runtime_policy_is_frozen_by_agent_snapshot(descriptor, captured_version):
+    import core.container as container_module
+    saved = dict(container_module.container.database().get_node_parameters.return_value)
+    snapshot = {_CONTEXT["node_id"]: {**saved, "runtime_behavior_version": captured_version}}
+    # The live row and parent may disagree; neither can upgrade this child.
+    container_module.container.database().get_node_parameters.return_value["runtime_behavior_version"] = 1 - captured_version
+    result = await prepare_agent_payload({**_CONTEXT, "runtime_behavior_version": 1 - captured_version,
+        "workspace_dir": "captured-root", "parameter_snapshot": snapshot})
+    assert result.get("runtime_behavior_version", 0) == captured_version
+    assert ("llm_warning_seconds" in result) == bool(captured_version)
+    assert result["parameter_snapshot"] == snapshot

@@ -11,6 +11,7 @@ import { AGENT_PHASE } from '../lib/agentPhases';
 import { NodeIcon } from '../assets/icons';
 import { Badge } from '@/components/ui/badge';
 import EditableNodeLabel from './ui/EditableNodeLabel';
+import { useLlmWaitNote } from '@/stores/llmWaitStore';
 
 // Agent-loop phase icons and labels. Colors reference the semantic theme
 // tokens (var(--*)) so each phase label recolors per active theme — init=info,
@@ -75,6 +76,8 @@ const AIAgentNode: React.FC<NodeProps<NodeData>> = ({ id, type, data, isConnecta
 
   // Get real-time node status from WebSocket
   const nodeStatus = useNodeStatus(id);
+  const workflowId = useAppStore((s) => s.currentWorkflow?.id);
+  const waitNote = useLlmWaitNote(workflowId, id);
   const isExecuting = nodeStatus?.status === 'executing';
   const currentPhase = nodeStatus?.data?.phase as string | undefined;
   const phaseConfig = currentPhase ? PHASE_CONFIG[currentPhase] : null;
@@ -277,10 +280,10 @@ const AIAgentNode: React.FC<NodeProps<NodeData>> = ({ id, type, data, isConnecta
         lineHeight: '1.2', marginBottom: theme.spacing.lg, transition: 'color 0.3s ease',
         overflowWrap: 'break-word', wordBreak: 'break-word', whiteSpace: 'normal',
         textAlign: 'center',
-      }} role={retryMessage ? 'status' : undefined}
-        aria-label={!retryMessage && capabilityLabel ? 'Current agent capability' : undefined}
-        title={retryMessage || capabilityLabel}>
-        {retryMessage || capabilityLabel || (isExecuting && phaseConfig ? phaseConfig.label : subtitle)}
+      }} role={waitNote || retryMessage ? 'status' : undefined}
+        aria-label={!waitNote && !retryMessage && capabilityLabel ? 'Current agent capability' : undefined}
+        title={waitNote || retryMessage || capabilityLabel}>
+        {waitNote || retryMessage || capabilityLabel || (isExecuting && phaseConfig ? phaseConfig.label : subtitle)}
       </div>
 
       {/* Left inputs below the main one (Memory / Task / etc.) */}
