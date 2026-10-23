@@ -107,6 +107,12 @@ class BrowserRuntime:
         self._controllers: Dict[str, ProfileController] = {}
         self._chromes: Dict[str, ChromeProcess] = {}
         self._proxies: Dict[str, EgressProxy] = {}
+        self._teardown_locks: Dict[str, asyncio.Lock] = {}
+        self._stop_locks: Dict[str, asyncio.Lock] = {}
+        self._stopping: set[str] = set()
+        self._cleanup_pending: set[str] = set()
+        self._shutting_down_v1 = False
+        self._resource_versions: Dict[str, int] = {}
         self._starting: Dict[str, asyncio.Task] = {}
         self._sessions: Dict[str, BrowserSession] = {}
         self._reaper: Optional[asyncio.Task] = None
@@ -192,6 +198,14 @@ class BrowserRuntime:
 
     async def open(self, profile: Profile, *, wait: float = 60.0) -> ProfileRuntime:
         """The profile's running browser, starting Chrome if needed."""
+        if profile.kind == "agent":
+            from services.plugin.deps import get_database
+            from ._profiles import ProfileStore
+            # Entry-point independent: a credentials/viewer open may be first.
+            profile = await ProfileStore(get_database()).get(profile.owner_id, profile.id)
+            self._resource_versions[profile.id] = 1
+            if self._shutting_down_v1 or profile.id in self._stopping or profile.id in self._cleanup_pending:
+                raise NodeUserError("Private Browser cleanup is still pending. Retry after owner recovery.")
         from services.browser_owners import _persistent
         from services.plugin.deps import get_database
         if getattr(self._settings(), "distributed_mode", False) is True or _persistent(get_database()):
@@ -207,9 +221,14 @@ class BrowserRuntime:
             controller.needs_observation |= bool(binding.get("needs_observation"))
             controller.challenge_required = bool(binding.get("challenge_required"))
             controller.recovered_assistance = binding.get("assistance")
+        if getattr(profile, "runtime_version", 0) == 1 and (
+                self._shutting_down_v1 or profile.id in self._stopping or profile.id in self._cleanup_pending):
+            raise NodeUserError("Private Browser cleanup is still pending. Retry after owner recovery.")
         runtime = self._profiles.get(profile.id)
         if runtime is not None and runtime.running:
             return runtime
+        if runtime is not None and getattr(profile, "runtime_version", 0) == 1:
+            await self._teardown(runtime)
         self._ensure_reaper()
         task = self._starting.get(profile.id)
         if task is None or task.done():
@@ -226,6 +245,23 @@ class BrowserRuntime:
             raise NodeUserError("The browser is still starting; try again in a moment.") from None
 
     async def _start(self, profile: Profile) -> ProfileRuntime:
+        try:
+            return await self._start_impl(profile)
+        except BaseException:
+            if getattr(profile, "runtime_version", 0) == 1:
+                runtime = self._profiles.get(profile.id)
+                if runtime is not None:
+                    await self._teardown(runtime)
+                else:
+                    self._cleanup_pending.add(profile.id)
+                    chrome = self._chromes.get(profile.id)
+                    if chrome is not None:
+                        await self._stop_private_chrome(chrome)
+                    await self._stop_private_proxy(profile.id)
+                    self._cleanup_pending.discard(profile.id)
+            raise
+
+    async def _start_impl(self, profile: Profile) -> ProfileRuntime:
         settings = self._settings()
         pin = get_config().chrome
         installer = get_chrome_installer()
@@ -244,7 +280,8 @@ class BrowserRuntime:
         controller = self.controller_for(profile)
         proxy = self._proxies.get(profile.id)
         if proxy is None:
-            proxy = EgressProxy(lambda c=controller: self._effective_policy(c), name=f"browser-egress-{profile.id}")
+            proxy = EgressProxy(lambda c=controller: self._effective_policy(c), name=f"browser-egress-{profile.id}",
+                                **({"runtime_version": 1} if getattr(profile, "runtime_version", 0) == 1 else {}))
             self._proxies[profile.id] = proxy
         proxy_port = await asyncio.to_thread(proxy.start)
 
@@ -293,7 +330,8 @@ class BrowserRuntime:
                 raise NodeUserError("The launched browser is older than this profile or the minimum supported browser version. Update the selected browser or use another profile.")
             await self._wire(runtime)
         except BaseException:
-            await chrome.shutdown()
+            if getattr(profile, "runtime_version", 0) != 1:
+                await chrome.shutdown()
             raise
         self._profiles[profile.id] = runtime
         controller.last_activity = time.monotonic()
@@ -385,6 +423,9 @@ class BrowserRuntime:
         if self._profiles.get(runtime.profile.id) is not runtime:
             return
         logger.warning("[browser] Chrome for profile %s stopped unexpectedly", runtime.profile.id)
+        if getattr(runtime.profile, "runtime_version", 0) == 1:
+            await self.stop_profile(runtime.profile.id, reason="Chrome stopped")
+            return
         await self._teardown(runtime)
         controller = runtime.controller
         controller.tabs.clear()
@@ -394,6 +435,21 @@ class BrowserRuntime:
             await controller.release_lease()
 
     async def _teardown(self, runtime: ProfileRuntime) -> None:
+        if getattr(runtime.profile, "runtime_version", 0) == 1:
+            async with self._teardown_locks.setdefault(runtime.profile.id, asyncio.Lock()):
+                if self._profiles.get(runtime.profile.id) is not runtime:
+                    return
+                self._cleanup_pending.add(runtime.profile.id)
+                try:
+                    await asyncio.to_thread(runtime.cli.stop_daemon)
+                except Exception:
+                    logger.debug("[browser] private daemon stop failed", exc_info=True)
+                await self._stop_private_chrome(runtime.chrome)
+                await self._stop_private_proxy(runtime.profile.id)
+                if self._profiles.get(runtime.profile.id) is runtime:
+                    self._profiles.pop(runtime.profile.id, None)
+                self._cleanup_pending.discard(runtime.profile.id)
+            return
         self._profiles.pop(runtime.profile.id, None)
         try:
             runtime.cli.stop_daemon()
@@ -407,9 +463,55 @@ class BrowserRuntime:
             except Exception:  # noqa: BLE001
                 pass
 
+    async def _stop_private_chrome(self, chrome: ChromeProcess) -> None:
+        try:
+            await asyncio.wait_for(chrome.shutdown(), timeout=_STOP_TIMEOUT)
+        except Exception:
+            await chrome.stop()
+        if chrome.is_running():
+            raise NodeUserError("Private Browser cleanup is still pending; restore its owner before deleting it.")
+
+    async def _stop_private_proxy(self, profile_id: str) -> None:
+        proxy = self._proxies.get(profile_id)
+        if proxy is None:
+            return
+        if await asyncio.to_thread(proxy.stop) is False:
+            raise NodeUserError("Private Browser proxy cleanup is still pending. Retry after owner recovery.")
+        if self._proxies.get(profile_id) is proxy:
+            self._proxies.pop(profile_id, None)
+
     async def stop_profile(self, profile_id: str, *, reason: str = "") -> None:
         runtime = self._profiles.get(profile_id)
+        private = (self._resource_versions.get(profile_id) == 1
+                   or getattr(getattr(runtime, "profile", None), "runtime_version", 0) == 1
+                   or getattr(self._proxies.get(profile_id), "runtime_version", 0) == 1)
+        if private:
+            async with self._stop_locks.setdefault(profile_id, asyncio.Lock()):
+                self._stopping.add(profile_id)
+                try:
+                    await self._stop_profile_impl(profile_id, reason=reason, private=True)
+                finally:
+                    self._stopping.discard(profile_id)
+            return
+        await self._stop_profile_impl(profile_id, reason=reason)
+
+    async def _stop_profile_impl(self, profile_id: str, *, reason: str, private: bool = False) -> None:
+        if private:
+            starting = self._starting.get(profile_id)
+            if starting is not None and not starting.done() and starting is not asyncio.current_task():
+                starting.cancel()
+                await asyncio.gather(starting, return_exceptions=True)
+        runtime = self._profiles.get(profile_id)
         if runtime is None:
+            if private:
+                chrome = self._chromes.get(profile_id)
+                if chrome is not None:
+                    await self._stop_private_chrome(chrome)
+            proxy = self._proxies.get(profile_id)
+            if proxy is not None and getattr(proxy, "runtime_version", 0) == 1:
+                await self._stop_private_proxy(profile_id)
+            if private:
+                self._cleanup_pending.discard(profile_id)
             return
         controller = runtime.controller
         await controller.release_lease()
@@ -423,9 +525,10 @@ class BrowserRuntime:
         controller.tabs.clear()
         controller.active_target_id = None
         await controller.emit("closed", {"reason": reason or "stopped"})
-        proxy = self._proxies.pop(profile_id, None)
-        if proxy is not None:
-            await asyncio.to_thread(proxy.stop)
+        if not private:
+            proxy = self._proxies.pop(profile_id, None)
+            if proxy is not None:
+                await asyncio.to_thread(proxy.stop)
         logger.info("[browser] profile %s stopped (%s)", profile_id, reason or "requested")
 
     async def _make_room(self, *, exclude: str) -> None:
@@ -458,15 +561,33 @@ class BrowserRuntime:
 
     async def shutdown(self) -> None:
         """Stop every profile's Chrome gracefully (the plugin shutdown hook)."""
+        self._shutting_down_v1 = True
         if self._reaper is not None:
             self._reaper.cancel()
-        await asyncio.gather(*(self._teardown(r) for r in list(self._profiles.values())), return_exceptions=True)
-        for proxy in list(self._proxies.values()):
+        starting = [task for profile_id, task in self._starting.items()
+                    if self._resource_versions.get(profile_id) == 1 and not task.done()]
+        for task in starting:
+            task.cancel()
+        await asyncio.gather(*starting, return_exceptions=True)
+        private_ids = {profile_id for profile_id, version in self._resource_versions.items() if version == 1}
+        private_ids.update(profile_id for profile_id, runtime in self._profiles.items()
+                           if getattr(runtime.profile, "runtime_version", 0) == 1)
+        private_ids.update(profile_id for profile_id, proxy in self._proxies.items()
+                           if getattr(proxy, "runtime_version", 0) == 1)
+        await asyncio.gather(*(self.stop_profile(profile_id, reason="backend shutdown") for profile_id in private_ids),
+                             *(self._teardown(r) for r in list(self._profiles.values()) if r.profile.id not in private_ids),
+                             return_exceptions=True)
+        for profile_id, proxy in list(self._proxies.items()):
             try:
-                proxy.stop()
+                if getattr(proxy, "runtime_version", 0) == 1:
+                    await self._stop_private_proxy(profile_id)
+                else:
+                    proxy.stop()
+                    self._proxies.pop(profile_id, None)
             except Exception:  # noqa: BLE001
                 pass
-        self._proxies.clear()
+        if self._cleanup_pending or any(getattr(proxy, "runtime_version", 0) == 1 for proxy in self._proxies.values()):
+            raise NodeUserError("Private Browser cleanup is still pending; browser ownership must remain fenced.")
 
     # -- status ------------------------------------------------------------------
 

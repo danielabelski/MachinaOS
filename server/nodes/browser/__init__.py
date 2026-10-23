@@ -78,7 +78,7 @@ async def _cleanup_deleted_workflow_profile(database: Any, principal: str, profi
     from ._profiles import ProfileStore, remove_profile_files
     from ._runtime import get_browser_runtime
     profile = await ProfileStore(database).get(principal, profile_id)
-    if profile.kind != "employee" or profile.workflow_id != workflow_id or await database.get_workflow(workflow_id) is not None:
+    if profile.kind not in {"employee", "agent"} or profile.workflow_id != workflow_id or await database.get_workflow(workflow_id) is not None:
         raise NodeUserError("Browser cleanup is not associated with a deleted workflow.")
     binding = await bind_profile(database, profile.id, principal)
     if binding["owner_id"] != replica_id():
