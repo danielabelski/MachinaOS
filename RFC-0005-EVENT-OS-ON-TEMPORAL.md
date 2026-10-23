@@ -1128,7 +1128,7 @@ A marker becomes `deprecate_patch` one release after no open history can lack it
 | `docs-internal/discord_service.md` | Public ingress prefix; append before the deferred reply |
 | `docs-internal/docker.md`, deploy runbooks | PostgreSQL per hosted instance, tiers, weekly window, telemetry, backups |
 | `CLAUDE.md` | The rows on the event framework, chat protocol, Temporal architecture and Docker |
-| `.env.template` | `WEBHOOK_MAX_BODY_BYTES`, `TELEGRAM_REPLAY_MAX_AGE_S`, `EVENT_INGRESS_MODE`, `EVENT_OS`, the telemetry endpoint, the maintenance window |
+| `.env.template` | `WEBHOOK_MAX_BODY_BYTES`, `EVENT_INGRESS_MODE`, `EVENT_OS`, the telemetry endpoint, the maintenance window |
 
 ## 29. References
 
