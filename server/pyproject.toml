@@ -22,6 +22,12 @@ dependencies = [
     # built on it, verify TLS against this bundle; declared explicitly because
     # it only arrives transitively. Do not lower without checking that advisory.
     "certifi>=2026.10.19",
+    # Security floor for httpx's brotli decoder (CPython only, as httpx's
+    # brotli extra installs it): <1.2.1 carries PYSEC-2026-4322
+    # (CVE-2026-111497, "Node2Shell"), an out-of-bounds write on a crafted
+    # Brotli stream, which any compressed HTTP response could deliver. Do not
+    # lower without checking that advisory.
+    "brotli>=1.2.1; platform_python_implementation == 'CPython'",
     # Security floor: <3.14.4 carries eight advisories, the worst being
     # unbounded memory and CPU use (GHSA-2g87-pp6c-29x5), no initial header
     # timeout (GHSA-5wr8-gcqf-gqf3) and multipart file-descriptor exhaustion
