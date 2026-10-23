@@ -347,6 +347,9 @@ class TestWebhookSourceHandle:
             async def body(self):
                 return body
 
+            async def stream(self):
+                yield body
+
         return FakeReq()
 
     def test_valid_signature_dispatches(self):
@@ -429,6 +432,9 @@ class TestWebhookSourceHandle:
             async def body(self):
                 return body
 
+            async def stream(self):
+                yield body
+
         with patch("services.event_waiter.dispatch") as dispatch:
             with pytest.raises(HTTPException) as exc:
                 _run(src.handle(FakeReq()))
@@ -464,6 +470,9 @@ class TestWebhookSourceHandle:
 
             async def body(self):
                 return body
+
+            async def stream(self):
+                yield body
 
         with patch("services.event_waiter.dispatch") as dispatch:
             with pytest.raises(HTTPException) as exc:
