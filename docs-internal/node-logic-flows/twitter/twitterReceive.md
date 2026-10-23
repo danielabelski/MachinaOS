@@ -3,12 +3,22 @@
 | Field | Value |
 |------|-------|
 | **Category** | social / trigger |
-| **Backend handler** | Plugin [`server/nodes/twitter/twitter_receive/__init__.py`](../../../server/nodes/twitter/twitter_receive/__init__.py); `execute()` delegates to [`server/services/handlers/triggers.py::handle_trigger_node`](../../../server/services/handlers/triggers.py) (generic). Filter: [`server/nodes/twitter/_filters.py::build_filter`](../../../server/nodes/twitter/_filters.py). Events: [`server/nodes/twitter/_events.py`](../../../server/nodes/twitter/_events.py). |
+| **Backend handler** | Plugin [`server/nodes/twitter/twitter_receive/__init__.py`](../../../server/nodes/twitter/twitter_receive/__init__.py); `execute()` refuses with a `NodeUserError` and `validate_graph` refuses Start (see the status note below). Filter: [`server/nodes/twitter/_filters.py::build_filter`](../../../server/nodes/twitter/_filters.py). Events: [`server/nodes/twitter/_events.py`](../../../server/nodes/twitter/_events.py). |
 | **Tests** | [`server/tests/nodes/test_twitter.py`](../../../server/tests/nodes/test_twitter.py) |
 | **Skill (if any)** | none |
 | **Dual-purpose tool** | no (trigger only) |
 
 ## Purpose
+
+> **Status (2026-10-23, RFC-0005 Phase 0.8): the node refuses to run.** Nothing
+> polls Twitter for it: it is not a `PollingTriggerNode`, and
+> `dispatch_twitter_event_received` has no caller, so a deployed one never fired
+> and a canvas Run waited forever. Start now refuses it with
+> `TWITTER_RECEIVE_UNAVAILABLE`, and a canvas Run returns a `NodeUserError`
+> pointing to Twitter Search on a Cron Scheduler. Making it work means
+> subclassing `PollingTriggerNode` with `fetch_ids` / `fetch_detail` over the X
+> API's mentions, search and timeline endpoints (paid and rate-limited). The
+> rest of this card describes the intended design.
 
 Wait for a Twitter/X event (mention, search match, or timeline update) and emit
 it as the workflow trigger payload. The trigger is polling-based (X API v2 has

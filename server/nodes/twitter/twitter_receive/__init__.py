@@ -1,4 +1,11 @@
-"""Twitter Receive — Wave 11.C migration (polling trigger)."""
+"""Twitter Receive — Wave 11.C migration (polling trigger).
+
+Nothing polls Twitter for this node yet: it is not a
+``PollingTriggerNode`` and its dispatcher (``_events.dispatch_twitter_event_received``)
+has no caller, so a deployed one never fired and a canvas Run waited
+forever. Until a poller exists, Start refuses it (``validate_graph``) and
+a canvas Run answers with the reason (RFC-0005 Phase 0.8).
+"""
 
 from __future__ import annotations
 
@@ -6,9 +13,16 @@ from typing import Any, Dict, Literal, Optional
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from services.plugin import NodeContext, Operation, TaskQueue, TriggerNode
+import time
+
+from services.plugin import NodeContext, NodeUserError, Operation, TaskQueue, TriggerNode
 
 from .._credentials import TwitterCredential
+
+_UNAVAILABLE = (
+    "Twitter Receive cannot run yet: nothing polls Twitter for it, so it would never fire. "
+    "To act on new tweets, run Twitter Search from a Cron Scheduler."
+)
 
 
 class TwitterReceiveParams(BaseModel):
@@ -52,20 +66,18 @@ class TwitterReceiveNode(TriggerNode):
     Params = TwitterReceiveParams
     Output = TwitterReceiveOutput
 
+    @classmethod
+    def validate_graph(cls, node_id: str, graph: Dict[str, Any]) -> list[Dict[str, Any]]:
+        return [{"code": "TWITTER_RECEIVE_UNAVAILABLE", "node_id": node_id, "message": _UNAVAILABLE}]
+
     async def execute(
         self,
         node_id: str,
         parameters: Dict[str, Any],
         context: NodeContext,
     ) -> Dict[str, Any]:
-        from services.handlers.triggers import handle_trigger_node
-
-        return await handle_trigger_node(
-            node_id=node_id,
-            node_type=self.type,
-            parameters=parameters,
-            context=context.raw,
-        )
+        error = NodeUserError(_UNAVAILABLE)
+        return self._wrap_error(start_time=time.time(), error=str(error), error_type="NodeUserError", extra=error.as_dict())
 
     @Operation("wait")
     async def wait(self, ctx: NodeContext, params: TwitterReceiveParams) -> TwitterReceiveOutput:

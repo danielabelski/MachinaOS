@@ -14,8 +14,8 @@ External boundaries mocked:
     fields the handler reads (``.data`` etc.).
   - ``auth_service.get_oauth_tokens('twitter')`` is fed via
     ``patched_container(auth_oauth_tokens={...})``.
-  - ``event_waiter`` is patched at both the executor dispatch site and the
-    generic trigger handler for ``twitterReceive``.
+  - ``twitterReceive`` refuses to run until a poller exists, so its tests
+    check the refusal.
 """
 
 from __future__ import annotations
@@ -484,85 +484,22 @@ class TestTwitterUser:
 # ============================================================================
 
 
-def _make_waiter_stub(*, canned_event=None):
-    """Fake event_waiter module for the trigger path."""
-    waiter_obj = MagicMock(name="Waiter")
-    waiter_obj.id = "waiter-twitter-id"
-
-    stub = MagicMock(name="event_waiter_module")
-    stub.is_trigger_node = MagicMock(return_value=True)
-    stub.get_trigger_config = MagicMock(
-        return_value=MagicMock(
-            node_type="twitterReceive",
-            event_type="twitter_event_received",
-            display_name="Twitter Event",
-        )
-    )
-    stub.register = AsyncMock(return_value=waiter_obj)
-    stub.wait_for_event = AsyncMock(return_value=canned_event or {})
-    stub.run_trigger_precheck = AsyncMock(return_value=None)
-    stub.get_backend_mode = MagicMock(return_value="asyncio.Future")
-    stub.cancel = MagicMock(return_value=True)
-    stub.dispatch = MagicMock(return_value=1)
-    return stub
-
-
 class TestTwitterReceive:
-    CANNED = {
-        "trigger_type": "mentions",
-        "tweet_id": "tw123",
-        "text": "@me hello",
-        "author_id": "u999",
-        "author_username": "alice",
-        "created_at": "2026-04-15T12:00:00",
-    }
+    """Nothing polls Twitter for twitterReceive yet, so it refuses to run
+    instead of waiting forever (RFC-0005 Phase 0.8)."""
 
-    async def test_happy_path_returns_canned_event(self, harness):
-        waiter = _make_waiter_stub(canned_event=self.CANNED)
-
-        with patched_broadcaster(), patch("services.handlers.triggers.event_waiter", waiter):
-            result = await harness.execute(
-                "twitterReceive",
-                {"trigger_type": "mentions", "poll_interval": 60},
-            )
-
-        harness.assert_envelope(result, success=True)
-        payload = result["result"]
-        assert payload["tweet_id"] == "tw123"
-        assert payload["author_username"] == "alice"
-        waiter.register.assert_awaited_once()
-        waiter.wait_for_event.assert_awaited_once()
-
-    async def test_cancellation_returns_error_envelope(self, harness):
-        import asyncio
-
-        waiter = _make_waiter_stub()
-        waiter.wait_for_event = AsyncMock(side_effect=asyncio.CancelledError())
-
-        with patched_broadcaster(), patch("services.handlers.triggers.event_waiter", waiter):
+    async def test_a_canvas_run_says_why_it_cannot_run(self, harness):
+        with patched_broadcaster(), patch("services.handlers.triggers.event_waiter") as waiter:
             result = await harness.execute("twitterReceive", {"trigger_type": "mentions"})
 
         harness.assert_envelope(result, success=False)
-        assert "cancel" in result["error"].lower()
+        assert result["error_type"] == "NodeUserError"
+        assert "cannot run yet" in result["error"]
+        waiter.register.assert_not_called()
 
-    async def test_unknown_trigger_config_errors(self, harness):
-        # get_trigger_config -> None simulates a missing registry entry.
-        waiter = _make_waiter_stub()
-        waiter.get_trigger_config = MagicMock(return_value=None)
+    def test_start_refuses_it(self):
+        from nodes.twitter.twitter_receive import TwitterReceiveNode
 
-        with patched_broadcaster(), patch("services.handlers.triggers.event_waiter", waiter):
-            result = await harness.execute("twitterReceive", {"trigger_type": "mentions"})
+        errors = TwitterReceiveNode.validate_graph("tw-1", {"nodes": [], "edges": []})
 
-        harness.assert_envelope(result, success=False)
-        assert "unknown trigger" in result["error"].lower()
-        waiter.register.assert_not_awaited()
-
-    async def test_generic_exception_becomes_envelope(self, harness):
-        waiter = _make_waiter_stub()
-        waiter.wait_for_event = AsyncMock(side_effect=RuntimeError("boom"))
-
-        with patched_broadcaster(), patch("services.handlers.triggers.event_waiter", waiter):
-            result = await harness.execute("twitterReceive", {"trigger_type": "mentions"})
-
-        harness.assert_envelope(result, success=False)
-        assert "boom" in result["error"]
+        assert [error["code"] for error in errors] == ["TWITTER_RECEIVE_UNAVAILABLE"]
