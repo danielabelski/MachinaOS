@@ -92,6 +92,17 @@ services/events/dispatch.py:emit(event: WorkflowEvent)
            (skipped with emit(..., broadcast=False))
 ```
 
+**Webhook bodies are capped at the edge.** Every webhook body is read through
+`services/events/webhook.read_body_capped`: the generic `/webhook/{path}`
+route, `WebhookSource.handle` (Stripe, Dodo Payments, WhatsApp Business) and
+Discord interactions. A body larger than `WEBHOOK_MAX_BODY_BYTES` (default in
+`.env.template`) gets 413 before anything is dispatched, because the body
+rides into a workflow's input, which Temporal caps at 2 MB, and the trigger
+path copies it several times (RFC-0004 C1). The declared `Content-Length`
+refuses an honest oversized request before it is read; the running total of
+what actually arrives is the limit. `WebhookSource.handle` no longer puts
+each event on the source's queue, which nothing read.
+
 **Private payloads skip the broadcast.** The broadcast reaches every
 connected socket. An event whose payload is one owner's content passes
 `broadcast=False` and reaches only the signalled workflows: chat does, since

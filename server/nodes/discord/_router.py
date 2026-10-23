@@ -30,6 +30,7 @@ from fastapi.responses import JSONResponse
 
 from core.logging import get_logger
 from services.events.oauth_lifecycle import make_oauth_callback_router
+from services.events.webhook import read_body_capped
 
 from . import _interactions
 from ._accounts import DEFAULT_ACCOUNT, PUBLIC_KEY_KEY, storage_scope
@@ -76,7 +77,7 @@ async def _handle_interaction(request: Request, account_id: str) -> Response:
     # The signature covers the exact bytes Discord sent. Re-serialising the
     # parsed JSON would change key order or separators and break verification
     # for authentic requests, so the body is read raw and parsed afterwards.
-    body = await request.body()
+    body = await read_body_capped(request)
 
     public_key = await _public_key(account_id)
     if not public_key:

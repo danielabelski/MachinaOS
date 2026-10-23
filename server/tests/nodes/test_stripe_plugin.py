@@ -32,7 +32,7 @@ def _signed(body: bytes, secret: str) -> dict:
 
 
 def _fake_request(body: bytes, headers: dict | None = None):
-    """Return an object with the two attrs WebhookSource.handle uses."""
+    """Return an object with the attributes WebhookSource.handle reads."""
 
     class R:
         pass
@@ -43,7 +43,11 @@ def _fake_request(body: bytes, headers: dict | None = None):
     async def _body():
         return body
 
+    async def _stream():
+        yield body
+
     r.body = _body
+    r.stream = _stream
     return r
 
 

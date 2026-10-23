@@ -701,8 +701,9 @@ Node groups (palette categories) are registered in [`server/nodes/groups.py`](./
 
 #### Webhook Router (`server/routers/webhook.py`)
 - `ANY /webhook/{path}` - Dynamic webhook endpoint for incoming HTTP requests (GET, POST, PUT, DELETE, PATCH)
-- Dispatches `webhook_received` event via `broadcaster.send_custom_event()` to trigger waiting webhookTrigger nodes
-- Returns immediate 200 OK response (responseNode mode planned for future)
+- A path a plugin registered with `register_webhook_source` (Stripe, Dodo Payments, WhatsApp Business) goes to that `WebhookSource`; any other path reaches webhookTrigger nodes through `nodes/trigger/webhook_trigger/_events.broadcast_webhook_received` (`dispatch.emit`)
+- A body larger than `WEBHOOK_MAX_BODY_BYTES` (default in `.env.template`) gets 413 before anything is dispatched (`services/events/webhook.read_body_capped`, also used by Discord interactions), because the body rides into a workflow's input
+- Returns 200 OK once dispatched (responseNode mode planned for future)
 - `GET /webhook/` - Webhook endpoint info and usage documentation
 
 #### Workspace Router (`server/routers/workspace.py`)

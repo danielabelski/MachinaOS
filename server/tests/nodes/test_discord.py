@@ -845,6 +845,22 @@ class TestInteractionsEndpoint:
         assert response.status_code == 200
         assert response.json() == {"type": 1}
 
+    def test_a_body_over_the_webhook_limit_is_413(self, monkeypatch):
+        """The body would ride into a workflow's input (RFC-0004 C1)."""
+        monkeypatch.setenv("WEBHOOK_MAX_BODY_BYTES", "16")
+        private, public_hex = _keypair()
+        body = b'{"type":1,"pad":"' + b"x" * 32 + b'"}'
+        ts = "1700000000"
+        sig = private.sign(ts.encode() + body).hex()
+
+        response = self._post(
+            body,
+            {"X-Signature-Ed25519": sig, "X-Signature-Timestamp": ts, "Content-Type": "application/json"},
+            public_hex,
+        )
+
+        assert response.status_code == 413
+
     def test_bad_signature_is_401_not_400(self):
         """Discord's endpoint-validation probe sends a deliberately invalid
         signature and refuses to save the URL unless it gets a 401."""

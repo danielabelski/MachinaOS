@@ -33,6 +33,38 @@ logger = get_logger(__name__)
 WEBHOOK_SOURCES: Dict[str, "WebhookSource"] = {}
 
 
+async def read_body_capped(request: Request) -> bytes:
+    """Read a webhook's body, refusing it with 413 past
+    ``WEBHOOK_MAX_BODY_BYTES`` (default in ``.env.template``).
+
+    The declared ``Content-Length`` refuses an honest oversized request
+    before any of it is read; the running total is what enforces the
+    limit, because the header is the caller's to set.
+    """
+    from core.env_defaults import env_int
+
+    limit = env_int("WEBHOOK_MAX_BODY_BYTES")
+    declared = request.headers.get("content-length", "")
+    if declared.isdigit() and int(declared) > limit:
+        raise _body_too_large(limit)
+    chunks: list[bytes] = []
+    total = 0
+    async for chunk in request.stream():
+        total += len(chunk)
+        if total > limit:
+            raise _body_too_large(limit)
+        chunks.append(chunk)
+    body = b"".join(chunks)
+    # Starlette's body cache: request.body() and request.json() now return
+    # these bytes instead of reading the consumed stream.
+    request._body = body
+    return body
+
+
+def _body_too_large(limit: int) -> HTTPException:
+    return HTTPException(status_code=413, detail=f"Request body is larger than the {limit}-byte webhook limit.")
+
+
 def register_webhook_source(source: "WebhookSource") -> None:
     """Idempotent: same instance for the same path is a no-op; conflicts raise."""
     existing = WEBHOOK_SOURCES.get(source.path)
@@ -90,8 +122,9 @@ class WebhookSource(PushEventSource):
     async def handle(self, request: Request) -> WorkflowEvent:
         """Called by the webhook router. Verifies signature, parses the
         body, shapes the event, dispatches into ``event_waiter``, and
-        returns the event for logging / response shaping."""
-        body = await request.body()
+        returns the event for logging / response shaping. Subclasses that
+        feed deployed triggers emit the returned event themselves."""
+        body = await read_body_capped(request)
         if self.verifier is not None:
             secret = await self._resolve_secret()
             if not secret:
@@ -118,7 +151,6 @@ class WebhookSource(PushEventSource):
             raise HTTPException(status_code=400, detail=f"invalid JSON body: {e}")
 
         event = await self.shape(request, body, payload)
-        await self.receive(event)
 
         from services import event_waiter
 

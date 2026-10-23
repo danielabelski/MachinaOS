@@ -789,7 +789,7 @@ def _delivery(event_type: str = "payment.succeeded", *, msg_id: str = "msg_1", k
 
 
 def _request(body: bytes, headers: dict):
-    """An object with the two attributes WebhookSource.handle reads."""
+    """An object with the attributes WebhookSource.handle reads."""
 
     class Request:
         pass
@@ -800,7 +800,11 @@ def _request(body: bytes, headers: dict):
     async def read():
         return body
 
+    async def stream():
+        yield body
+
     request.body = read
+    request.stream = stream
     return request
 
 

@@ -3,13 +3,16 @@
 Two dispatch paths:
 
 1. **Plugin-owned WebhookSource** (Wave 12 framework). Plugins register
-   a :class:`services.events.WebhookSource` for their path; the router
-   verifies the signature, shapes a :class:`WorkflowEvent`, and queues
-   it onto the source. The source's owning plugin pulls events via
-   ``source.emit()`` and dispatches into ``event_waiter``.
-2. **Legacy generic webhook** (pre-framework). Falls through to
-   ``broadcaster.send_custom_event("webhook_received", …)`` so existing
-   ``webhookTrigger`` nodes keep working untouched.
+   a :class:`services.events.WebhookSource` for their path. Its
+   ``handle()`` verifies the signature, shapes a :class:`WorkflowEvent`
+   and wakes a waiting canvas Run; the plugin's override emits the event
+   to deployed triggers.
+2. **Generic webhook.** Paths no plugin claims reach ``webhookTrigger``
+   nodes through ``nodes/trigger/webhook_trigger/_events``.
+
+Both read the body through ``read_body_capped``, so a body larger than
+``WEBHOOK_MAX_BODY_BYTES`` is refused with 413 before it reaches a
+workflow.
 """
 
 from fastapi import APIRouter, HTTPException, Request
@@ -19,6 +22,7 @@ import asyncio
 import logging
 
 from services.events import WEBHOOK_SOURCES
+from services.events.webhook import read_body_capped
 # Wave 12 B9: webhook event dispatch moved to
 # ``nodes/trigger/webhook_trigger/_events.broadcast_webhook_received``.
 # The router no longer reaches into the broadcaster directly.
@@ -75,7 +79,7 @@ async def handle_webhook(path: str, request: Request):
         logger.info("[Webhook] %s %s -> %s", request.method, path, type(source).__name__)
         return JSONResponse({"status": "received", "path": path}, status_code=200)
 
-    body = await request.body()
+    body = await read_body_capped(request)
     json_body = None
     content_type = request.headers.get("content-type", "")
 

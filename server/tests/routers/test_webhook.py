@@ -120,6 +120,59 @@ class TestGetHandshake:
         assert source.handled == 1
 
 
+class TestBodyCap:
+    """A body larger than ``WEBHOOK_MAX_BODY_BYTES`` is refused with 413
+    before it reaches a workflow: it would ride into the workflow's input,
+    which Temporal caps at 2 MB (RFC-0004 C1)."""
+
+    def test_a_declared_oversize_body_is_refused(self, client, clean_registry, monkeypatch):
+        monkeypatch.setenv("WEBHOOK_MAX_BODY_BYTES", "16")
+        clean_registry.clear()
+
+        with patch("nodes.trigger.webhook_trigger._events.broadcast_webhook_received") as broadcast:
+            resp = client.post("/webhook/unclaimed", content=b"x" * 17)
+
+        assert resp.status_code == 413
+        broadcast.assert_not_called()
+
+    def test_a_streamed_body_without_a_length_is_capped_by_what_arrives(self, client, clean_registry, monkeypatch):
+        monkeypatch.setenv("WEBHOOK_MAX_BODY_BYTES", "16")
+        clean_registry.clear()
+
+        def chunks():
+            yield b"x" * 10
+            yield b"x" * 10
+
+        with patch("nodes.trigger.webhook_trigger._events.broadcast_webhook_received") as broadcast:
+            resp = client.post("/webhook/unclaimed", content=chunks())
+
+        assert resp.status_code == 413
+        broadcast.assert_not_called()
+
+    def test_a_registered_source_is_capped_too(self, client, clean_registry, monkeypatch):
+        monkeypatch.setenv("WEBHOOK_MAX_BODY_BYTES", "16")
+        source = _RecordingSource()
+        clean_registry[source.path] = source
+
+        with patch("services.event_waiter.dispatch") as dispatch:
+            resp = client.post("/webhook/recording", json={"padding": "x" * 32})
+
+        assert resp.status_code == 413
+        dispatch.assert_not_called()
+
+    def test_a_received_event_is_not_left_on_a_queue_nothing_reads(self, client, clean_registry):
+        """``handle()`` used to put every event on the source's queue as well,
+        which nothing drained, so each webhook stayed in memory for good."""
+        source = _RecordingSource()
+        clean_registry[source.path] = source
+
+        with patch("services.event_waiter.dispatch"):
+            resp = client.post("/webhook/recording", json={"a": 1})
+
+        assert resp.status_code == 200
+        assert source._queue.empty()
+
+
 class TestLegacyFallback:
     def test_unclaimed_path_still_reaches_the_generic_handler(self, client, clean_registry):
         """An unregistered path must keep firing webhookTrigger nodes."""
