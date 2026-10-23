@@ -530,20 +530,13 @@ class TelegramService(ServiceSingleton):
                     except (TypeError, ValueError):
                         pass
 
-                # Pre-poll peek for historical owner capture.
-                # Polling starts with drop_pending_updates=True
-                # (correct hygiene for operational events -- we do
-                # not want stale group spam replaying on every
-                # restart) but that ALSO drops any DM the user sent
-                # before the bot connected. Without this peek the
-                # only path to owner capture is "DM the bot AFTER
-                # polling has started", which is the surprising UX
-                # that produces "Bot owner not detected" on every
-                # fresh setup. get_updates() with no offset returns
-                # the same pending queue without advancing it, so
-                # the subsequent start_polling drop-pass is a no-op
-                # for these messages -- they were going to be
-                # dropped anyway, we just inspect them first.
+                # Pre-poll peek for historical owner capture: find the
+                # owner in a DM the user sent before the bot connected,
+                # before polling delivers the pending queue, so a
+                # workflow fired by an earlier message in that queue can
+                # already send to the owner. get_updates() with no offset
+                # returns the queue without advancing it, so polling
+                # still delivers every one of these messages.
                 if self._owner_chat_id is None:
                     await self._capture_owner_from_pending_updates()
 
@@ -659,8 +652,12 @@ class TelegramService(ServiceSingleton):
         try:
             logger.info("[Telegram] Starting polling loop...")
             await self._application.start()
+            # Keep the updates Telegram held while the backend was down (up
+            # to 24 hours): dropping them lost every message sent during a
+            # restart. Each update is delivered once; the offset advances
+            # as polling confirms it.
             await self._application.updater.start_polling(
-                drop_pending_updates=True,
+                drop_pending_updates=False,
                 allowed_updates=Update.ALL_TYPES,
                 error_callback=self._on_polling_error,
             )
@@ -680,8 +677,8 @@ class TelegramService(ServiceSingleton):
     async def _capture_owner_from_pending_updates(self) -> None:
         """Inspect the bot's pending update queue (24h Telegram retention)
         for any private message and capture the owner if found. Called
-        from connect() before polling starts -- after polling begins the
-        ``drop_pending_updates=True`` flag throws these away unread.
+        from connect() before polling starts, so the owner is known before
+        polling delivers the queued messages.
 
         Uses the same atomic-write-through invariant as
         ``_on_message_received``: persist FIRST, set in-memory only on

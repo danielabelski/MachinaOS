@@ -501,6 +501,27 @@ def test_transient_and_fatal_polling_messages_are_distinguishable():
     assert "bot disconnected" not in callback_src
 
 
+@pytest.mark.asyncio
+async def test_polling_keeps_the_messages_telegram_held_during_a_restart():
+    """Telegram holds updates for 24 hours. Polling used to start with
+    ``drop_pending_updates=True``, which discarded every message sent while
+    the backend was down (RFC-0005 Phase 0.5)."""
+    import asyncio
+
+    service = TelegramService()
+    started = asyncio.Event()
+    updater = SimpleNamespace(start_polling=AsyncMock(side_effect=lambda **_: started.set()))
+    service._application = SimpleNamespace(start=AsyncMock(), updater=updater)
+
+    task = asyncio.create_task(service._run_polling())
+    await asyncio.wait_for(started.wait(), timeout=5)
+    task.cancel()
+    with pytest.raises(asyncio.CancelledError):
+        await task
+
+    assert updater.start_polling.await_args.kwargs["drop_pending_updates"] is False
+
+
 # ---------------------------------------------------------------------------
 # shutdown: release the getUpdates slot
 # ---------------------------------------------------------------------------
