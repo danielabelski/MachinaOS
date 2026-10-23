@@ -56,9 +56,11 @@ The builds are not code-signed yet. If your computer blocks the installer, macOS
 
 ### How an employee works
 
-[![Connect AI, describe a job, review the setup, hire, and coach your employee](docs/diagrams/how-it-works.svg)](docs/diagrams/how-it-works.svg)
+[![How AI employees work: jobs arrive through chat, email, messaging, schedules or webhooks; an employee team uses browsers, apps and computer tools to deliver results, with memory, skills and feedback informing the next job](docs/diagrams/how-ai-employees-work.png)](docs/diagrams/how-ai-employees-work.png)
 
-An employee takes a job through the steps needed to complete it: browsing websites, using connected apps, working with files, running code, and coordinating specialists. It can work when a message arrives, at a scheduled time, or when you ask it to. Its lead assigns work and reviews submissions. You can see progress, results, and requests for help on the employee's page.
+Jobs can arrive through Home chat, email (Gmail, Outlook, or IMAP), WhatsApp, Telegram, or Discord, or start on a schedule. Dev mode also supports webhook inputs.
+
+An employee takes a job through the steps needed to complete it: browsing websites, using connected apps, working with files, running code, and coordinating specialists. Its lead assigns work and reviews submissions. You can see progress, results, and requests for help on the employee's page.
 
 **You set the ground rules.** New hires ask before sending by default. Supported send actions appear as drafts for approval; browser use is restricted to reading while Ask first is on. You can review app-access requests, change access, and stop or resume the employee from Home. Keep the app running and your computer awake for background work.
 

@@ -1,11 +1,20 @@
 # Diagrams
 
-One set, dark theme, all SVG. This folder is the only copy; nothing under
-`docs-internal/` vendors these files.
+Dark-theme architecture diagrams in SVG and a generated product explainer in PNG.
+This folder holds the project assets; nothing under `docs-internal/` vendors them.
 
 **Overview diagrams** (linked from the README and CONTRIBUTING):
 
-- `how-it-works.svg` (README's guide for everyone: connect AI, describe a job,
+- [how-ai-employees-work.png](how-ai-employees-work.png) (README's guide for
+  everyone: input channels, employee team, browser/app/computer work, results,
+  and the memory/skills feedback loop). Inputs show Chat, Email, WhatsApp,
+  Telegram, Discord, Schedules, and Webhooks (Dev mode).
+  App tiles show Gmail, Google Calendar, Google Drive, Google Sheets, GitHub,
+  and Stripe.
+  Created with built-in ImageGen using the
+  onboarding's product style; the [generation prompt](how-ai-employees-work.prompt.txt)
+  records the brief and source references. It is a conceptual product illustration.
+- `how-it-works.svg` (editable hiring overview: connect AI, describe a job,
   review the setup, hire, and coach)
 - `default-workflows.svg` (README's technical section: example workflow structures)
 - `system-overview.svg`, `execution-flow.svg`, `ai-agent-routing.svg`, `node-anatomy.svg` (CONTRIBUTING)
