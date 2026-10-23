@@ -104,10 +104,16 @@ what actually arrives is the limit. `WebhookSource.handle` no longer puts
 each event on the source's queue, which nothing read.
 
 **Private payloads skip the broadcast.** The broadcast reaches every
-connected socket. An event whose payload is one owner's content passes
-`broadcast=False` and reaches only the signalled workflows: chat does, since
-its envelope carries the owner's message text (clients learn of a new
-message from the identity-only `chat.updated`).
+connected socket, so `emit` has no default for `broadcast`: every producer
+states whether a client reads the frame (RFC-0005 Phase 0.9). An event whose
+payload is someone's content passes `broadcast=False` and reaches only the
+signalled workflows: owner chat (clients learn of a new message from the
+identity-only `chat.updated`), webhooks, Stripe, Dodo Payments, WhatsApp,
+WhatsApp Business, Telegram, Discord, email and Twitter. No client read any
+of those frames. Delegated-task completion broadcasts a separate
+identity-only envelope (the Task Manager panel refreshes on it), and
+`todos_updated` broadcasts because the checklist reads it. The WhatsApp
+bridge's outbound `event.message_sent` is no longer relayed at all.
 
 **Workflow-scoped delivery** (core dispatch rule, July 2026): an envelope
 whose `workflow_id` field is set by its producer's call site reaches ONLY

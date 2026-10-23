@@ -68,6 +68,7 @@ async def dispatch_todos_updated(
             workflow_id=workflow_id,
         ),
         wire_routing_key=_TODOS_UPDATED_WIRE_KEY,
+        broadcast=True,
     )
 
 

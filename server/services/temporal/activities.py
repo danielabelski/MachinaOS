@@ -417,7 +417,7 @@ async def emit_event_activity(event_payload: Dict[str, Any]) -> Dict[str, Any]:
             "error": f"{type(exc).__name__}: {exc}",
         }
 
-    await emit(event)
+    await emit(event, broadcast=False)
     return {
         "delivered": True,
         "event_id": event.id,

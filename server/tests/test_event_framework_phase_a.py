@@ -244,8 +244,18 @@ class TestA6DispatchEmitFeatureFlag:
             source="opencompany://services/test",
             type="com.opencompany.test.disabled",
         )
-        returned = await emit(event)
+        returned = await emit(event, broadcast=False)
         assert returned is event
+
+    @pytest.mark.asyncio
+    async def test_every_emit_names_its_audience(self):
+        """``broadcast`` has no default, so no producer sends someone's
+        content to every socket by leaving it out (RFC-0005 Phase 0.9)."""
+        from services.events.dispatch import emit
+
+        event = WorkflowEvent(source="opencompany://services/test", type="com.opencompany.test.audience")
+        with pytest.raises(TypeError):
+            await emit(event)
 
     @pytest.mark.asyncio
     async def test_enabled_emit_calls_both_paths(self, monkeypatch):
@@ -274,7 +284,7 @@ class TestA6DispatchEmitFeatureFlag:
             source="opencompany://services/test",
             type="com.opencompany.test.enabled",
         )
-        await dispatch.emit(event, wire_routing_key="custom_wire_key")
+        await dispatch.emit(event, wire_routing_key="custom_wire_key", broadcast=True)
 
         assert len(signal_calls) == 1
         assert signal_calls[0] is event

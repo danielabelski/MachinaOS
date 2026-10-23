@@ -75,13 +75,13 @@ def status_updated(data: Mapping[str, Any], *, event_id: str) -> WorkflowEvent:
 async def emit_message_received(data: Mapping[str, Any], *, event_id: str) -> None:
     from services.events.dispatch import emit
 
-    await emit(message_received(data, event_id=event_id), wire_routing_key=_MESSAGE_WIRE_KEY)
+    await emit(message_received(data, event_id=event_id), wire_routing_key=_MESSAGE_WIRE_KEY, broadcast=False)
 
 
 async def emit_status_updated(data: Mapping[str, Any], *, event_id: str) -> None:
     from services.events.dispatch import emit
 
-    await emit(status_updated(data, event_id=event_id), wire_routing_key=_STATUS_WIRE_KEY)
+    await emit(status_updated(data, event_id=event_id), wire_routing_key=_STATUS_WIRE_KEY, broadcast=False)
 
 
 __all__ = [

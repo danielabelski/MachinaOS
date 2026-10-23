@@ -26,7 +26,8 @@ from services.events.envelope import WorkflowEvent
 # The exact string ``register_canary_trigger_type`` records for stripeReceive.
 STRIPE_EVENT_RECEIVED_TYPE = "com.opencompany.stripe.event.received"
 
-# Outer WS wire key for the in-process broadcast half of ``emit``.
+# Outer wire key ``emit`` names the event with. Not broadcast: a Stripe
+# event carries customer details and no client reads it.
 _WIRE_KEY = "stripe_event_received"
 
 
@@ -57,7 +58,7 @@ def stripe_event_received(
 async def emit_stripe_event(event: WorkflowEvent) -> None:
     from services.events.dispatch import emit
 
-    await emit(event, wire_routing_key=_WIRE_KEY)
+    await emit(event, wire_routing_key=_WIRE_KEY, broadcast=False)
 
 
 __all__ = [

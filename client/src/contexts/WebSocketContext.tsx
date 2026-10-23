@@ -425,27 +425,6 @@ export interface TerminalLogEntry {
   details?: any;
 }
 
-// WhatsApp received message structure (from Go service via whatsapp_message_received event)
-export interface WhatsAppMessage {
-  message_id: string;
-  sender: string;
-  chat_id: string;
-  type: 'text' | 'image' | 'video' | 'audio' | 'document' | 'location' | 'contact' | 'sticker';
-  text?: string;
-  timestamp: number;
-  is_group: boolean;
-  push_name?: string;
-  media_url?: string;
-  media_data?: string;  // Base64 if includeMediaData is enabled
-  caption?: string;
-  // Location message fields
-  latitude?: number;
-  longitude?: number;
-  // Contact message fields
-  contact_name?: string;
-  vcard?: string;
-}
-
 export interface NodeParameters {
   parameters: Record<string, any>;
   version: number;
@@ -491,8 +470,6 @@ interface WebSocketContextValue {
   twitterStatus: TwitterStatus;
   googleStatus: GoogleStatus;
   telegramStatus: TelegramStatus;
-  whatsappMessages: WhatsAppMessage[];  // History of received messages
-  lastWhatsAppMessage: WhatsAppMessage | null;  // Most recent message
   apiKeyStatuses: Record<string, ApiKeyStatus>;
   consoleLogs: ConsoleLogEntry[];  // Console node output logs
   terminalLogs: TerminalLogEntry[];  // Server/terminal logs
@@ -515,7 +492,6 @@ interface WebSocketContextValue {
   updateCompactionStats: (workflowId: string, sessionId: string, stats: CompactionStats) => void;
   requestStatus: () => void;
   clearNodeStatus: (nodeId: string) => Promise<void>;
-  clearWhatsAppMessages: () => void;
   clearConsoleLogs: () => void;
   clearTerminalLogs: () => void;
 
@@ -819,9 +795,6 @@ const getWebSocketUrl = () => {
   return `${wsUrl}/ws/status`;
 };
 
-// Max number of WhatsApp messages to keep in history
-const MAX_WHATSAPP_MESSAGE_HISTORY = 100;
-
 export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   // Get authentication state - only connect WebSocket when authenticated
   const { isAuthenticated, isLoading: authLoading } = useAuth();
@@ -841,8 +814,6 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const [twitterStatus, setTwitterStatus] = useState<TwitterStatus>(defaultTwitterStatus);
   const [googleStatus, setGoogleStatus] = useState<GoogleStatus>(defaultGoogleStatus);
   const [telegramStatus, setTelegramStatus] = useState<TelegramStatus>(defaultTelegramStatus);
-  const [whatsappMessages, setWhatsappMessages] = useState<WhatsAppMessage[]>([]);
-  const [lastWhatsAppMessage, setLastWhatsAppMessage] = useState<WhatsAppMessage | null>(null);
   const [apiKeyStatuses, setApiKeyStatuses] = useState<Record<string, ApiKeyStatus>>({});
   const [consoleLogs, setConsoleLogs] = useState<ConsoleLogEntry[]>([]);
   const [terminalLogs, setTerminalLogs] = useState<TerminalLogEntry[]>([]);
@@ -1393,39 +1364,6 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ chi
               name: data.name,
             });
             invalidateCatalogue(queryClient);
-          }
-          break;
-
-        case 'whatsapp_message_received':
-          // Handle incoming WhatsApp message from Go service
-          if (data) {
-            const message: WhatsAppMessage = {
-              message_id: data.message_id || data.id || '',
-              sender: data.sender || data.from || '',
-              chat_id: data.chat_id || data.chat || '',
-              type: data.type || 'text',
-              text: data.text || data.message || data.body || '',
-              timestamp: data.timestamp || Date.now(),
-              is_group: data.is_group || data.isGroup || false,
-              push_name: data.push_name || data.pushName || data.name,
-              media_url: data.media_url || data.mediaUrl,
-              media_data: data.media_data || data.mediaData,
-              caption: data.caption,
-              latitude: data.latitude,
-              longitude: data.longitude,
-              contact_name: data.contact_name || data.contactName,
-              vcard: data.vcard
-            };
-
-            // Update last message
-            setLastWhatsAppMessage(message);
-
-            // Add to message history (newest first, limit size)
-            setWhatsappMessages(prev => {
-              const updated = [message, ...prev];
-              return updated.slice(0, MAX_WHATSAPP_MESSAGE_HISTORY);
-            });
-
           }
           break;
 
@@ -2415,12 +2353,6 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     } catch (err) {
       console.error('[WebSocket] Failed to clear backend node output:', err);
     }
-  }, []);
-
-  // Clear WhatsApp message history
-  const clearWhatsAppMessages = useCallback(() => {
-    setWhatsappMessages([]);
-    setLastWhatsAppMessage(null);
   }, []);
 
   // Clear console logs (both local state and database). Scoped to
@@ -3770,8 +3702,6 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     twitterStatus,
     googleStatus,
     telegramStatus,
-    whatsappMessages,
-    lastWhatsAppMessage,
     apiKeyStatuses,
     consoleLogs,
     terminalLogs,
@@ -3794,7 +3724,6 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     getVariable,
     requestStatus,
     clearNodeStatus,
-    clearWhatsAppMessages,
     clearConsoleLogs,
     clearTerminalLogs,
 
@@ -3872,7 +3801,6 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     isConnected, isReady, reconnecting,
     androidStatus, setAndroidStatus,
     whatsappStatus, twitterStatus, googleStatus, telegramStatus,
-    whatsappMessages, lastWhatsAppMessage,
     apiKeyStatuses,
     consoleLogs, terminalLogs,
     nodeStatuses, nodeParameters,
@@ -3880,7 +3808,7 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     compactionStats, updateCompactionStats,
     getNodeStatus, getApiKeyStatus, getVariable,
     requestStatus, clearNodeStatus,
-    clearWhatsAppMessages, clearConsoleLogs, clearTerminalLogs,
+    clearConsoleLogs, clearTerminalLogs,
     sendRequest, addEventListener,
     getNodeParametersAsync, getAllNodeParametersAsync,
     saveNodeParametersAsync, deleteNodeParametersAsync,
@@ -3994,20 +3922,6 @@ export const useDeploymentStatus = (): DeploymentStatus => {
 export const useWorkflowLock = (): WorkflowLock => {
   const { workflowLock } = useWebSocket();
   return workflowLock;
-};
-
-// Hook specifically for WhatsApp messages (for trigger nodes)
-export const useWhatsAppMessages = (): {
-  messages: WhatsAppMessage[];
-  lastMessage: WhatsAppMessage | null;
-  clearMessages: () => void;
-} => {
-  const { whatsappMessages, lastWhatsAppMessage, clearWhatsAppMessages } = useWebSocket();
-  return {
-    messages: whatsappMessages,
-    lastMessage: lastWhatsAppMessage,
-    clearMessages: clearWhatsAppMessages
-  };
 };
 
 // Hook to check if a tool is currently being executed by any AI Agent

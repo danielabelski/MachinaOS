@@ -1,12 +1,10 @@
-"""Wave 12 C1 rollout #4: whatsappReceive producer dual-emit invariant.
+"""Wave 12 C1 rollout #4: whatsappReceive producer invariant.
 
-Locks the contract: ``nodes.whatsapp._events.broadcast_whatsapp_message``
-must fan out incoming (``direction="received"``) messages to the
-Temporal-durable ``services.events.dispatch.emit`` path so canary
-listeners can consume them. Outbound (``direction="sent"``) messages
-are pure observation — no trigger node consumes them, so the
-``dispatch.emit`` call is gated on direction == "received" inside
-the broadcaster.
+Locks the contract: ``nodes.whatsapp._events.emit_whatsapp_message_received``
+sends incoming messages through the Temporal-durable
+``services.events.dispatch.emit`` path so canary listeners can consume
+them, without broadcasting them to every socket. Outbound messages are
+not emitted or broadcast at all: nothing consumes them.
 
 Same regex-introspection + runtime smoke pattern used for
 webhookTrigger / chatTrigger / taskTrigger / telegramReceive
@@ -16,7 +14,6 @@ producers in this series.
 from __future__ import annotations
 
 import inspect
-import re
 import sys
 import types
 from typing import Any, Dict, List
@@ -34,12 +31,8 @@ if "cli" not in sys.modules:
     sys.modules["cli.tcp"] = _opencompany_tcp
 
 
-_EVENTS_EMIT_PATTERN = re.compile(r"\bemit\s*\(")
-_DIRECTION_GUARD_PATTERN = re.compile(r"direction\s*==\s*[\"']received[\"']")
-
-
 class TestWhatsappProducerDualEmit:
-    """Producer wrapper fans out received messages to the canary path."""
+    """Producer wrapper sends received messages to the canary path."""
 
     def test_redelivery_keeps_the_id_scoped_to_chat_and_direction(self):
         from nodes.whatsapp._events import whatsapp_message_event
@@ -60,31 +53,15 @@ class TestWhatsappProducerDualEmit:
 
         assert whatsapp_message_event("received", payload).id != whatsapp_message_event("received", payload).id
 
-    def test_broadcaster_is_async(self):
-        from nodes.whatsapp._events import broadcast_whatsapp_message
+    def test_emitter_is_async(self):
+        from nodes.whatsapp._events import emit_whatsapp_message_received
 
-        assert inspect.iscoroutinefunction(broadcast_whatsapp_message)
-
-    def test_broadcaster_calls_dispatch_emit_for_received(self):
-        from nodes.whatsapp import _events
-
-        src = inspect.getsource(_events.broadcast_whatsapp_message)
-
-        assert _EVENTS_EMIT_PATTERN.search(src), (
-            "broadcast_whatsapp_message must call "
-            "services.events.dispatch.emit(...) so canary "
-            "TriggerListenerWorkflow consumers receive incoming "
-            "WhatsApp messages."
-        )
-
-        assert _DIRECTION_GUARD_PATTERN.search(src), (
-            "broadcast_whatsapp_message must gate the dispatch.emit "
-            "call on direction == 'received' — outbound 'sent' events "
-            "are pure observation and have no trigger consumers."
-        )
+        assert inspect.iscoroutinefunction(emit_whatsapp_message_received)
 
     @pytest.mark.asyncio
-    async def test_received_message_fires_dispatch_emit(self, monkeypatch):
+    async def test_received_message_reaches_triggers_and_is_not_broadcast(self, monkeypatch):
+        """The message is a customer's content: it goes to the deployed
+        triggers only, never to every connected socket (RFC-0005 Phase 0.9)."""
         from nodes.whatsapp import _events
         from services.events import dispatch as dispatch_mod
         from services import status_broadcaster as sb
@@ -101,8 +78,7 @@ class TestWhatsappProducerDualEmit:
         monkeypatch.setattr(sb, "get_status_broadcaster", lambda: broadcaster)
         monkeypatch.setattr(dispatch_mod, "emit", fake_emit)
 
-        await _events.broadcast_whatsapp_message(
-            "received",
+        await _events.emit_whatsapp_message_received(
             {
                 "chat_id": "123@s.whatsapp.net",
                 "text": "hello",
@@ -111,58 +87,22 @@ class TestWhatsappProducerDualEmit:
             },
         )
 
-        # Legacy raw frame still goes out so the existing FE message-list
-        # handler at WebSocketContext.tsx (which reads ``data.*``)
-        # keeps working until the Wave 12 D4 follow-up migrates it to
-        # envelope-shape. The duplicate typed-envelope WS broadcast was
-        # dropped in Wave 13 — dispatch.emit broadcasts the envelope on
-        # the same wire key once.
-        assert broadcaster.broadcast.await_count == 1
-
-        # And the canary path fires exactly once.
+        broadcaster.broadcast.assert_not_awaited()
         assert len(emit_calls) == 1
         envelope = emit_calls[0]["event"]
         assert envelope.type == "com.opencompany.whatsapp.message.received"
         assert envelope.subject == "123@s.whatsapp.net"
         assert emit_calls[0]["wire_routing_key"] == "whatsapp_message_received"
+        assert emit_calls[0]["broadcast"] is False
 
-    @pytest.mark.asyncio
-    async def test_sent_message_does_not_fire_dispatch_emit(self, monkeypatch):
-        """Outbound message — observation only, no trigger consumer.
+    def test_outbound_messages_are_not_broadcast(self):
+        """The bridge's message_sent events used to carry each outbound
+        message to every socket, and no client read them."""
+        from nodes.whatsapp import _events, _service
 
-        Skipping the canary fan-out here keeps the Visibility query +
-        signal load proportional to actual trigger demand. Without the
-        guard, every outbound message would query Temporal Visibility
-        with zero matches every time.
-        """
-        from nodes.whatsapp import _events
-        from services.events import dispatch as dispatch_mod
-        from services import status_broadcaster as sb
-
-        emit_calls: List[Any] = []
-
-        async def fake_emit(event, **kwargs):
-            emit_calls.append(event)
-            return event
-
-        broadcaster = MagicMock()
-        broadcaster.broadcast = AsyncMock()
-
-        monkeypatch.setattr(sb, "get_status_broadcaster", lambda: broadcaster)
-        monkeypatch.setattr(dispatch_mod, "emit", fake_emit)
-
-        await _events.broadcast_whatsapp_message(
-            "sent",
-            {"chat_id": "123@s.whatsapp.net", "text": "hi"},
-        )
-
-        # Single legacy raw broadcast for the FE message-list
-        # observation channel — duplicate typed-envelope sibling dropped
-        # in Wave 13.
-        assert broadcaster.broadcast.await_count == 1
-
-        # No canary fan-out (no trigger consumes outbound).
-        assert emit_calls == []
+        assert not hasattr(_events, "broadcast_whatsapp_message")
+        assert "whatsapp_message_sent" not in inspect.getsource(_events)
+        assert 'method == "event.message_sent"' not in inspect.getsource(_service)
 
 
 class TestWhatsappPluginSelfRegistersCanary:

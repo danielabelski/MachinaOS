@@ -148,9 +148,9 @@ class RPCClient:
             # shape. No more direct broadcaster.* reaches into framework.
             from . import (
                 broadcast_whatsapp_history_synced,
-                broadcast_whatsapp_message,
                 broadcast_whatsapp_newsletter,
                 broadcast_whatsapp_status,
+                emit_whatsapp_message_received,
             )
 
             if method == "event.status":
@@ -235,12 +235,9 @@ class RPCClient:
                     qr=qr_image,
                 )
 
-            elif method == "event.message_sent":
-                await broadcast_whatsapp_message("sent", params)
-
             elif method == "event.message_received":
                 # Includes newsletter messages with newsletter_meta field.
-                await broadcast_whatsapp_message("received", params)
+                await emit_whatsapp_message_received(params)
 
             elif method == "event.newsletter_join":
                 await broadcast_whatsapp_newsletter("joined", params)

@@ -4,8 +4,8 @@ Per RFC plugin_authoring_rfc.md §6.4: plugin-specific factories live in
 the plugin folder.
 
 Delivery: single ``dispatch.emit`` call routes events to running
-:class:`TriggerListenerWorkflow` consumers via Temporal Visibility AND
-broadcasts the envelope to FE on the ``email_received`` wire key.
+:class:`TriggerListenerWorkflow` consumers via Temporal Visibility. Not
+broadcast: an email is someone's content and no client reads it.
 emailReceive is canary-registered (see ``nodes/email/__init__.py``) so
 the deployment manager skips ``setup_event_trigger`` and the legacy
 ``event_waiter.dispatch`` path has zero consumers — removed.
@@ -45,6 +45,7 @@ async def dispatch_email_received(email_data: Mapping[str, Any]) -> None:
     await emit(
         email_message_received(dict(email_data)),
         wire_routing_key=_WIRE_ROUTING_KEY,
+        broadcast=False,
     )
 
 

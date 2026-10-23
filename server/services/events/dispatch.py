@@ -64,7 +64,7 @@ async def emit(
     event: WorkflowEvent,
     *,
     wire_routing_key: Optional[str] = None,
-    broadcast: bool = True,
+    broadcast: bool,
 ) -> WorkflowEvent:
     """Route ``event`` to running consumer workflows + in-process WS clients.
 
@@ -76,10 +76,11 @@ async def emit(
             field on the WS frame). Defaults to the generic
             ``cloudevent`` channel; plugin emitters override per their
             existing wire key (e.g. ``"telegram_message_received"``).
-        broadcast: ``False`` skips the WebSocket fan-out. The broadcast
-            reaches every connected socket, so an event whose payload is
-            one owner's content (a chat message) must not ride it; its
-            consumers are the workflows signalled here.
+        broadcast: Whether the envelope also goes to every connected
+            socket. Required, so every producer decides: an event whose
+            payload is someone's content (a chat or channel message, a
+            webhook body) passes ``False``; its consumers are the workflows
+            signalled here. ``True`` only for a frame a client reads.
 
     Returns:
         The envelope unchanged — callers may chain.

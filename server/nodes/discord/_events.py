@@ -92,20 +92,21 @@ async def broadcast_discord_status(
 
 
 async def dispatch_discord_message_received(event_data: Mapping[str, Any]) -> None:
-    """Single delivery path: Temporal listeners and the in-process socket.
+    """Single delivery path: Temporal listeners. Not broadcast: a message is
+    someone's content and no client reads it.
 
     ``emit`` is a no-op unless ``Settings.event_framework_enabled``, so the
     legacy path stays the default.
     """
     from services.events.dispatch import emit
 
-    await emit(discord_message_received(event_data), wire_routing_key=MESSAGE_WIRE_KEY)
+    await emit(discord_message_received(event_data), wire_routing_key=MESSAGE_WIRE_KEY, broadcast=False)
 
 
 async def dispatch_discord_interaction_created(event_data: Mapping[str, Any]) -> None:
     from services.events.dispatch import emit
 
-    await emit(discord_interaction_created(event_data), wire_routing_key=INTERACTION_WIRE_KEY)
+    await emit(discord_interaction_created(event_data), wire_routing_key=INTERACTION_WIRE_KEY, broadcast=False)
 
 
 __all__ = [

@@ -150,16 +150,17 @@ async def dispatch_telegram_message_received(event_data: Mapping[str, Any]) -> N
     """Dispatch an incoming Telegram message via the canary CloudEvents path.
 
     Single delivery: :func:`services.events.dispatch.emit` Signals running
-    :class:`TriggerListenerWorkflow` consumers via Temporal Visibility AND
-    broadcasts the envelope to FE on the ``telegram_message_received``
-    wire key. telegramReceive is canary-registered so no legacy
-    ``event_waiter`` waiter is ever registered for it.
+    :class:`TriggerListenerWorkflow` consumers via Temporal Visibility. Not
+    broadcast: the message is someone's content and no client reads it.
+    telegramReceive is canary-registered so no legacy ``event_waiter``
+    waiter is ever registered for it.
     """
     from services.events.dispatch import emit
 
     await emit(
         telegram_message_received(dict(event_data)),
         wire_routing_key=_MESSAGE_LEGACY_EVENT_TYPE,
+        broadcast=False,
     )
 
 

@@ -32,9 +32,9 @@ from services.ws_handler_registry import (
 from ._credentials import WhatsAppCredential  # noqa: F401 — side-effect register
 from ._events import (  # noqa: F401 — re-exported for callers
     broadcast_whatsapp_history_synced,
-    broadcast_whatsapp_message,
     broadcast_whatsapp_newsletter,
     broadcast_whatsapp_status,
+    emit_whatsapp_message_received,
 )
 from ._filters import build_filter as build_whatsapp_filter
 from ._handlers import WS_HANDLERS
@@ -71,7 +71,7 @@ register_option_loader("whatsappGroupMembers", load_group_members)
 
 # Wave 12 C1 rollout #4: opt whatsappReceive into the
 # TriggerListenerWorkflow consumer path. Producer side:
-# broadcast_whatsapp_message(direction="received", ...) in ._events.py
+# emit_whatsapp_message_received in ._events.py
 # fans out via services.events.dispatch.emit; emit() is gated by
 # Settings.event_framework_enabled so the legacy path stays default.
 # See services/deployment/canary_registry.py.

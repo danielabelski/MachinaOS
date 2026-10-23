@@ -134,7 +134,8 @@ class TestStripeWebhookShape:
         # by emit alone, which the base WebhookSource.handle never calls.
         emit.assert_awaited_once()
         assert emit.await_args.args == (ev,)
-        assert emit.await_args.kwargs == {"wire_routing_key": "stripe_event_received"}
+        # Stripe events carry customer details and no client reads them.
+        assert emit.await_args.kwargs == {"wire_routing_key": "stripe_event_received", "broadcast": False}
 
     def test_handle_rejects_tampered_signature(self):
         from fastapi import HTTPException

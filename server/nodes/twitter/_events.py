@@ -90,6 +90,7 @@ async def dispatch_twitter_event_received(event_data: Mapping[str, Any]) -> int:
     await emit(
         twitter_event_received(payload),
         wire_routing_key=_LEGACY_EVENT_TYPE,
+        broadcast=False,
     )
 
     return resolved
