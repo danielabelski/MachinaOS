@@ -8,7 +8,10 @@ Two dispatch paths:
    and wakes a waiting canvas Run; the plugin's override emits the event
    to deployed triggers.
 2. **Generic webhook.** Paths no plugin claims reach ``webhookTrigger``
-   nodes through ``nodes/trigger/webhook_trigger/_events``.
+   nodes through ``nodes/trigger/webhook_trigger/_routes.deliver_webhook``,
+   which answers 404 for a path no running workflow declares, 405 for a
+   method none of its triggers accepts and 401 when the header check
+   fails.
 
 Both read the body through ``read_body_capped``, so a body larger than
 ``WEBHOOK_MAX_BODY_BYTES`` is refused with 413 before it reaches a
@@ -23,12 +26,16 @@ import logging
 
 from services.events import WEBHOOK_SOURCES
 from services.events.webhook import read_body_capped
-# Wave 12 B9: webhook event dispatch moved to
-# ``nodes/trigger/webhook_trigger/_events.broadcast_webhook_received``.
-# The router no longer reaches into the broadcaster directly.
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/webhook", tags=["webhook"])
+
+# What the generic route answers when ``deliver_webhook`` refuses a request.
+_REFUSALS = {
+    404: "No running workflow has a webhook at this path.",
+    405: "No webhook at this path accepts this method.",
+    401: "Missing or wrong authentication header.",
+}
 
 # Pending responses: path -> asyncio.Future (for responseNode mode)
 _pending_responses: Dict[str, asyncio.Future] = {}
@@ -89,21 +96,21 @@ async def handle_webhook(path: str, request: Request):
         except Exception:
             pass
 
-    webhook_data = {
-        "method": request.method,
-        "path": path,
-        "headers": dict(request.headers),
-        "query": dict(request.query_params),
-        "body": body.decode("utf-8") if isinstance(body, bytes) else (body if body else ""),
-        "json": json_body,
-    }
+    from core.container import container
+    from nodes.trigger.webhook_trigger._routes import deliver_webhook
 
-    logger.info(f"[Webhook] Received: {request.method} /webhook/{path}")
-
-    # Wave 12 B9: route through plugin _events.py wrapper.
-    from nodes.trigger.webhook_trigger._events import broadcast_webhook_received
-
-    await broadcast_webhook_received(webhook_data)
+    status = await deliver_webhook(
+        container.database(),
+        method=request.method,
+        path=path,
+        headers=dict(request.headers),
+        query=dict(request.query_params),
+        body=body.decode("utf-8") if body else "",
+        json_body=json_body,
+    )
+    logger.info(f"[Webhook] {request.method} /webhook/{path} -> {status}")
+    if status != 200:
+        return JSONResponse({"status": "refused", "path": path, "error": _REFUSALS[status]}, status_code=status)
 
     return JSONResponse(
         content={"status": "received", "path": path, "message": "Webhook received and dispatched to workflow"}, status_code=200

@@ -1,8 +1,10 @@
 """Webhook Trigger — Wave 11.B reference migration (event-based trigger).
 
-Listens for inbound HTTP requests dispatched into ``services.event_waiter``
-by ``routers/webhook.py``. Filter narrows to a specific ``path``. No
-credentials, no HTTP egress — the routing layer injects the event.
+Listens for inbound HTTP requests on ``/webhook/{path}``.
+``_routes.deliver_webhook`` (called by ``routers/webhook.py``) enforces the
+trigger's path, method and header authentication before anything reaches a
+workflow, and scopes the event to the workflow that declares the path; the
+filter narrows to the ``path``. No credentials, no HTTP egress.
 
 Replaces:
 - ``server/nodes/triggers.py:webhookTrigger`` metadata-only registration
@@ -88,15 +90,25 @@ class WebhookTriggerNode(TriggerNode):
     Output = WebhookTriggerOutput
 
     def build_filter(self, params: WebhookTriggerParams) -> Callable[[Dict[str, Any]], bool]:
-        """Narrow dispatched events to this trigger's path."""
+        """Narrow dispatched events to this trigger's path. A trigger with
+        no path matches nothing: it used to match every webhook."""
         expected_path = params.path or ""
 
         def matches(event: Dict[str, Any]) -> bool:
-            if expected_path and event.get("path") != expected_path:
-                return False
-            return True
+            return bool(expected_path) and event.get("path") == expected_path
 
         return matches
+
+    @classmethod
+    def validate_graph(cls, node_id: str, graph: Dict[str, Any]) -> list[Dict[str, Any]]:
+        """Refuse a Start whose webhook has no path: ``/webhook/`` with no
+        path would reach nothing, and an empty path used to match every
+        webhook sent to the instance."""
+        params = (graph.get("parameters") or {}).get(node_id)
+        if params is None or (params.get("path") or "").strip():
+            return []
+        return [{"code": "WEBHOOK_PATH_REQUIRED", "node_id": node_id,
+                 "message": "Give the webhook a path; it is the address callers send to (/webhook/<path>)."}]
 
     # Event triggers don't run a body — the base class handles the
     # ``event_waiter.register()`` + ``await future`` flow. Declare the
@@ -108,6 +120,6 @@ class WebhookTriggerNode(TriggerNode):
 
 # Wave 12 C1 canary: opt this trigger type into TriggerListenerWorkflow.
 # Gated runtime by Settings.event_framework_enabled in DeploymentManager;
-# the producer side (broadcast_webhook_received calling dispatch.emit) is
+# the producer side (_routes.deliver_webhook calling dispatch.emit) is
 # unconditional. See services/deployment/canary_registry.py.
 register_canary_trigger_type(WebhookTriggerNode.type, "com.opencompany.webhook.received")

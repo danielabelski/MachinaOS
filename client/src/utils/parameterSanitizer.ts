@@ -41,6 +41,7 @@ const SENSITIVE_EXACT_KEYS = normalizedSet([
   'private_key',
   'encryption_key',
   'oauth_token',
+  'header_value', // webhookTrigger's expected authentication header
 ]);
 
 // Legitimate parameter names that contain sensitive substrings but are NOT

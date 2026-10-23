@@ -5,7 +5,7 @@ whether a GET is a provider subscription handshake (answered by the source
 with its own Response) or ordinary traffic (handled by ``handle()``).
 """
 
-from unittest.mock import patch
+from unittest.mock import AsyncMock, patch
 
 import pytest
 from fastapi import FastAPI
@@ -14,6 +14,10 @@ from fastapi.testclient import TestClient
 
 from routers.webhook import router
 from services.events import WEBHOOK_SOURCES, WebhookSource, WorkflowEvent
+
+# Delivery to deployed webhookTrigger nodes; its own tests are in
+# tests/nodes/test_webhook_trigger_routes.py.
+_DELIVER = "nodes.trigger.webhook_trigger._routes.deliver_webhook"
 
 
 @pytest.fixture
@@ -129,11 +133,11 @@ class TestBodyCap:
         monkeypatch.setenv("WEBHOOK_MAX_BODY_BYTES", "16")
         clean_registry.clear()
 
-        with patch("nodes.trigger.webhook_trigger._events.broadcast_webhook_received") as broadcast:
+        with patch(_DELIVER, new=AsyncMock(return_value=200)) as deliver:
             resp = client.post("/webhook/unclaimed", content=b"x" * 17)
 
         assert resp.status_code == 413
-        broadcast.assert_not_called()
+        deliver.assert_not_awaited()
 
     def test_a_streamed_body_without_a_length_is_capped_by_what_arrives(self, client, clean_registry, monkeypatch):
         monkeypatch.setenv("WEBHOOK_MAX_BODY_BYTES", "16")
@@ -143,11 +147,11 @@ class TestBodyCap:
             yield b"x" * 10
             yield b"x" * 10
 
-        with patch("nodes.trigger.webhook_trigger._events.broadcast_webhook_received") as broadcast:
+        with patch(_DELIVER, new=AsyncMock(return_value=200)) as deliver:
             resp = client.post("/webhook/unclaimed", content=chunks())
 
         assert resp.status_code == 413
-        broadcast.assert_not_called()
+        deliver.assert_not_awaited()
 
     def test_a_registered_source_is_capped_too(self, client, clean_registry, monkeypatch):
         monkeypatch.setenv("WEBHOOK_MAX_BODY_BYTES", "16")
@@ -178,11 +182,20 @@ class TestLegacyFallback:
         """An unregistered path must keep firing webhookTrigger nodes."""
         clean_registry.clear()
 
-        with patch("nodes.trigger.webhook_trigger._events.broadcast_webhook_received") as broadcast:
+        with patch(_DELIVER, new=AsyncMock(return_value=200)) as deliver:
             resp = client.post("/webhook/unclaimed", json={"hello": "world"})
 
         assert resp.status_code == 200
-        broadcast.assert_called_once()
-        payload = broadcast.call_args[0][0]
-        assert payload["path"] == "unclaimed"
-        assert payload["json"] == {"hello": "world"}
+        deliver.assert_awaited_once()
+        assert deliver.await_args.kwargs["path"] == "unclaimed"
+        assert deliver.await_args.kwargs["json_body"] == {"hello": "world"}
+
+    @pytest.mark.parametrize("status", [401, 404, 405])
+    def test_a_refusal_is_answered_with_its_status(self, client, clean_registry, status):
+        clean_registry.clear()
+
+        with patch(_DELIVER, new=AsyncMock(return_value=status)):
+            resp = client.post("/webhook/unclaimed", json={"hello": "world"})
+
+        assert resp.status_code == status
+        assert resp.json()["status"] == "refused"

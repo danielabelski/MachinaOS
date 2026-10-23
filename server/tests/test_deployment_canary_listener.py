@@ -346,7 +346,9 @@ class TestStartCanaryListener:
         )
 
         node = _node("wh-1", "webhookTrigger")
-        listener_id = await mgr._start_canary_listener(node, "wf-abc", params={"path": "hook"})
+        listener_id = await mgr._start_canary_listener(
+            node, "wf-abc", params={"path": "hook", "authentication": "header", "header_value": "s3cret"},
+        )
 
         # Wave 14: listener id = ``<workflow_slug>-<trigger_label>``.
         # Slug falls back to workflow_id ("wf-abc") when no DB row;
@@ -359,6 +361,9 @@ class TestStartCanaryListener:
         assert call["id_conflict_policy"] == WorkflowIDConflictPolicy.USE_EXISTING
         assert call["task_queue"] == "machina-tasks"
         assert call["args"][0]["user_id"] == "account-21"
+        # The listener's input is Temporal history: the webhook's expected
+        # header value stays out of it (the router checks it at the edge).
+        assert call["args"][0]["filter_params"] == {"path": "hook", "authentication": "header"}
         # New listeners freeze the Coding runtime before later graph firings.
         assert call["args"][0]["_temporal_routing_v1"] == {
             "version": 1,

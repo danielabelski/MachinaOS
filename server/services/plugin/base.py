@@ -236,9 +236,11 @@ class BaseNode:
     ) -> Dict[str, Any]:
         return {"reset": False}
 
-    # Wiring this node needs to run, checked before Start and import
-    # (services/workflow_validator.py). Returns validator errors,
-    # ``{"code", "node_id", "message"}``; none by default.
+    # Wiring and configuration this node needs to run, checked before Start
+    # and import (services/workflow_validator.py). ``graph`` holds ``nodes``,
+    # ``edges`` and the ``parameters`` the caller supplied by node id (a node
+    # may be absent). Returns validator errors, ``{"code", "node_id",
+    # "message"}``; none by default.
     @classmethod
     def validate_graph(cls, node_id: str, graph: Dict[str, Any]) -> Sequence[Dict[str, Any]]:
         return ()

@@ -182,10 +182,9 @@ def build_webhook_filter(params: Dict) -> Callable[[Dict], bool]:
     webhook_path = params.get("path", "")
 
     def matches(data: Dict) -> bool:
-        event_path = data.get("path", "")
-        if webhook_path and event_path != webhook_path:
-            return False
-        return True
+        # A trigger with no path matches nothing; it used to match every
+        # webhook sent to the instance.
+        return bool(webhook_path) and data.get("path", "") == webhook_path
 
     return matches
 

@@ -1,13 +1,15 @@
-"""CloudEvents factory + broadcaster wrapper for webhook_trigger.
+"""CloudEvents factory + emit wrapper for webhook_trigger.
 
 Per RFC plugin_authoring_rfc.md §6.4: plugin-specific factories live in
 the plugin folder.
 
-Delivery: single ``dispatch.emit`` call routes events to running
-:class:`TriggerListenerWorkflow` consumers via Temporal Visibility AND
-broadcasts the envelope to FE on the ``webhook_received`` wire key.
-webhookTrigger is canary-registered (see ``nodes/trigger/webhook_trigger/__init__.py``)
-so the deployment manager skips ``setup_event_trigger`` and the legacy
+Delivery: ``_routes.deliver_webhook`` calls :func:`emit_webhook_received`
+once per workflow that declares the path. The envelope is scoped to that
+workflow, so ``dispatch.emit`` signals only its consumers, and it is never
+broadcast: it carries the caller's headers and body, and no client reads
+it. webhookTrigger is canary-registered (see
+``nodes/trigger/webhook_trigger/__init__.py``) so the deployment manager
+skips ``setup_event_trigger`` and the legacy
 ``broadcaster.send_custom_event`` path (which dispatched to
 ``event_waiter``) has zero consumers — removed.
 """
@@ -38,17 +40,16 @@ def webhook_received(webhook_data: Mapping[str, Any]) -> WorkflowEvent:
     )
 
 
-async def broadcast_webhook_received(webhook_data: Mapping[str, Any]) -> None:
-    """Broadcast an incoming webhook via the canary CloudEvents path."""
+async def emit_webhook_received(webhook_data: Mapping[str, Any], *, workflow_id: str) -> None:
+    """Deliver an incoming webhook to the triggers of ``workflow_id``."""
     from services.events.dispatch import emit
 
-    await emit(
-        webhook_received(dict(webhook_data)),
-        wire_routing_key=_WIRE_ROUTING_KEY,
-    )
+    event = webhook_received(dict(webhook_data))
+    event.workflow_id = workflow_id
+    await emit(event, wire_routing_key=_WIRE_ROUTING_KEY, broadcast=False)
 
 
 __all__ = [
-    "broadcast_webhook_received",
+    "emit_webhook_received",
     "webhook_received",
 ]

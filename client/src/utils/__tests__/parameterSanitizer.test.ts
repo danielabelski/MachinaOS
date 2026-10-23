@@ -103,6 +103,16 @@ describe('sanitizeParameters', () => {
       expect(out).toEqual({ keep_me: 'ok' });
     });
 
+    it("strips a webhook trigger's expected header value but keeps its header name", () => {
+      const out = sanitizeParameters({
+        path: 'orders',
+        authentication: 'header',
+        header_name: 'X-API-Key',
+        header_value: 'the-shared-secret',
+      });
+      expect(out).toEqual({ path: 'orders', authentication: 'header', header_name: 'X-API-Key' });
+    });
+
     it('keeps cloud_tool_key, which is an identifier and not a credential', () => {
       // A blanket `endsWith("key")` rule would discard this identifier
       // when exporting legacy workflow configuration.

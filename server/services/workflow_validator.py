@@ -295,7 +295,7 @@ async def validate_workflow(
     # 4. Missing credentials. Warnings (a workflow can be saved with missing
     #    credentials and configured later — only at force=True execute does
     #    it become a runtime error).
-    graph = {"nodes": nodes, "edges": edges}
+    graph = {"nodes": nodes, "edges": edges, "parameters": parameters_by_id}
     for n in nodes:
         node_id = n.get("id")
         node_type = n.get("type", "")

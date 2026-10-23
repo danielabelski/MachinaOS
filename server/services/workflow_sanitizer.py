@@ -45,6 +45,10 @@ _BLOCKED_EXACT = frozenset(
         "reasoningsignature",
         "encryptedreasoning",
         "encryptedcontent",
+        # webhookTrigger's expected header secret: the router reads it from
+        # the saved parameters, so it never needs to ride a snapshot or a
+        # Temporal input.
+        "headervalue",
     }
 )
 

@@ -19,6 +19,7 @@ from constants import POLLING_TRIGGER_TYPES, WORKFLOW_TRIGGER_TYPES
 from services import event_waiter
 from services.events.envelope import equivalent_event_types
 from services.run_graph import collect_downstream_node_ids
+from services.workflow_sanitizer import sanitize_runtime_payload
 from .state import DeploymentState, TriggerInfo
 from .triggers import TriggerManager
 
@@ -899,7 +900,9 @@ class DeploymentManager:
             "trigger_label": trigger_label,
             "node_type": node_type,
             "event_type": event_type,
-            "filter_params": params,
+            # The listener's input is Temporal history; a secret parameter
+            # (a webhook's expected header value) has no use in a filter.
+            "filter_params": sanitize_runtime_payload(params),
             "nodes": state.nodes,
             "edges": state.edges,
             "parameter_snapshot": state.parameter_snapshot,

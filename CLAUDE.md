@@ -701,7 +701,7 @@ Node groups (palette categories) are registered in [`server/nodes/groups.py`](./
 
 #### Webhook Router (`server/routers/webhook.py`)
 - `ANY /webhook/{path}` - Dynamic webhook endpoint for incoming HTTP requests (GET, POST, PUT, DELETE, PATCH)
-- A path a plugin registered with `register_webhook_source` (Stripe, Dodo Payments, WhatsApp Business) goes to that `WebhookSource`; any other path reaches webhookTrigger nodes through `nodes/trigger/webhook_trigger/_events.broadcast_webhook_received` (`dispatch.emit`)
+- A path a plugin registered with `register_webhook_source` (Stripe, Dodo Payments, WhatsApp Business) goes to that `WebhookSource`; any other path goes to `nodes/trigger/webhook_trigger/_routes.deliver_webhook`, whose route table is the running and paused generations' snapshots: 404 for a path no generation declares, 405 for a method none of its triggers accepts, 401 when the trigger's header check fails (expected value read from the saved node parameters, `hmac.compare_digest`, fail closed). Each matching workflow gets one event scoped to it (`dispatch.emit`, `broadcast=False`), with `authorization`, `cookie`, `proxy-authorization` and the trigger's own header removed. A webhookTrigger with an empty path matches nothing, and Start refuses it (`WEBHOOK_PATH_REQUIRED`)
 - A body larger than `WEBHOOK_MAX_BODY_BYTES` (default in `.env.template`) gets 413 before anything is dispatched (`services/events/webhook.read_body_capped`, also used by Discord interactions), because the body rides into a workflow's input
 - Returns 200 OK once dispatched (responseNode mode planned for future)
 - `GET /webhook/` - Webhook endpoint info and usage documentation
@@ -2749,7 +2749,7 @@ This function:
   - `httpRequest` - Make outgoing HTTP requests with httpx async client
   - `webhookTrigger` - Receive incoming HTTP requests at `/webhook/{path}`
   - `webhookResponse` - Send custom responses back to webhook callers
-  - `server/routers/webhook.py` - Dynamic webhook router using broadcaster.send_custom_event()
+  - `server/routers/webhook.py` - Dynamic webhook router; unclaimed paths go to `nodes/trigger/webhook_trigger/_routes.deliver_webhook` (path, method and header checks, one event scoped to each matching workflow)
   - Output panel shows clean summaries (method, path, body for webhooks; status code for HTTP)
 - **n8n-Pattern Cache System**: Automatic fallback hierarchy for different environments
   - Opt-in (`REDIS_ENABLED=true`; no shipped configuration sets it): Redis → SQLite → Memory

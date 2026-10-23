@@ -139,6 +139,21 @@ second envelope of the same type and id whose data is only `task_id`,
 `status`, `team_id` and `workflow_id`, which is all the Task Manager panel
 reads to refresh.
 
+Third producer: generic webhooks (`nodes/trigger/webhook_trigger/_routes.py`,
+`com.opencompany.webhook.received`). `deliver_webhook` takes its route table
+from the running and paused generations' snapshots and answers 404 for a path
+none declares, 405 for a method none of its triggers accepts, and 401 when
+the trigger's header check fails (expected value read from the saved node
+parameters, never from a snapshot or a Temporal input; compared with
+`hmac.compare_digest`; no configured value refuses). Each workflow with an
+accepting trigger gets one envelope scoped to it, emitted with
+`broadcast=False`; `authorization`, `cookie`, `proxy-authorization` and the
+trigger's own header are removed first. A webhookTrigger with an empty path
+matches nothing, and Start refuses one (`WEBHOOK_PATH_REQUIRED`). Before this
+(RFC-0004 C3) the header check was never made, one webhook fired every
+deployed workflow's trigger, and headers and body were broadcast to every
+socket.
+
 Worker is embedded in the FastAPI process (the `main.py` lifespan schedules
 `run_temporal_lifecycle` from `services/temporal/lifecycle.py` as one
 `asyncio.create_task()` named `temporal-init`; that module owns the connect loop and the
