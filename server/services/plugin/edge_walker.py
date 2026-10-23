@@ -446,6 +446,10 @@ async def _append_skill_entries(
             skills_config["skill"] = configured
         logger.debug(f"{log_prefix} Master Skill found with {len(skills_config)} configured skills")
         entries = await expander(source_node_id, skills_config)
+        from services.agent_runtime_policy import runtime_behavior_version
+        if runtime_behavior_version(skill_params):
+            entries = [{**entry, "parameters": {**(entry.get("parameters") or {}), "runtime_behavior_version": 1}}
+                       for entry in entries]
         skill_data.extend(entries)
         for entry in entries:
             logger.debug(f"{log_prefix} Master Skill enabled: {entry['skill_name']}")

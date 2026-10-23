@@ -7,16 +7,18 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { fireEvent, screen, waitFor, within } from '@testing-library/react';
-import { renderWithProviders } from '../../../test/providers';
+import { makeTestQueryClient, renderWithProviders } from '../../../test/providers';
+import type { AvailableSkill } from '../../../hooks/useFolderSkills';
 
 const sendRequest = vi.hoisted(() => vi.fn());
+const folder = vi.hoisted(() => ({ skills: [] as AvailableSkill[] }));
 
 vi.mock('../../../contexts/WebSocketContext', () => ({
   useWebSocket: () => ({ sendRequest }),
   useNodeStatus: () => undefined,
 }));
 vi.mock('../../../hooks/useFolderSkills', () => ({
-  useFolderSkills: () => ({ data: [], isLoading: false }),
+  useFolderSkills: () => ({ data: folder.skills, isLoading: false }),
 }));
 vi.mock('../../../hooks/useUserSkills', () => ({
   USER_SKILLS_QUERY_KEY: ['userSkills'],
@@ -31,9 +33,11 @@ vi.mock('../../../hooks/useNodeAllowlist', () => ({
 vi.mock('../../../assets/icons', () => ({ NodeIcon: () => null }));
 
 import MasterSkillEditor from '../MasterSkillEditor';
+import { skillContentQueryKey } from '../../../lib/skillContentQueryKey';
 
 beforeEach(() => {
   sendRequest.mockReset();
+  folder.skills = [];
   sendRequest.mockImplementation(async (type: string) => (
     type === 'list_skill_folders'
       ? { success: true, folders: [{ name: 'coding', skill_count: 0 }] }
@@ -42,6 +46,27 @@ beforeEach(() => {
 });
 
 describe('MasterSkillEditor', () => {
+  it('keeps legacy cache identity and isolates defaults and Reset by the saved v1 Master Skill node', async () => {
+    expect(skillContentQueryKey('browser', 'legacy', 0)).toEqual(['skillContent', 'browser']);
+    folder.skills = [{ type: 'browser', skillName: 'browser', displayName: 'Browser', description: 'Browse pages', icon: '', color: '' }];
+    sendRequest.mockImplementation(async (type: string, payload: Record<string, string>) => type === 'get_skill_content'
+      ? { success: true, instructions: `defaults:${payload.master_skill_node_id}` }
+      : { success: true, folders: [] });
+    const queryClient = makeTestQueryClient();
+    // This assertion compares two inactive defaults entries. The shared test
+    // client otherwise deliberately garbage-collects inactive queries at once.
+    queryClient.setQueryDefaults(['skillContent'], { gcTime: Infinity });
+    const onConfigChange = vi.fn();
+    const props = { skillFolder: 'coding', skillsConfig: { browser: { enabled: true, instructions: 'custom', isCustomized: true } }, onConfigChange, runtimeBehaviorVersion: 1 };
+    const view = renderWithProviders(<MasterSkillEditor {...props} nodeId="master-a" />, { queryClient });
+    await waitFor(() => expect(queryClient.getQueryData(skillContentQueryKey('browser', 'master-a', 1))).toBe('defaults:master-a'));
+    view.rerender(<MasterSkillEditor {...props} nodeId="master-b" />);
+    await waitFor(() => expect(queryClient.getQueryData(skillContentQueryKey('browser', 'master-b', 1))).toBe('defaults:master-b'));
+    fireEvent.click(await screen.findByRole('button', { name: 'Reset' }));
+    await waitFor(() => expect(onConfigChange).toHaveBeenCalledWith({ browser: { enabled: true, instructions: 'defaults:master-b', isCustomized: false } }));
+    expect(queryClient.getQueryData(skillContentQueryKey('browser', 'master-a', 1))).toBe('defaults:master-a');
+    expect(sendRequest.mock.calls.filter(([type]) => type === 'get_skill_content').every(([, payload]) => payload.master_skill_node_id)).toBe(true);
+  });
   it('keeps the folder in the row it saves after deleting a user skill', async () => {
     renderWithProviders(
       <MasterSkillEditor

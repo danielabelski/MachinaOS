@@ -47,6 +47,10 @@ async def handle_get_skill_content(data: Dict[str, Any], websocket: WebSocket) -
     skill_loader = get_skill_loader()
 
     skill = await skill_loader.load_skill_async(skill_name)
+    if data.get("master_skill_node_id"):
+        from services.skill_defaults import scoped_defaults_version, v1_default
+        if await scoped_defaults_version(container.database(), websocket, data["master_skill_node_id"]) == 1:
+            skill = v1_default(skill_name, skill)
     if skill:
         return {
             "success": True,
@@ -418,6 +422,13 @@ async def handle_reset_skill(data: Dict[str, Any], websocket: WebSocket) -> Dict
         return {"success": False, "error": f"Skill '{skill_name}' not found"}
 
     metadata = skill_loader._registry[skill_name]
+
+    if data.get("master_skill_node_id"):
+        from services.skill_defaults import scoped_defaults_version, v1_default
+        if await scoped_defaults_version(container.database(), websocket, data["master_skill_node_id"]) == 1:
+            variant = v1_default(skill_name)
+            if variant:
+                return {"success": True, "skill_name": skill_name, "original_content": variant.instructions, "is_builtin": variant.metadata.path is not None}
 
     if metadata.path is None:
         return {"success": False, "error": f"Cannot reset user skill '{skill_name}' - no default exists"}

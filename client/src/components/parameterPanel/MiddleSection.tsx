@@ -557,6 +557,7 @@ const MiddleSection: React.FC<MiddleSectionProps> = ({
               skillFolder={parameters.skill_folder || 'assistant'}
               onSkillFolderChange={(folder) => onParameterChange('skill_folder', folder)}
               nodeId={nodeId}
+              runtimeBehaviorVersion={parameters.runtime_behavior_version === 1 ? 1 : 0}
             />
           </div>
         ) : isTodoEditorNode ? (

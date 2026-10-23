@@ -107,6 +107,9 @@ def _load_authoritative(descriptor: Dict[str, Any]):
     name = descriptor["skill_name"]
     configured = str((descriptor.get("parameters") or {}).get("instructions") or "")
     skill = get_skill_loader().load_skill(name)
+    if not configured and (descriptor.get("parameters") or {}).get("runtime_behavior_version") == 1:
+        from services.skill_defaults import v1_default
+        skill = v1_default(name, skill)
     if configured:
         instructions = configured
     elif skill:

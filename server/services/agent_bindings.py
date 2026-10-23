@@ -24,7 +24,7 @@ async def node_tools(ai_service: Any, tool_info: Mapping[str, Any]) -> list:
         return []
     if bindings is None:
         tool, config = await ai_service._build_tool_from_node(tool_info)
-        return [(tool, config)] if tool is not None else []
+        return await _runtime_tools([(tool, config)] if tool is not None else [], tool_info)
     node_id = tool_info.get("node_id", "")
     built = []
     for binding in bindings:
@@ -38,7 +38,21 @@ async def node_tools(ai_service: Any, tool_info: Mapping[str, Any]) -> list:
         }
         definition = ToolDef(name=binding.name, description=binding.description, parameters=binding.schema)
         built.append((AgentToolSpec(definition=definition, args_schema=None, execution=config), config))
-    return built
+    return await _runtime_tools(built, tool_info)
+
+
+async def _runtime_tools(built, tool_info):
+    from services.runtime_tool_context import enrich_runtime_tools
+    if tool_info.get("node_type") == "browser" and (tool_info.get("agent_runtime") or {}).get("runtime_behavior_version") == 1:
+        from services.browser_resources import browser_readiness
+        from services.plugin.deps import get_database
+        tool_info = dict(tool_info)
+        try:
+            tool_info["browser_readiness"] = await browser_readiness(get_database(),
+                str((tool_info.get("parameters") or {}).get("profile_id") or ""))
+        except Exception:
+            tool_info["browser_readiness"] = {"needs_observation": None}
+    return enrich_runtime_tools(built, tool_info)
 
 
 def is_runtime_tool(cls: Any) -> bool:

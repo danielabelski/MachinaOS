@@ -53,6 +53,7 @@ import { cn } from '@/lib/utils';
 import { useFolderSkills } from '../../hooks/useFolderSkills';
 import { USER_SKILLS_QUERY_KEY, useUserSkillsQuery, type UserSkill } from '../../hooks/useUserSkills';
 import { useNodeAllowlist } from '../../hooks/useNodeAllowlist';
+import { skillContentQueryKey } from '../../lib/skillContentQueryKey';
 
 // Skill configuration stored in node parameters
 // Key is skillName (folder name like 'whatsapp-skill'). Entries can carry
@@ -104,9 +105,10 @@ const REQUIRED_ASSISTANT_SKILL = 'skill';
 /** The node's whole saved row (MasterSkillParams on the server). A direct
  *  `save_node_parameters` replaces the row, so both fields go every time,
  *  under the keys the panel and the agent read. */
-const masterSkillRow = (skillsConfig: MasterSkillConfig, skillFolder: string | undefined) => ({
+const masterSkillRow = (skillsConfig: MasterSkillConfig, skillFolder: string | undefined, runtimeBehaviorVersion: number) => ({
   skills_config: skillsConfig,
   skill_folder: skillFolder || 'assistant',
+  ...(runtimeBehaviorVersion === 1 ? { runtime_behavior_version: 1 } : {}),
 });
 
 interface MasterSkillEditorProps {
@@ -115,6 +117,7 @@ interface MasterSkillEditorProps {
   skillFolder?: string;
   onSkillFolderChange?: (folder: string) => void;
   nodeId?: string;  // For persisting skillsConfig to database
+  runtimeBehaviorVersion?: number;
 }
 
 // All skill-icon rendering routes through the shared <NodeIcon>
@@ -128,7 +131,8 @@ const MasterSkillEditor: React.FC<MasterSkillEditorProps> = ({
   onConfigChange,
   skillFolder,
   onSkillFolderChange,
-  nodeId
+  nodeId,
+  runtimeBehaviorVersion = 0,
 }) => {
   const { sendRequest } = useWebSocket();
   const masterSkillStatus = useNodeStatus(nodeId || '');
@@ -151,6 +155,18 @@ const MasterSkillEditor: React.FC<MasterSkillEditorProps> = ({
   // the load effect below fires once per selection instead of on every
   // background list refetch (avoids the render loop + clobbering edits).
   const initializedSkillRef = useRef<string | null>(null);
+  const scope = `${nodeId || ''}:${runtimeBehaviorVersion}`;
+  const currentScope = useRef(scope);
+  currentScope.current = scope;
+  const contentKey = useCallback((name: string) => skillContentQueryKey(name, nodeId, runtimeBehaviorVersion), [nodeId, runtimeBehaviorVersion]);
+  const contentScope = useMemo(() => runtimeBehaviorVersion === 1 && nodeId ? { master_skill_node_id: nodeId } : {}, [nodeId, runtimeBehaviorVersion]);
+  useEffect(() => {
+    if (runtimeBehaviorVersion !== 1) return;
+    initializedSkillRef.current = null;
+    setSelectedSkillName(null);
+    setPendingSkillData(null);
+    setIsCreatingNew(false);
+  }, [nodeId, runtimeBehaviorVersion]);
 
   const queryClient = useQueryClient();
   const userSkillsQuery = useUserSkillsQuery();
@@ -261,13 +277,14 @@ const MasterSkillEditor: React.FC<MasterSkillEditorProps> = ({
     try {
       setIsLoading(true);
       const content = await queryClient.fetchQuery<string>({
-        queryKey: ['skillContent', skillName],
+        queryKey: contentKey(skillName),
         queryFn: async () => {
           const response = await sendRequest<{ instructions: string; success: boolean; error?: string }>(
             'get_skill_content',
-            { skill_name: skillName },
+            { skill_name: skillName, ...contentScope },
           );
           if (response?.success && response.instructions) return response.instructions;
+          if (runtimeBehaviorVersion === 1) throw new Error(response?.error || 'Could not load the saved skill defaults.');
           console.warn('[MasterSkillEditor] No content returned for skill:', skillName, response?.error);
           return '';
         },
@@ -280,7 +297,7 @@ const MasterSkillEditor: React.FC<MasterSkillEditorProps> = ({
     } finally {
       setIsLoading(false);
     }
-  }, [queryClient, sendRequest]);
+  }, [queryClient, sendRequest, contentKey, contentScope, runtimeBehaviorVersion]);
 
   // Existing Master Skill nodes may predate the required Skill-tool entry.
   // Once the assistant catalogue is available, persist the authoritative
@@ -309,8 +326,8 @@ const MasterSkillEditor: React.FC<MasterSkillEditorProps> = ({
   }, [skillFolder, folderSkills, skillsConfig, fetchSkillContent, onConfigChange]);
 
   const getCachedSkillContent = useCallback(
-    (skillName: string): string | undefined => queryClient.getQueryData<string>(['skillContent', skillName]),
-    [queryClient],
+    (skillName: string): string | undefined => queryClient.getQueryData<string>(contentKey(skillName)),
+    [queryClient, contentKey],
   );
 
   useEffect(() => {
@@ -335,19 +352,20 @@ const MasterSkillEditor: React.FC<MasterSkillEditorProps> = ({
       if (skill.isUserSkill) continue;
       if (getCachedSkillContent(skill.skillName) !== undefined) continue;
       queryClient.prefetchQuery({
-        queryKey: ['skillContent', skill.skillName],
+        queryKey: contentKey(skill.skillName),
         queryFn: async () => {
           const response = await sendRequest<{
             instructions: string;
             success: boolean;
             error?: string;
-          }>('get_skill_content', { skill_name: skill.skillName });
+          }>('get_skill_content', { skill_name: skill.skillName, ...contentScope });
+          if (runtimeBehaviorVersion === 1 && !(response?.success && response.instructions)) throw new Error(response?.error || 'Could not load the saved skill defaults.');
           return (response?.success && response.instructions) || '';
         },
         staleTime: Infinity,
       });
     }
-  }, [availableSkills, queryClient, sendRequest, getCachedSkillContent]);
+  }, [availableSkills, queryClient, sendRequest, getCachedSkillContent, contentKey, contentScope, runtimeBehaviorVersion]);
 
   // When selecting a user skill, load its data into pendingSkillData for editing.
   // Guarded by initializedSkillRef so it runs ONCE per selection -- re-running on
@@ -391,6 +409,8 @@ const MasterSkillEditor: React.FC<MasterSkillEditorProps> = ({
     if (enabled && !currentConfig?.instructions) {
       // Load default instructions when enabling for first time
       const defaultContent = await fetchSkillContent(skillName);
+      if (runtimeBehaviorVersion === 1 && currentScope.current !== scope) return;
+      if (runtimeBehaviorVersion === 1 && !defaultContent) { toast.error('Could not load the saved skill defaults. Try again.'); return; }
       onConfigChange({
         ...skillsConfig,
         [skillName]: { ...currentConfig, enabled: true, instructions: defaultContent, isCustomized: false }
@@ -406,7 +426,7 @@ const MasterSkillEditor: React.FC<MasterSkillEditorProps> = ({
         }
       });
     }
-  }, [skillsConfig, onConfigChange, fetchSkillContent]);
+  }, [skillsConfig, onConfigChange, fetchSkillContent, runtimeBehaviorVersion, scope]);
 
   const handleUpdateInstructions = useCallback((skillName: string, instructions: string) => {
     const currentConfig = skillsConfig[skillName];
@@ -425,15 +445,17 @@ const MasterSkillEditor: React.FC<MasterSkillEditorProps> = ({
   }, [skillsConfig, onConfigChange, getCachedSkillContent]);
 
   const handleResetToDefault = useCallback(async (skillName: string) => {
-    queryClient.removeQueries({ queryKey: ['skillContent', skillName] });
+    queryClient.removeQueries({ queryKey: contentKey(skillName), exact: true });
     const defaultContent = await fetchSkillContent(skillName);
+    if (runtimeBehaviorVersion === 1 && currentScope.current !== scope) return;
+    if (runtimeBehaviorVersion === 1 && !defaultContent) { toast.error('Could not load the saved skill defaults. Try again.'); return; }
     const currentConfig = skillsConfig[skillName];
 
     onConfigChange({
       ...skillsConfig,
       [skillName]: { ...currentConfig, enabled: currentConfig?.enabled || false, instructions: defaultContent, isCustomized: false }
     });
-  }, [skillsConfig, onConfigChange, fetchSkillContent, queryClient]);
+  }, [skillsConfig, onConfigChange, fetchSkillContent, queryClient, contentKey, scope, runtimeBehaviorVersion]);
 
   // Create new skill - show inline editor
   const handleCreateSkill = useCallback(() => {
@@ -531,7 +553,7 @@ const MasterSkillEditor: React.FC<MasterSkillEditorProps> = ({
           if (nodeId) {
             await sendRequest('save_node_parameters', {
               node_id: nodeId,
-              parameters: masterSkillRow(newConfig, skillFolder),
+              parameters: masterSkillRow(newConfig, skillFolder, runtimeBehaviorVersion),
             });
           }
           setIsCreatingNew(false);
@@ -546,7 +568,7 @@ const MasterSkillEditor: React.FC<MasterSkillEditorProps> = ({
     } finally {
       setSavingSkill(false);
     }
-  }, [pendingSkillData, isCreatingNew, skillFolder, sendRequest, invalidateUserSkills, skillsConfig, onConfigChange, nodeId]);
+  }, [pendingSkillData, isCreatingNew, skillFolder, sendRequest, invalidateUserSkills, skillsConfig, onConfigChange, nodeId, runtimeBehaviorVersion]);
 
   // Delete user skill
   const handleDeleteSkill = useCallback(async (skillName: string) => {
@@ -563,7 +585,7 @@ const MasterSkillEditor: React.FC<MasterSkillEditorProps> = ({
         if (nodeId) {
           await sendRequest('save_node_parameters', {
             node_id: nodeId,
-            parameters: masterSkillRow(newConfig, skillFolder),
+            parameters: masterSkillRow(newConfig, skillFolder, runtimeBehaviorVersion),
           });
         }
 
@@ -580,7 +602,7 @@ const MasterSkillEditor: React.FC<MasterSkillEditorProps> = ({
     } catch (err: any) {
       toast.error(err.message || 'Failed to delete skill');
     }
-  }, [sendRequest, invalidateUserSkills, skillsConfig, onConfigChange, selectedSkillName, nodeId, skillFolder]);
+  }, [sendRequest, invalidateUserSkills, skillsConfig, onConfigChange, selectedSkillName, nodeId, skillFolder, runtimeBehaviorVersion]);
 
   const selectedSkillInfo = availableSkills.find(s => s.skillName === selectedSkillName);
   const selectedSkillConfig = selectedSkillName ? skillsConfig[selectedSkillName] : undefined;

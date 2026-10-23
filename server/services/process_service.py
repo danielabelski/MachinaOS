@@ -388,6 +388,22 @@ class ProcessService:
         logger.info("[Process] Sent input to %s: %s", name, text[:100])
         return {"success": True, "result": {"sent": text}}
 
+    def classify_port_owners(self, owners: dict, workflow_id: str) -> dict:
+        """Public ownership categories without foreign commands/environment."""
+        result = {}
+        for port, pids in owners.items():
+            entries = []
+            for pid in pids or [None]:
+                managed = next((p for p in self._processes.values() if p.pid == pid and p.status == "running"), None)
+                if managed is None:
+                    entries.append({"classification": "unmanaged_or_unknown", **({"pid": pid} if pid else {})})
+                elif managed.workflow_id == workflow_id:
+                    entries.append({"classification": "current_workflow_managed", "pid": pid, "name": managed.name})
+                else:
+                    entries.append({"classification": "other_workflow_managed", "pid": pid})
+            result[str(port)] = entries
+        return result
+
     def list_processes(self, workflow_id: str = "default") -> List[Dict[str, Any]]:
         """List all processes for a workflow."""
         return [self._info(m) for (wid, _), m in self._processes.items() if wid == workflow_id]
