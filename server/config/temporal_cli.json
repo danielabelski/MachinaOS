@@ -1,5 +1,5 @@
 {
-  "_comment": "The Temporal CLI whose `server start-dev` runs every install's Temporal dev server (services/temporal/_install.py). Asset keys are <os>_<arch> in the CLI release's own spellings. Bump the version, server_version and every asset's file and sha256 together, copying them from the release's checksums.txt. A database created by another server minor is deleted at the next start, and the install begins on an empty Temporal database (RFC-0005 E16).",
+  "_comment": "The release pin for new Temporal installations (services/temporal/_install.py). Asset keys are <os>_<arch> in the CLI release's spellings. Bump the version, server_version and all checksums together from the official checksums.txt. Existing installations retain their installed server/database pair until an explicit migration; older binaries and database files are never automatically deleted.",
   "version": "1.9.1",
   "server_version": "1.32.0",
   "base": "https://github.com/temporalio/cli/releases/download/v{version}/",

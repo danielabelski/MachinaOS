@@ -1,0 +1,1102 @@
+{
+  "origin_commit": "a9ee66755078bb60ef4ec24eaa29d9b47f33ea81",
+  "workflow_types": [
+    "AgentWorkflow",
+    "ApprovedToolCallWorkflow",
+    "CronTriggerWorkflow",
+    "DelegatedTaskWorkflow",
+    "EmployeeJobDeliveryWorkflow",
+    "EmployeeJobWorkflow",
+    "MachinaWorkflow",
+    "NodeInvocationWorkflow",
+    "PiCodingAgentWorkflow",
+    "PiInlineDelegationWorkflow",
+    "PollingTriggerWorkflow",
+    "TriggerListenerWorkflow",
+    "WorkflowControlWorkflow",
+    "WorkspaceTaskControllerWorkflow"
+  ],
+  "identities": {
+    "services/temporal/agent_workflow.py": {
+      "commands": [
+        {
+          "command": "execute_activity",
+          "type": "'agent.cancel_delegation'",
+          "activity_id": "'cancel-delegation'"
+        },
+        {
+          "command": "execute_activity",
+          "type": "'agent.cancel_delegation'",
+          "activity_id": "'cancel-delegation-before-begin'"
+        },
+        {
+          "command": "execute_activity",
+          "type": "'agent.skill.clear'",
+          "activity_id": "'clear-active-skills'"
+        },
+        {
+          "command": "execute_activity",
+          "type": "'agent.skill.clear'",
+          "activity_id": "'clear-active-skills-blocked'"
+        },
+        {
+          "command": "execute_activity",
+          "type": "'agent.skill.clear'",
+          "activity_id": "'clear-active-skills-compaction-failed'"
+        },
+        {
+          "command": "execute_activity",
+          "type": "'agent.skill.clear'",
+          "activity_id": "'clear-active-skills-failed'"
+        },
+        {
+          "command": "execute_activity",
+          "type": "'agent.skill.clear'",
+          "activity_id": "'clear-active-skills-no-assignments'"
+        },
+        {
+          "command": "execute_activity",
+          "type": "'employee.job.deliver'",
+          "activity_id": "'employee-reviewed-delivery'"
+        },
+        {
+          "command": "execute_activity",
+          "type": "'employee.job.failed'",
+          "activity_id": "'employee-runtime-failed'"
+        },
+        {
+          "command": "execute_activity",
+          "type": "'agent.persist_turn'",
+          "activity_id": "'persist-blocked-tool-turn'"
+        },
+        {
+          "command": "execute_activity",
+          "type": "'agent.prepare_payload'",
+          "activity_id": "'prepare-payload'"
+        },
+        {
+          "command": "execute_activity",
+          "type": "'agent.release_subagent_permit'",
+          "activity_id": "'release-permit-cancelled'"
+        },
+        {
+          "command": "execute_activity",
+          "type": "'agent.release_subagent_permit'",
+          "activity_id": "'release-permit-final'"
+        },
+        {
+          "command": "execute_activity",
+          "type": "'agent.store_output'",
+          "activity_id": "'store-output'"
+        },
+        {
+          "command": "execute_activity",
+          "type": "activity_name",
+          "activity_id": "activity_id"
+        },
+        {
+          "command": "execute_activity",
+          "type": "'agent.acquire_subagent_permit'",
+          "activity_id": "f'acquire-permit-{iteration + 1}-{call_index + 1}'"
+        },
+        {
+          "command": "execute_activity",
+          "type": "'agent.begin_delegation'",
+          "activity_id": "f'begin-delegation-{iteration + 1}-{call_index + 1}'"
+        },
+        {
+          "command": "execute_activity",
+          "type": "'agent.cancel_delegation'",
+          "activity_id": "f'cancel-delegation-{iteration + 1}-{pending_index + 1}'"
+        },
+        {
+          "command": "execute_activity",
+          "type": "'agent.compact_context'",
+          "activity_id": "f'compact-context-{iteration + 1}'"
+        },
+        {
+          "command": "execute_activity",
+          "type": "'employee.job.failed'",
+          "activity_id": "f'employee-no-assignments-failed-{correction_count}'"
+        },
+        {
+          "command": "execute_activity",
+          "type": "'agent.finalize_team'",
+          "activity_id": "f'finalize-agent-team-budget-{correction_count}'"
+        },
+        {
+          "command": "execute_activity",
+          "type": "'agent.finalize_team'",
+          "activity_id": "f'finalize-agent-team-{correction_count}' if delegation_repair else 'finalize-agent-team'"
+        },
+        {
+          "command": "execute_activity",
+          "type": "'agent.finish_delegation'",
+          "activity_id": "f'finish-delegation-{iteration + 1}-{call_index + 1}'"
+        },
+        {
+          "command": "execute_activity",
+          "type": "'agent.finish_delegation'",
+          "activity_id": "f'finish-delegation-{iteration + 1}-{call_index + 1}'"
+        },
+        {
+          "command": "execute_activity",
+          "type": "'agent.execute_llm_step'",
+          "activity_id": "f'llm-step-{iteration + 1}'"
+        },
+        {
+          "command": "execute_activity",
+          "type": "'agent.queue_delegation'",
+          "activity_id": "f'queue-delegation-{iteration + 1}-{call_index + 1}'"
+        },
+        {
+          "command": "execute_activity",
+          "type": "'agent.queue_delegation'",
+          "activity_id": "f'queue-task-manager-{iteration + 1}-{call_index + 1}'"
+        },
+        {
+          "command": "execute_activity",
+          "type": "'agent.acquire_subagent_permit'",
+          "activity_id": "f'reacquire-own-permit-{iteration + 1}'"
+        },
+        {
+          "command": "execute_activity",
+          "type": "'agent.register_task_execution'",
+          "activity_id": "f'register-delegation-{iteration + 1}-{call_index + 1}'"
+        },
+        {
+          "command": "start_activity",
+          "type": "f'node.taskManager.v{preflight_tool['version']}'",
+          "activity_id": "f'task-manager-preflight-{iteration + 1}-{preflight_index + 1}'"
+        },
+        {
+          "command": "execute_activity",
+          "type": "'agent.release_subagent_permit'",
+          "activity_id": "f'yield-own-permit-task-manager-{iteration + 1}'"
+        },
+        {
+          "command": "execute_activity",
+          "type": "'agent.release_subagent_permit'",
+          "activity_id": "f'yield-own-permit-task-manager-{iteration + 1}'"
+        },
+        {
+          "command": "execute_activity",
+          "type": "'agent.release_subagent_permit'",
+          "activity_id": "f'yield-own-permit-{iteration + 1}'"
+        },
+        {
+          "command": "execute_activity",
+          "type": "'agent.refresh_tools'",
+          "activity_id": "refresh_activity_id"
+        },
+        {
+          "command": "execute_activity",
+          "type": "'agent.release_subagent_permit'",
+          "activity_id": "release_activity_id"
+        },
+        {
+          "command": "execute_activity",
+          "type": "'agent.acquire_subagent_permit'"
+        },
+        {
+          "command": "execute_activity",
+          "type": "'agent.begin_delegation'"
+        },
+        {
+          "command": "execute_activity",
+          "type": "'agent.broadcast_progress'"
+        },
+        {
+          "command": "execute_activity",
+          "type": "'agent.broadcast_progress'"
+        },
+        {
+          "command": "execute_activity",
+          "type": "'agent.finish_delegation'"
+        },
+        {
+          "command": "execute_activity",
+          "type": "'agent.finish_delegation'"
+        },
+        {
+          "command": "execute_activity",
+          "type": "'agent.persist_turn'"
+        },
+        {
+          "command": "execute_activity",
+          "type": "'agent.register_task_execution'"
+        },
+        {
+          "command": "execute_activity",
+          "type": "'agent.register_task_execution'"
+        },
+        {
+          "command": "execute_activity",
+          "type": "'browser_tasks.claim'"
+        },
+        {
+          "command": "execute_activity",
+          "type": "'browser_tasks.release'"
+        },
+        {
+          "command": "patched",
+          "type": "'agent-blocked-tool-turn-save-v1'"
+        },
+        {
+          "command": "patched",
+          "type": "'agent-node-binding-refresh-v2'"
+        },
+        {
+          "command": "patched",
+          "type": "'agent-tool-binding-key-v1'"
+        },
+        {
+          "command": "patched",
+          "type": "'agent-user-action-error-v1'"
+        },
+        {
+          "command": "patched",
+          "type": "'employee-task-manager-runtime-v2'"
+        },
+        {
+          "command": "patched",
+          "type": "'employee-task-manager-runtime-v2'"
+        },
+        {
+          "command": "patched",
+          "type": "'employee-task-manager-tool-scope-v2'"
+        },
+        {
+          "command": "patched",
+          "type": "'employee-task-manager-tool-scope-v2'"
+        },
+        {
+          "command": "patched",
+          "type": "'workspace-task-activity-policy-v1'"
+        },
+        {
+          "command": "patched",
+          "type": "employee-no-delegation-repair-v1"
+        },
+        {
+          "command": "patched",
+          "type": "employee-no-delegation-repair-v1"
+        },
+        {
+          "command": "start_child_workflow",
+          "type": "agent_workflow_name(child_context.get('node_type'), child_context)",
+          "id": "child_id"
+        },
+        {
+          "command": "start_child_workflow",
+          "type": "agent_workflow_name(request['child_context'].get('node_type'), request['child_context'])",
+          "id": "request['child_workflow_id']"
+        },
+        {
+          "command": "start_child_workflow",
+          "type": "'DelegatedTaskWorkflow'"
+        }
+      ],
+      "identifier_helpers": [
+        "def _delegation_child_id(agent_workflow_id: str, tool_node_id: str, iteration: int, call_index: int) -> str:\n    \"\"\"Return a stable child id for one delegation call.\"\"\"\n    return f'{agent_workflow_id}-delegate-{tool_node_id}-{iteration + 1}-{call_index + 1}'",
+        "def _refresh_tools_activity_id(tool_node_id: str, iteration: int, call_index: int) -> str:\n    \"\"\"Return a stable id for the hot-refresh owned by one tool call.\"\"\"\n    return f'refresh-tools-{tool_node_id}-{iteration + 1}-{call_index + 1}'",
+        "def _tool_activity_id(tool_node_id: str, iteration: int, call_index: int) -> str:\n    \"\"\"Return a stable, unique id for one tool call in one agent turn.\"\"\"\n    return f'tool-{tool_node_id}-{iteration + 1}-{call_index + 1}'"
+      ],
+      "id_bindings": [
+        {
+          "acquired_permit_id": "None"
+        },
+        {
+          "acquired_permit_id": "str((acquire_result or {}).get('lease_id') or task_id)"
+        },
+        {
+          "agent_node_id": "payload['node_id']"
+        },
+        {
+          "agent_workflow_id": "payload.get('workflow_id')"
+        },
+        {
+          "assignee_id": "str(request.get('assignee_node_id') or '')"
+        },
+        {
+          "base_activity_id": "f'release-permit-{iteration + 1}-{call_index + 1}'"
+        },
+        {
+          "child_id": "_delegation_child_id(workflow.info().workflow_id, assignee_id, iteration, call_index) + f'-{task_id}'"
+        },
+        {
+          "child_id": "_delegation_child_id(workflow.info().workflow_id, candidate_tool['tool_node_id'], iteration, call_index)"
+        },
+        {
+          "execution_id": "str(resume.get('execution_id') or '') or str(context.get('execution_id') or '') or workflow.info().run_id[:8]"
+        },
+        {
+          "memory_node_id": "payload.get('memory_node_id') or ''"
+        },
+        {
+          "own_logical_permit_id": "str(context.get('team_task_id') or '')"
+        },
+        {
+          "own_permit_id": "str(context.get('team_permit_id') or own_logical_permit_id)"
+        },
+        {
+          "permit_id": "child_context['team_task_id']"
+        },
+        {
+          "permit_id": "delegation_permits.get(call_index)"
+        },
+        {
+          "permit_id": "delegation_permits.get(call_index)"
+        },
+        {
+          "refresh_activity_id": "_refresh_tools_activity_id(tool_info['tool_node_id'], iteration, call_index)"
+        },
+        {
+          "release_activity_id": "base_activity_id if release_attempt == 0 else f'{base_activity_id}-recovery-{release_attempt}'"
+        },
+        {
+          "root_execution_id": "str(payload.get('root_execution_id') or context.get('root_execution_id') or execution_id)"
+        },
+        {
+          "root_id": "lifecycle['root_execution_id']"
+        },
+        {
+          "runner_id": "f'{child_id}-runner'"
+        },
+        {
+          "task_id": "f'task-{root_execution_id}-{agent_node_id}-{iteration + 1}-{call_index + 1}'"
+        },
+        {
+          "task_id": "f'task-{root_execution_id}-{agent_node_id}-{iteration + 1}-{call_index + 1}'"
+        },
+        {
+          "task_id": "lifecycle['team_task_id']"
+        },
+        {
+          "task_id": "str(request.get('team_task_id') or '')"
+        },
+        {
+          "task_scope_execution_id": "str(payload.get('team_execution_id') or execution_id)"
+        },
+        {
+          "team_id": "str(child_context.get('team_id') or '')"
+        },
+        {
+          "team_id": "str(payload.get('team_id') or '')"
+        },
+        {
+          "team_id": "str(payload.get('team_id') or context.get('team_id') or '')"
+        },
+        {
+          "team_id": "str(payload.get('team_id') or context.get('team_id') or '')"
+        },
+        {
+          "team_id": "str(payload.get('team_id') or context.get('team_id') or '')"
+        },
+        {
+          "tool_activity_id": "_tool_activity_id(tool_info['tool_node_id'], iteration, call_index)"
+        },
+        {
+          "trace_id": "str(call.get('id', '') or '')"
+        }
+      ]
+    },
+    "services/temporal/approved_tool_call_workflow.py": {
+      "commands": [
+        {
+          "command": "execute_activity",
+          "type": "'approvals.claim_send'"
+        },
+        {
+          "command": "execute_activity",
+          "type": "'approvals.record_outcome'"
+        },
+        {
+          "command": "execute_activity",
+          "type": "str(claim['activity'])"
+        }
+      ],
+      "identifier_helpers": [],
+      "id_bindings": [
+        {
+          "approval_id": "str(payload.get('approval_id') or '')"
+        }
+      ]
+    },
+    "services/temporal/employee_job_workflow.py": {
+      "commands": [
+        {
+          "command": "execute_activity",
+          "type": "'employee.job.deliver'"
+        },
+        {
+          "command": "execute_activity",
+          "type": "'employee.job.deliver'"
+        },
+        {
+          "command": "execute_activity",
+          "type": "'employee.job.failed'"
+        },
+        {
+          "command": "execute_activity",
+          "type": "'employee.job.failed'"
+        },
+        {
+          "command": "execute_activity",
+          "type": "'employee.job.resolve_delivery'"
+        },
+        {
+          "command": "execute_child_workflow",
+          "type": "child_name",
+          "id": "workflow.info().workflow_id + ':lead'"
+        },
+        {
+          "command": "start_child_workflow",
+          "type": "child_name",
+          "id": "workflow.info().workflow_id + ':lead'"
+        }
+      ],
+      "identifier_helpers": [],
+      "id_bindings": []
+    },
+    "services/temporal/execution_control.py": {
+      "commands": [
+        {
+          "command": "execute_activity",
+          "type": "'execution_control.register'"
+        },
+        {
+          "command": "execute_activity",
+          "type": "'execution_control.unregister'"
+        }
+      ],
+      "identifier_helpers": [],
+      "id_bindings": [
+        {
+          "first_run_id": "payload.get('first_execution_run_id')"
+        }
+      ]
+    },
+    "services/temporal/node_invocation.py": {
+      "commands": [
+        {
+          "command": "execute_activity",
+          "type": "'workflow_runs.record_completion'"
+        },
+        {
+          "command": "execute_activity",
+          "type": "'workspace_tasks.update_record'"
+        },
+        {
+          "command": "execute_activity",
+          "type": "payload['activity']"
+        },
+        {
+          "command": "execute_child_workflow",
+          "type": "agent_workflow_name(payload['context'].get('node_type', ''), payload['context'])",
+          "id": "f'{workflow.info().workflow_id}:agent'"
+        }
+      ],
+      "identifier_helpers": [],
+      "id_bindings": []
+    },
+    "services/temporal/pi_control.py": {
+      "commands": [
+        {
+          "command": "execute_activity",
+          "type": "'coding.pi_child_control'",
+          "activity_id": "f'pi-child-control-{self._control_calls}'"
+        }
+      ],
+      "identifier_helpers": [],
+      "id_bindings": []
+    },
+    "services/temporal/pi_inline_delegation.py": {
+      "commands": [
+        {
+          "command": "execute_activity",
+          "type": "'agent.cancel_delegation'"
+        },
+        {
+          "command": "execute_activity",
+          "type": "'coding.inline_delegation_status'"
+        },
+        {
+          "command": "execute_activity",
+          "type": "'coding.inline_delegation_status'"
+        },
+        {
+          "command": "execute_activity",
+          "type": "'coding.inline_delegation_status'"
+        },
+        {
+          "command": "start_child_workflow",
+          "type": "'DelegatedTaskWorkflow'",
+          "id": "f'{request['runner_workflow_id']}-runner'"
+        }
+      ],
+      "identifier_helpers": [],
+      "id_bindings": [
+        {
+          "call_id": "str(config.get('operation_id') or config.get('tool_call_id') or '')"
+        },
+        {
+          "node_id": "str(config.get('node_id') or '')"
+        },
+        {
+          "parent_id": "str(config.get('parent_node_id') or '')"
+        },
+        {
+          "root_id": "scope.get('root_execution_id') or scope.get('execution_id')"
+        },
+        {
+          "root_id": "str(config.get('root_execution_id') or config.get('execution_id') or '')"
+        },
+        {
+          "runner_id": "f'coding-inline-{identity}'"
+        },
+        {
+          "runner_id": "receipt.get('runner_workflow_id')"
+        },
+        {
+          "task_id": "lifecycle['team_task_id']"
+        },
+        {
+          "task_id": "lifecycle['team_task_id']"
+        },
+        {
+          "task_id": "precreated_task_id or f'delegated_pi_{identity[:32]}'"
+        },
+        {
+          "team_id": "str((team or {}).get('team_id') or (team or {}).get('id') or '')"
+        },
+        {
+          "workflow_id": "str(config.get('workflow_id') or '')"
+        }
+      ]
+    },
+    "services/temporal/pi_workflow.py": {
+      "commands": [
+        {
+          "command": "execute_activity",
+          "type": "'agent.skill.clear'",
+          "activity_id": "'pi-clear-skills-failed'"
+        },
+        {
+          "command": "execute_activity",
+          "type": "'agent.execute_llm_step'",
+          "activity_id": "f'llm-step-{iteration + 1}'"
+        },
+        {
+          "command": "execute_activity",
+          "type": "'coding.pi_put_blob'",
+          "activity_id": "f'pi-blob-{identity}'"
+        },
+        {
+          "command": "start_activity",
+          "type": "'coding.pi_drive_turn'",
+          "activity_id": "f'pi-driver-{self._pi.turn}-{self._pi_driver_sequence}'"
+        },
+        {
+          "command": "patched",
+          "type": "'pi-paused-receipt-checkpoint-v1'"
+        }
+      ],
+      "identifier_helpers": [],
+      "id_bindings": [
+        {
+          "model_id": "f'turn:{iteration}:model'"
+        },
+        {
+          "model_id": "f'turn:{iteration}:model'"
+        }
+      ]
+    },
+    "services/temporal/polling_trigger_workflow.py": {
+      "commands": [
+        {
+          "command": "execute_activity",
+          "type": "activity_name",
+          "activity_id": "listener_data['trigger_node_id']"
+        },
+        {
+          "command": "execute_activity",
+          "type": "'load_persisted_workflow_graph_activity'"
+        },
+        {
+          "command": "start_child_workflow",
+          "type": "'MachinaWorkflow'"
+        }
+      ],
+      "identifier_helpers": [],
+      "id_bindings": [
+        {
+          "child_id": "f'{workflow_slug}-{trigger_label}-{event_id}'"
+        },
+        {
+          "event_id": "event.get('id') or workflow.uuid4().hex"
+        },
+        {
+          "event_id": "event.get('id')"
+        },
+        {
+          "event_session_id": "str(event.get('session_id') or '').strip()"
+        },
+        {
+          "session_id": "listener_data.get('session_id', 'default')"
+        },
+        {
+          "tenant_id": "listener_data.get('tenant_id')"
+        },
+        {
+          "trigger_node_id": "listener_data['trigger_node_id']"
+        },
+        {
+          "workflow_id": "listener_data.get('workflow_id')"
+        }
+      ]
+    },
+    "services/temporal/trigger_listener_workflow.py": {
+      "commands": [
+        {
+          "command": "execute_activity",
+          "type": "'load_persisted_workflow_graph_activity'"
+        },
+        {
+          "command": "execute_activity",
+          "type": "broadcast_trigger_status_activity"
+        },
+        {
+          "command": "execute_activity",
+          "type": "broadcast_trigger_status_activity"
+        },
+        {
+          "command": "execute_activity",
+          "type": "evaluate_trigger_filter_activity"
+        },
+        {
+          "command": "patched",
+          "type": "machina-trigger-listener-node-filter"
+        },
+        {
+          "command": "start_child_workflow",
+          "type": "'MachinaWorkflow'"
+        },
+        {
+          "command": "start_child_workflow",
+          "type": "'MachinaWorkflow'"
+        }
+      ],
+      "identifier_helpers": [],
+      "id_bindings": [
+        {
+          "carried_id": "carried_event.get('id')"
+        },
+        {
+          "child_id": "f'{workflow_slug}-{trigger_label}-{event_id}'"
+        },
+        {
+          "event_id": "event.get('id') or workflow.uuid4().hex"
+        },
+        {
+          "event_id": "event_payload.get('id')"
+        },
+        {
+          "event_session_id": "str(trigger_output.get('session_id') or '').strip()"
+        },
+        {
+          "session_id": "listener_data.get('session_id', 'default')"
+        },
+        {
+          "tenant_id": "listener_data.get('tenant_id')"
+        },
+        {
+          "trigger_node_id": "listener_data['trigger_node_id']"
+        },
+        {
+          "workflow_id": "listener_data.get('workflow_id')"
+        }
+      ]
+    },
+    "services/temporal/workflow.py": {
+      "commands": [
+        {
+          "command": "execute_activity",
+          "type": "'chat_run.finish'"
+        },
+        {
+          "command": "execute_activity",
+          "type": "'chat_run.start'"
+        },
+        {
+          "command": "execute_activity",
+          "type": "'store_node_output_activity'"
+        },
+        {
+          "command": "execute_activity",
+          "type": "'workflow_control.pause_on_failure'"
+        },
+        {
+          "command": "execute_activity",
+          "type": "'workflow_runs.record_completion'"
+        },
+        {
+          "command": "patched",
+          "type": "'workflow-node-user-action-error-v1'"
+        },
+        {
+          "command": "patched",
+          "type": "'workspace-node-cancellation-v1'"
+        },
+        {
+          "command": "patched",
+          "type": "machina-chat-run-v1"
+        },
+        {
+          "command": "patched",
+          "type": "machina-conditional-edges-v1"
+        },
+        {
+          "command": "patched",
+          "type": "machina-run-record-v1"
+        },
+        {
+          "command": "start_activity",
+          "type": "dispatch['name']"
+        },
+        {
+          "command": "start_child_workflow",
+          "type": "dispatch['name']"
+        },
+        {
+          "command": "start_child_workflow",
+          "type": "dispatch['name']"
+        }
+      ],
+      "identifier_helpers": [
+        "@staticmethod\ndef _chat_run_id(nodes: List[Dict[str, Any]]) -> Optional[str]:\n    \"\"\"The chat run the firing trigger's event started, or None.\n\n        Read from the event envelope the trigger listener attached to the\n        trigger's output, and only when the chat service produced it. Depends\n        on the workflow input alone, so it is deterministic.\"\"\"\n    for node in nodes:\n        if not node.get('_pre_executed'):\n            continue\n        output = node.get('_trigger_output')\n        if not isinstance(output, dict) or output.get('not_triggered'):\n            continue\n        envelope = output.get('_event_envelope')\n        if not isinstance(envelope, dict):\n            continue\n        if envelope.get('source') != CHAT_MESSAGE_SOURCE or envelope.get('type') != CHAT_MESSAGE_TYPE:\n            continue\n        data = envelope.get('data')\n        run_id = data.get('run_id') if isinstance(data, dict) else None\n        if isinstance(run_id, str) and run_id:\n            return run_id\n    return None",
+        "def _agent_child_workflow_id(root_workflow_id: str, agent_node_id: str) -> str:\n    \"\"\"Return a deterministic child id unique to one canvas agent and run.\"\"\"\n    return f'{root_workflow_id}-agent-{agent_node_id}'"
+      ],
+      "id_bindings": [
+        {
+          "chat_run_id": "self._chat_run_id(nodes)"
+        },
+        {
+          "child_workflow_id": "_agent_child_workflow_id(workflow.info().workflow_id, node_id)"
+        },
+        {
+          "event_id": "event_payload.get('id')"
+        },
+        {
+          "execution_id": "workflow_data.get('execution_id') or workflow.info().workflow_id"
+        },
+        {
+          "node_id": "node['id']"
+        },
+        {
+          "run_id": "data.get('run_id') if isinstance(data, dict) else None"
+        },
+        {
+          "session_id": "workflow_data.get('session_id', 'default')"
+        },
+        {
+          "source_id": "edge.get('source')"
+        },
+        {
+          "tenant_id": "workflow_data.get('tenant_id')"
+        },
+        {
+          "workflow_id": "workflow_data.get('workflow_id')"
+        },
+        {
+          "workflow_id": "workflow_data.get('workflow_id')"
+        },
+        {
+          "workflow_id": "workflow_data.get('workflow_id')"
+        }
+      ]
+    },
+    "services/temporal/workflow_control_workflow.py": {
+      "commands": [
+        {
+          "command": "execute_activity",
+          "type": "activity_name",
+          "activity_id": "listener_data['trigger_node_id']"
+        },
+        {
+          "command": "execute_activity",
+          "type": "activity_name",
+          "activity_id": "listener_data['trigger_node_id']"
+        },
+        {
+          "command": "execute_activity",
+          "type": "'controller.queue.read'"
+        },
+        {
+          "command": "execute_activity",
+          "type": "'controller.queue.spill'"
+        },
+        {
+          "command": "execute_activity",
+          "type": "'controller.queue.spill'"
+        },
+        {
+          "command": "patched",
+          "type": "'controller-durable-overflow-v1'"
+        },
+        {
+          "command": "patched",
+          "type": "'controller-durable-queue-v2'"
+        },
+        {
+          "command": "patched",
+          "type": "'controller-durable-queue-v2'"
+        },
+        {
+          "command": "patched",
+          "type": "'controller-durable-queue-v2'"
+        },
+        {
+          "command": "patched",
+          "type": "'controller-event-accumulator-v1'"
+        },
+        {
+          "command": "patched",
+          "type": "'controller-messaging-v1'"
+        }
+      ],
+      "identifier_helpers": [
+        "def _remember_event_id(self, dedup_key: str) -> None:\n    self._seen_event_ids[dedup_key] = None\n    if len(self._seen_event_ids) > _MAX_CARRIED_SEEN_IDS:\n        oldest = next(iter(self._seen_event_ids))\n        del self._seen_event_ids[oldest]"
+      ],
+      "id_bindings": [
+        {
+          "event_id": "str(event.get('id') or '')"
+        },
+        {
+          "event_id": "str(event.get('id') or '')"
+        },
+        {
+          "event_id": "str(event.get('id') or '')"
+        },
+        {
+          "first_run_id": "str(registration.get('first_execution_run_id') or '')"
+        },
+        {
+          "listener_id": "str(spec['listener_id'])"
+        },
+        {
+          "workflow_id": "str(registration.get('workflow_id') or '')"
+        }
+      ]
+    },
+    "services/temporal/workspace_tasks_workflow.py": {
+      "commands": [
+        {
+          "command": "execute_activity",
+          "type": "'workspace_tasks.admit_record'"
+        },
+        {
+          "command": "execute_activity",
+          "type": "'workspace_tasks.reset_runtime'"
+        },
+        {
+          "command": "start_child_workflow",
+          "type": "NodeInvocationWorkflow.run",
+          "id": "run_id"
+        }
+      ],
+      "identifier_helpers": [],
+      "id_bindings": [
+        {
+          "run_id": "context.get('execution_id')"
+        }
+      ]
+    },
+    "nodes/scheduler/cron_scheduler/_workflow.py": {
+      "commands": [
+        {
+          "command": "start_child_workflow",
+          "type": "'MachinaWorkflow'"
+        }
+      ],
+      "identifier_helpers": [],
+      "id_bindings": [
+        {
+          "child_id": "f'{workflow_slug}-{trigger_label}-{firing_iso}'"
+        },
+        {
+          "deployment_workflow_id": "listener_data.get('workflow_id')"
+        },
+        {
+          "session_id": "listener_data.get('session_id', 'default')"
+        },
+        {
+          "tenant_id": "listener_data.get('tenant_id')"
+        },
+        {
+          "trigger_node_id": "listener_data['trigger_node_id']"
+        }
+      ]
+    }
+  },
+  "patch_entries": [],
+  "plugin_activity_types": {
+    "aiAgent": "node.aiAgent.v1",
+    "ai_employee": "node.ai_employee.v1",
+    "android_agent": "node.android_agent.v1",
+    "autonomous_agent": "node.autonomous_agent.v1",
+    "browser_agent": "node.browser_agent.v1",
+    "chatAgent": "node.chatAgent.v1",
+    "claude_code_agent": "node.claude_code_agent.v1",
+    "codex_agent": "node.codex_agent.v1",
+    "coding_agent": "node.coding_agent.v1",
+    "consumer_agent": "node.consumer_agent.v1",
+    "orchestrator_agent": "node.orchestrator_agent.v1",
+    "payments_agent": "node.payments_agent.v1",
+    "productivity_agent": "node.productivity_agent.v1",
+    "rlm_agent": "node.rlm_agent.v1",
+    "social_agent": "node.social_agent.v1",
+    "task_agent": "node.task_agent.v1",
+    "tool_agent": "node.tool_agent.v1",
+    "travel_agent": "node.travel_agent.v1",
+    "web_agent": "node.web_agent.v1",
+    "airplaneModeControl": "node.airplaneModeControl.v1",
+    "appLauncher": "node.appLauncher.v1",
+    "appList": "node.appList.v1",
+    "audioAutomation": "node.audioAutomation.v1",
+    "batteryMonitor": "node.batteryMonitor.v1",
+    "bluetoothAutomation": "node.bluetoothAutomation.v1",
+    "cameraControl": "node.cameraControl.v1",
+    "deviceStateAutomation": "node.deviceStateAutomation.v1",
+    "environmentalSensors": "node.environmentalSensors.v1",
+    "location": "node.location.v1",
+    "mediaControl": "node.mediaControl.v1",
+    "motionDetection": "node.motionDetection.v1",
+    "networkMonitor": "node.networkMonitor.v1",
+    "screenControlAutomation": "node.screenControlAutomation.v1",
+    "systemInfo": "node.systemInfo.v1",
+    "wifiAutomation": "node.wifiAutomation.v1",
+    "awsAction": "node.awsAction.v1",
+    "browser": "node.browser.v1",
+    "chatHistory": "node.chatHistory.v1",
+    "chatReply": "node.chatReply.v1",
+    "chatSend": "node.chatSend.v1",
+    "chatUi": "node.chatUi.v1",
+    "cloudflareAction": "node.cloudflareAction.v1",
+    "javascriptExecutor": "node.javascriptExecutor.v1",
+    "montyExecutor": "node.montyExecutor.v1",
+    "pythonExecutor": "node.pythonExecutor.v1",
+    "typescriptExecutor": "node.typescriptExecutor.v1",
+    "context": "node.context.v2",
+    "discordAction": "node.discordAction.v1",
+    "discordInteraction": "node.discordInteraction.v1",
+    "discordReceive": "node.discordReceive.v1",
+    "discordSend": "node.discordSend.v1",
+    "documentParser": "node.documentParser.v1",
+    "embeddingGenerator": "node.embeddingGenerator.v1",
+    "fileDownloader": "node.fileDownloader.v1",
+    "httpScraper": "node.httpScraper.v1",
+    "textChunker": "node.textChunker.v1",
+    "vectorStore": "node.vectorStore.v1",
+    "dodoPaymentsAction": "node.dodoPaymentsAction.v1",
+    "dodoPaymentsReceive": "node.dodoPaymentsReceive.v1",
+    "emailRead": "node.emailRead.v1",
+    "emailReceive": "node.emailReceive.v1",
+    "emailSend": "node.emailSend.v1",
+    "fileModify": "node.fileModify.v1",
+    "fileRead": "node.fileRead.v1",
+    "fsSearch": "node.fsSearch.v1",
+    "gallery": "node.gallery.v1",
+    "shell": "node.shell.v1",
+    "gcloudAction": "node.gcloudAction.v1",
+    "githubAction": "node.githubAction.v1",
+    "googleCalendar": "node.googleCalendar.v1",
+    "googleContacts": "node.googleContacts.v1",
+    "googleDrive": "node.googleDrive.v1",
+    "googleGmail": "node.googleGmail.v1",
+    "googleGmailReceive": "node.googleGmailReceive.v1",
+    "googleSheets": "node.googleSheets.v1",
+    "googleTasks": "node.googleTasks.v1",
+    "gmaps_create": "node.gmaps_create.v1",
+    "gmaps_locations": "node.gmaps_locations.v1",
+    "gmaps_nearby_places": "node.gmaps_nearby_places.v1",
+    "mcpConnector": "node.mcpConnector.v1",
+    "msCalendar": "node.msCalendar.v1",
+    "msMail": "node.msMail.v1",
+    "msMailReceive": "node.msMailReceive.v1",
+    "mobile_use_agent": "node.mobile_use_agent.v1",
+    "android_tool": "node.android_tool.v1",
+    "anthropicChatModel": "node.anthropicChatModel.v1",
+    "cerebrasChatModel": "node.cerebrasChatModel.v1",
+    "deepseekChatModel": "node.deepseekChatModel.v1",
+    "geminiChatModel": "node.geminiChatModel.v1",
+    "groqChatModel": "node.groqChatModel.v1",
+    "kimiChatModel": "node.kimiChatModel.v1",
+    "lmstudioChatModel": "node.lmstudioChatModel.v1",
+    "mistralChatModel": "node.mistralChatModel.v1",
+    "ollamaChatModel": "node.ollamaChatModel.v1",
+    "openaiChatModel": "node.openaiChatModel.v1",
+    "openaiCompatibleChatModel": "node.openaiCompatibleChatModel.v1",
+    "openrouterChatModel": "node.openrouterChatModel.v1",
+    "sarvamChatModel": "node.sarvamChatModel.v1",
+    "proxyConfig": "node.proxyConfig.v1",
+    "proxyRequest": "node.proxyRequest.v1",
+    "proxyStatus": "node.proxyStatus.v1",
+    "cronScheduler": "node.cronScheduler.v1",
+    "timer": "node.timer.v1",
+    "apifyActor": "node.apifyActor.v1",
+    "crawleeScraper": "node.crawleeScraper.v1",
+    "tikhubAction": "node.tikhubAction.v1",
+    "braveSearch": "node.braveSearch.v1",
+    "duckduckgoSearch": "node.duckduckgoSearch.v1",
+    "perplexitySearch": "node.perplexitySearch.v1",
+    "serperSearch": "node.serperSearch.v1",
+    "masterSkill": "node.masterSkill.v1",
+    "simpleMemory": "node.simpleMemory.v1",
+    "socialReceive": "node.socialReceive.v1",
+    "socialSend": "node.socialSend.v1",
+    "speechToText": "node.speechToText.v1",
+    "textToSpeech": "node.textToSpeech.v1",
+    "stripeAction": "node.stripeAction.v1",
+    "stripeReceive": "node.stripeReceive.v1",
+    "telegramReceive": "node.telegramReceive.v1",
+    "telegramSend": "node.telegramSend.v1",
+    "fileHandler": "node.fileHandler.v1",
+    "textGenerator": "node.textGenerator.v1",
+    "agentBuilder": "node.agentBuilder.v1",
+    "calculatorTool": "node.calculatorTool.v1",
+    "canvas": "node.canvas.v1",
+    "currentTimeTool": "node.currentTimeTool.v1",
+    "dataSource": "node.dataSource.v1",
+    "taskManager": "node.taskManager.v1",
+    "writeTodos": "node.writeTodos.v1",
+    "detectLanguage": "node.detectLanguage.v1",
+    "translateText": "node.translateText.v1",
+    "transliterateText": "node.transliterateText.v1",
+    "chatTrigger": "node.chatTrigger.v1",
+    "taskTrigger": "node.taskTrigger.v1",
+    "webhookTrigger": "node.webhookTrigger.v1",
+    "twitterReceive": "node.twitterReceive.v1",
+    "twitterSearch": "node.twitterSearch.v1",
+    "twitterSend": "node.twitterSend.v1",
+    "twitterUser": "node.twitterUser.v1",
+    "console": "node.console.v1",
+    "httpRequest": "node.httpRequest.v1",
+    "processManager": "node.processManager.v1",
+    "teamMonitor": "node.teamMonitor.v1",
+    "webhookResponse": "node.webhookResponse.v1",
+    "vercelAction": "node.vercelAction.v1",
+    "visionAnalyze": "node.visionAnalyze.v1",
+    "whatsappDb": "node.whatsappDb.v1",
+    "whatsappReceive": "node.whatsappReceive.v1",
+    "whatsappSend": "node.whatsappSend.v1",
+    "whatsappBusinessMedia": "node.whatsappBusinessMedia.v1",
+    "whatsappBusinessReceive": "node.whatsappBusinessReceive.v1",
+    "whatsappBusinessStatus": "node.whatsappBusinessStatus.v1",
+    "whatsappBusinessSend": "node.whatsappBusinessSend.v1",
+    "approvalGate": "node.approvalGate.v1",
+    "employeeJob": "node.employeeJob.v1",
+    "employeeJobSource": "node.employeeJobSource.v1",
+    "start": "node.start.v1"
+  }
+}

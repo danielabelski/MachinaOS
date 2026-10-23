@@ -55,6 +55,9 @@ jobs:
   backend-tests:
     name: Backend tests (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
+    env:
+      TEMPORAL_REQUIRE_NATIVE_REPLAY: "1"
+      DEBUG: "false"
     strategy:
       fail-fast: false
       matrix:
@@ -88,6 +91,12 @@ jobs:
         run: |
           uv sync
           uv run python -c "import asyncio, os; from services.temporal._install import ensure_temporal_binaries; cli = asyncio.run(ensure_temporal_binaries())['temporal']; open(os.environ['GITHUB_ENV'], 'a', encoding='utf-8').write(f'TEMPORAL_TEST_CLI={cli}\n')"
+      - name: N-1 Temporal replay and identity gate
+        working-directory: server
+        shell: bash
+        run: |
+          uv run python -c "import os; from pathlib import Path; from services.temporal._install import cli_pin, _binary_versions; cli = Path(os.environ['TEMPORAL_TEST_CLI']); assert cli.is_file(); assert _binary_versions(cli)['cli_version'] == cli_pin()['version']"
+          uv run pytest tests/temporal/test_replay_corpus.py tests/temporal/test_workflow_identity_golden.py tests/temporal/test_run_graph_replay.py -v -p no:cacheprovider
       - name: pytest
         working-directory: server
         shell: bash

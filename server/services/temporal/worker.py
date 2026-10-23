@@ -41,41 +41,7 @@ from .execution_control_activities import ExecutionControlActivities
 
 
 
-def _framework_workflows() -> list:
-    """The framework workflow classes every worker must register.
-
-    Single source of truth: the three worker constructions below used to
-    hand-maintain identical copies of this list, which is how they drifted.
-    Imports stay lazy — the workflow modules pull in the plugin registry.
-    """
-    from services.temporal.workflow import MachinaWorkflow
-    from services.temporal.agent_workflow import AgentWorkflow, DelegatedTaskWorkflow
-    from services.temporal.pi_workflow import PiCodingAgentWorkflow
-    from services.temporal.pi_inline_delegation import PiInlineDelegationWorkflow
-    from services.temporal.trigger_listener_workflow import TriggerListenerWorkflow
-    from services.temporal.polling_trigger_workflow import PollingTriggerWorkflow
-    from services.temporal.workflow_control_workflow import WorkflowControlWorkflow
-
-    from services.temporal.node_invocation import NodeInvocationWorkflow
-    from services.temporal.workspace_tasks_workflow import WorkspaceTaskControllerWorkflow
-    from services.temporal.approved_tool_call_workflow import ApprovedToolCallWorkflow
-    from services.temporal.employee_job_workflow import EmployeeJobWorkflow, EmployeeJobDeliveryWorkflow
-
-    return [
-        EmployeeJobWorkflow,
-        EmployeeJobDeliveryWorkflow,
-        ApprovedToolCallWorkflow,
-        NodeInvocationWorkflow,
-        WorkspaceTaskControllerWorkflow,
-        MachinaWorkflow,
-        AgentWorkflow,
-        PiCodingAgentWorkflow,
-        PiInlineDelegationWorkflow,
-        DelegatedTaskWorkflow,
-        TriggerListenerWorkflow,
-        PollingTriggerWorkflow,
-        WorkflowControlWorkflow,
-    ]
+from .workflow_registry import framework_workflows as _framework_workflows
 
 
 logger = get_logger(__name__)

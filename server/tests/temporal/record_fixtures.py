@@ -21,13 +21,17 @@ so nothing touches an install's data.
 from __future__ import annotations
 
 import asyncio
+import argparse
 import contextlib
+import hashlib
+import io
 import json
 import os
-import shutil
+import re
 import subprocess
 import sys
 import tempfile
+import tarfile
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Awaitable, Callable
@@ -55,6 +59,8 @@ ROLLOVER_HISTORY_COUNT = 40
 # compares a timer's id, not its duration, so a shorter non-zero floor
 # records the same commands.
 POLL_INTERVAL_FLOOR_S = 1
+_PAUSE_TOOL_STARTED = asyncio.Event()
+_PAUSE_TOOL_RELEASE = asyncio.Event()
 
 
 def release() -> str:
@@ -87,6 +93,9 @@ def _node_activity(node_type: str):
 
     @activity.defn(name=f"node.{cls.type}.v{cls.version}")
     async def run(context: dict) -> dict:
+        if context.get("node_id") == "paused-tool":
+            _PAUSE_TOOL_STARTED.set()
+            await _PAUSE_TOOL_RELEASE.wait()
         if node_type == "taskManager":
             return {"success": True, "delegation_request": dict(DELEGATION_REQUEST)}
         return {"success": True, "result": {"node_id": context.get("node_id"), "answer": 42}}
@@ -320,11 +329,15 @@ class PiDriverPeer:
                 status = await handle.query("operation_status", {"id": identity, "epoch": epoch})
                 if status["status"] == "completed":
                     return status["result"]
+                if status["status"] == "park":
+                    return None
                 activity.heartbeat()
                 await asyncio.sleep(0.01)
 
         model_id = f"turn:{payload['turn']}:model"
         step = await operation(model_id, "model", {"purpose": "assistant"})
+        if step is None:
+            return {"status": "parked"}
         calls = step.get("calls") or []
         await handle.execute_update("assistant_ready", {
             "turn": payload["turn"], "epoch": epoch, "context_digest": payload["context_digest"],
@@ -334,7 +347,10 @@ class PiDriverPeer:
         operations, results = [model_id], []
         for index, call in enumerate(calls):
             identity = tool_operation_id(payload["turn"], index, call)
-            results.append(await operation(identity, "tool", {"call_index": index, "call_id": call["id"]}))
+            result = await operation(identity, "tool", {"call_index": index, "call_id": call["id"]})
+            if result is None:
+                return {"status": "parked"}
+            results.append(result)
             operations.append(identity)
         projection = [*payload["messages"], step["assistant_message"], *results]
         return {"status": "completed", "epoch": epoch, "snapshot": {"pi_blob": "fixture"},
@@ -772,7 +788,7 @@ async def cron_schedule(rec: Recorder) -> list[WorkflowHistory]:
             *await rec.chain(controller_id, controller.first_execution_run_id)]
 
 
-# ---- employee jobs, approved sends, Workspace tasks, Pi -------------------------
+# ---- employee jobs, approved sends --------------------------------------------
 
 
 async def employee_job(rec: Recorder) -> list[WorkflowHistory]:
@@ -892,9 +908,48 @@ async def pi_inline_delegation(rec: Recorder) -> list[WorkflowHistory]:
     return [await rec.history(runner_id), await rec.history(f"{runner_id}-runner"), await rec.history(f"{runner_id}-agent")]
 
 
+async def _paused_agent(rec: Recorder, *, pi: bool) -> list[WorkflowHistory]:
+    """Record a real acknowledged paused generation and its resumed agent."""
+    _PAUSE_TOOL_STARTED.clear()
+    _PAUSE_TOOL_RELEASE.clear()
+    suffix = "pi" if pi else "native"
+    identifier, controller_id = f"fixture-paused-{suffix}", f"fixture-paused-{suffix}-controller"
+    controller = await rec.start("WorkflowControlWorkflow", _controller_input(controller_id), controller_id)
+    plan = {"prompt": "call:calculator", "tools": [{"node_type": "calculatorTool", "node_id": "paused-tool", "name": "calculator"}]}
+    context = _pi_context(identifier, plan) if pi else _agent_context(identifier, plan)
+    context.update(execution_control_version=1, controller_workflow_id=controller_id, generation=1)
+    handle = await rec.start("PiCodingAgentWorkflow" if pi else "AgentWorkflow", context, identifier)
+    await asyncio.wait_for(_PAUSE_TOOL_STARTED.wait(), 30)
+    paused = {"state": "paused", "revision": 2, "generation": 1}
+    await controller.execute_update("set_control_state", paused)
+    await handle.execute_update("set_control_state", paused)
+    _PAUSE_TOOL_RELEASE.set()
+    checkpoint = await asyncio.wait_for(handle.execute_update("wait_for_checkpoint", paused), 30)
+    assert checkpoint["checkpoint"]
+    paused_histories = [await handle.fetch_history(), await controller.fetch_history()]
+    running = {"state": "running", "revision": 3, "generation": 1}
+    await controller.execute_update("set_control_state", running)
+    await handle.execute_update("set_control_state", running)
+    assert (await asyncio.wait_for(handle.result(), 30))["success"]
+    await _settle_and_reset(rec, controller)
+    return [*paused_histories, await handle.fetch_history(), await controller.fetch_history()]
+
+
+async def paused_native_generation(rec: Recorder) -> list[WorkflowHistory]:
+    """Native agent tool completes, generation acknowledges Stop, then Resume finishes the same run."""
+    return await _paused_agent(rec, pi=False)
+
+
+async def paused_pi_generation(rec: Recorder) -> list[WorkflowHistory]:
+    """Pi agent drains the driver at Stop, records its checkpoint, and resumes the same run."""
+    return await _paused_agent(rec, pi=True)
+
+
 Scenario = Callable[[Recorder], Awaitable[list[WorkflowHistory]]]
 
 SCENARIOS: dict[str, Scenario] = {
+    "paused_native_generation": paused_native_generation,
+    "paused_pi_generation": paused_pi_generation,
     "machina_manual_run": machina_manual_run,
     "machina_trigger_conditional": machina_trigger_conditional,
     "machina_chat_agent": machina_chat_agent,
@@ -944,19 +999,20 @@ def _search_attributes() -> list:
     return [key[spec.indexed_type](spec.name) for spec in EVENT_SEARCH_ATTRIBUTES]
 
 
-async def record(cli: str, out: Path) -> None:
+async def record(cli: str, out: Path, *, source_commit: str | None = None, source_root: Path | None = None) -> None:
     import nodes  # noqa: F401 -- the plugin registry names the node activities
     import temporalio
     from temporalio.testing import WorkflowEnvironment
     from temporalio.worker import Replayer, Worker
 
-    from services.temporal import polling_trigger_workflow, workflow_control_workflow
     from services.temporal._install import cli_pin
     from services.temporal.execution_control_activities import ExecutionControlActivities
     from services.temporal.pi_activities import PiControlActivities, pi_put_blob
     from services.temporal.pi_protocol import DRIVER_QUEUE
     from services.temporal.plugin_registry import temporal_plugins
     from services.temporal.worker import _framework_workflows
+
+    from services.temporal import polling_trigger_workflow, workflow_control_workflow
 
     polling_trigger_workflow._MIN_POLL_INTERVAL_S = POLL_INTERVAL_FLOOR_S
     workflow_control_workflow._MIN_POLL_INTERVAL_S = POLL_INTERVAL_FLOOR_S
@@ -1008,8 +1064,12 @@ async def record(cli: str, out: Path) -> None:
             await replayer.replay_workflow(history)
 
     pin = cli_pin()
+    actual_cli = subprocess.check_output([cli, "--version"], encoding="utf-8").strip()
+    match = re.search(r"(?:temporal CLI|temporal version)\s+(\d+\.\d+\.\d+)\s+\(Server\s+(\d+\.\d+\.\d+)", actual_cli, re.I)
+    if match is None:
+        raise RuntimeError(f"Cannot identify recorder CLI: {actual_cli}")
     if out.exists():
-        shutil.rmtree(out)
+        raise FileExistsError(f"Release histories are immutable: choose a new fixture output directory ({out})")
     out.mkdir(parents=True)
     for name, histories in recorded.items():
         document = {
@@ -1020,15 +1080,76 @@ async def record(cli: str, out: Path) -> None:
         (out / f"{name}.json").write_text(json.dumps(document), encoding="utf-8")
     manifest = {
         "release": release(),
-        "origin_commit": _git("rev-parse", "HEAD"),
-        "origin_dirty": bool(_git("status", "--porcelain")),
+        "origin_commit": source_commit or _git("rev-parse", "HEAD"),
+        "origin_dirty": False if source_commit else bool(_git("status", "--porcelain")),
+        "source_mode": "git-archive" if source_commit else "working-tree",
+        "source_archive_autocrlf": False,
+        "workflow_source_sha256": {
+            path.name: hashlib.sha256(path.read_bytes()).hexdigest()
+            for path in sorted((source_root or SERVER_DIR).joinpath("services", "temporal").glob("*.py"))
+        },
         "temporalio": temporalio.__version__,
-        "temporal_cli": pin["version"],
-        "temporal_server": pin["server_version"],
+        "temporal_cli": match[1],
+        "temporal_server": match[2],
+        "release_cli_pin": pin["version"],
         "scenarios": sorted(recorded),
     }
     (out / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
+    golden_path = FIXTURES_DIR / "workflow_identities.json"
+    if not golden_path.exists():
+        write_golden(source_root or SERVER_DIR, manifest["origin_commit"])
     print(f"[fixtures] wrote {sum(len(h) for h in recorded.values())} histories to {out}")
+
+
+def write_golden(source_root: Path, commit: str) -> None:
+    """Freeze command and plugin identities from the selected source tree."""
+    import nodes  # noqa: F401 -- production plugin discovery
+    from services.node_registry import registered_node_classes
+    from services.temporal.worker import _framework_workflows
+    from services.temporal.plugin_registry import temporal_plugins
+    from tests.temporal.workflow_identities import identity_snapshot
+
+    registrations = {"workflows": _framework_workflows()}
+    for plugin in temporal_plugins():
+        registrations = plugin.configure_replayer(registrations)
+    (FIXTURES_DIR / "workflow_identities.json").write_text(json.dumps({
+        "origin_commit": commit,
+        "workflow_types": sorted(item.__temporal_workflow_definition.name for item in registrations["workflows"]),
+        "identities": identity_snapshot(source_root), "patch_entries": [],
+        "plugin_activity_types": {name: f"node.{cls.type}.v{cls.version}" for name, cls in registered_node_classes().items()},
+    }, indent=2) + "\n", encoding="utf-8")
+
+
+@contextlib.contextmanager
+def committed_source(commit: str | None):
+    """Load real N-1 source without checking out or editing the working tree.
+
+    The recorder is the test driver, but every app module it imports comes
+    from the immutable git archive. DATA_DIR stays separate from both trees.
+    """
+    if not commit:
+        yield None, None
+        return
+    resolved = _git("rev-parse", "--verify", commit + "^{commit}")
+    with tempfile.TemporaryDirectory(prefix="opencompany-n-minus-one-") as directory:
+        root = Path(directory)
+        archive = subprocess.check_output([
+            "git", "-c", "core.autocrlf=false", "archive", resolved, "server/services", "server/nodes", "server/core",
+            "server/models", "server/constants.py", "server/config", ".env.template", "package.json",
+        ], cwd=REPO_ROOT)
+        with tarfile.open(fileobj=io.BytesIO(archive)) as files:
+            files.extractall(root, filter="data")
+        sys.path.insert(0, str(root / "server"))
+        previous = os.environ.get("OPENCOMPANY_APP_ROOT")
+        os.environ["OPENCOMPANY_APP_ROOT"] = str(root)
+        try:
+            yield resolved, root / "server"
+        finally:
+            sys.path.remove(str(root / "server"))
+            if previous is None:
+                os.environ.pop("OPENCOMPANY_APP_ROOT", None)
+            else:
+                os.environ["OPENCOMPANY_APP_ROOT"] = previous
 
 
 def main() -> int:
@@ -1036,10 +1157,20 @@ def main() -> int:
     if not cli or not Path(cli).is_file():
         print("Set TEMPORAL_TEST_CLI to the pinned Temporal CLI binary (see TEMPORAL_ARCHITECTURE.md).", file=sys.stderr)
         return 2
-    os.environ["DATA_DIR"] = tempfile.mkdtemp(prefix="opencompany-fixtures-")
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("out", nargs="?", type=Path, default=FIXTURES_DIR / release())
+    parser.add_argument("--source-commit", help="Record the exact app source at this commit, isolated from uncommitted changes")
+    parser.add_argument("--golden-only", action="store_true", help="Write only the command identity inventory from the selected commit")
+    options = parser.parse_args()
+    os.environ["DEBUG"] = "false"
     os.environ.setdefault("LOG_LEVEL", "WARNING")
-    out = Path(sys.argv[1]) if len(sys.argv) > 1 else FIXTURES_DIR / release()
-    asyncio.run(record(cli, out))
+    with tempfile.TemporaryDirectory(prefix="opencompany-fixtures-") as data_dir:
+        os.environ["DATA_DIR"] = data_dir
+        with committed_source(options.source_commit) as (commit, source_root):
+            if options.golden_only:
+                write_golden(source_root or SERVER_DIR, commit or _git("rev-parse", "HEAD"))
+            else:
+                asyncio.run(record(cli, options.out, source_commit=commit, source_root=source_root))
     return 0
 
 

@@ -97,10 +97,8 @@ class TemporalServerRuntime(BaseProcessSupervisor):
         # Ensure the parent dir for the SQLite file exists before
         # ``temporal server start-dev`` opens it.
         self._sqlite_path.parent.mkdir(parents=True, exist_ok=True)
-        # The server must never open a database another server minor
-        # created: such a database is deleted here and the install starts
-        # on an empty one (RFC-0005 E16).
-        await asyncio.to_thread(prepare_database, self._sqlite_path)
+        # Validate the selected existing pair before opening any SQLite file.
+        await asyncio.to_thread(prepare_database, self._sqlite_path, self._binaries["temporal"])
 
     def binary_path(self) -> Path:
         # ``_pre_spawn`` (called by ``BaseProcessSupervisor._do_start``
