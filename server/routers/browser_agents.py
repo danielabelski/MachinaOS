@@ -31,7 +31,7 @@ async def create_browser_agent(body: CreateBrowserAgent, request: Request):
 
     async def authorize(session):
         saved = (await session.execute(select(Workflow).where(Workflow.id == body.workflow_id))).scalar_one_or_none()
-        if saved is None or (saved.data.get("owner_id") and str(saved.data["owner_id"]) != principal):
+        if saved is None or str((saved.data or {}).get("owner_id") or "owner") != principal:
             raise HTTPException(status_code=404, detail="Workflow not found")
 
     # A cached mutation receipt must not bypass authorization after access

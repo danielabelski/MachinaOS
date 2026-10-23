@@ -5,7 +5,7 @@ from uuid import uuid4
 import pytest
 from fastapi import HTTPException
 
-from routers import agents
+from routers import agents, browser_agents
 from tests.nodes._agent_builder_harness import (  # noqa: F401 -- pytest registers imported fixtures
     builder_fixture, database_fixture, save_graph, saved,
 )
@@ -18,6 +18,7 @@ def request(owner="owner"):
 @pytest.fixture
 def creation(database, builder, monkeypatch):
     monkeypatch.setattr(agents, "container", SimpleNamespace(database=lambda: database))
+    monkeypatch.setattr(browser_agents, "container", SimpleNamespace(database=lambda: database))
     monkeypatch.setenv("NEW_AGENT_RUNTIME_V1_ENABLED", "true")
     return builder
 
@@ -60,6 +61,22 @@ async def test_receipt_never_bypasses_owner_check(database, creation):
         await agents.create_agent(body, request("stranger"))
     assert caught.value.status_code == 404
     assert len(creation.frames) == 1
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("bundle", [False, True])
+async def test_ownerless_legacy_workflow_still_belongs_to_local_owner(database, creation, bundle):
+    await save_graph(database, {"nodes": [], "edges": []})
+    body = agents.CreateAgent(workflow_id="7", node_type="aiAgent", mutation_id=uuid4())
+    with pytest.raises(HTTPException) as caught:
+        if bundle:
+            await browser_agents.create_browser_agent(browser_agents.CreateBrowserAgent(
+                workflow_id="7", mutation_id=uuid4()), request("stranger"))
+        else:
+            await agents.create_agent(body, request("stranger"))
+    assert caught.value.status_code == 404
+    assert (await saved(database))["nodes"] == []
+    assert creation.frames == []
 
 
 @pytest.mark.asyncio

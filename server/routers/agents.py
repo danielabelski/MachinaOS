@@ -53,7 +53,7 @@ async def create_agent(body: CreateAgent, request: Request):
 
     async def authorize(session):
         workflow = (await session.execute(select(Workflow).where(Workflow.id == body.workflow_id))).scalar_one_or_none()
-        if workflow is None or ((workflow.data or {}).get("owner_id") and str(workflow.data["owner_id"]) != principal):
+        if workflow is None or str((workflow.data or {}).get("owner_id") or "owner") != principal:
             raise HTTPException(status_code=404, detail="Workflow not found")
 
     # Receipts do not confer access if ownership changes after creation.
