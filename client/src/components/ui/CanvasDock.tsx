@@ -42,9 +42,11 @@ import { useSurfaceRunning } from '../workspace/activity';
 import { workspaceNodes } from '../workspace/descriptors';
 import MobileWorkspace from '../mobile/MobileWorkspace';
 import { queryClient } from '../../lib/queryClient';
+import { LlmWaitNote } from './LlmWaitNote';
 
 interface CanvasDockProps {
   nodes: Node[];
+  flushCanvas?: () => void;
 }
 
 const isCanvasNode = (node: Node): boolean =>
@@ -53,7 +55,7 @@ const isCanvasNode = (node: Node): boolean =>
 const nodeLabel = (node: Node): string =>
   (node.data?.label as string | undefined) || node.type || node.id;
 
-const CanvasDock: React.FC<CanvasDockProps> = ({ nodes }) => {
+const CanvasDock: React.FC<CanvasDockProps> = ({ nodes, flushCanvas }) => {
   const open = useCanvasDockStore((s) => s.open);
   const tab = useCanvasDockStore((s) => s.tab);
   const setTab = useCanvasDockStore((s) => s.setTab);
@@ -176,7 +178,7 @@ const CanvasDock: React.FC<CanvasDockProps> = ({ nodes }) => {
           tab={tab}
           onTabChange={setTab}
           activity={{ browser: browserRunning, android: mobileRunning }}
-          browser={<BrowserWorkspace key={workflowId ?? 'unsaved'} workflowId={workflowId} nodes={browserNodes} visible={open && tab === 'browser'} />}
+          browser={<BrowserWorkspace key={workflowId ?? 'unsaved'} workflowId={workflowId} nodes={browserNodes} visible={open && tab === 'browser'} flushCanvas={flushCanvas} />}
           android={<MobileWorkspace key={workflowId ?? 'unsaved'} workflowId={workflowId} nodes={mobileNodes} visible={open && tab === 'android'}
             canvasNodeId={effectiveNodeId ?? null} notify={(message, tone) => (tone === 'error' ? toast.error(message) : toast.success(message))} />}
           board={<>
@@ -252,6 +254,7 @@ const CanvasDock: React.FC<CanvasDockProps> = ({ nodes }) => {
         </div>
           </>}
         />}
+        {open && <LlmWaitNote workflowId={workflowId} className="shrink-0 border-t border-border-default px-3 py-2" />}
       </div>
     </div>
   );

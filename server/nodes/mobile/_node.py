@@ -9,7 +9,10 @@ from services.plugin import ActionNode, NodeContext, Operation, NodeUserError
 from services.plugin.scaling import RetryPolicy, TaskQueue
 
 
-class MobileParams(BaseModel):
+from services.agent_runtime_policy import AgentRuntimeParams
+
+
+class MobileParams(AgentRuntimeParams):
     prompt: str = Field(default="", max_length=20000, json_schema_extra={"rows": 4})
     model_source: Literal["global", "custom"] = Field(
         default="global", title="Model selection",
@@ -169,7 +172,7 @@ class MobileUseAgent(ActionNode):
             raise NodeUserError("Enter a task for the mobile agent")
         runtime = get_runtime()
         model = await resolve_model(ctx, params)
-        config = params.model_dump()
+        config = params.model_dump(exclude={"runtime_behavior_version"})
         directive = (ctx.raw.get("_raw_parameters") or {}).get("system_message")
         if directive and directive != config["prompt"]:
             config["prompt"] = f"{directive}\n\n{config['prompt']}"

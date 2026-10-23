@@ -28,7 +28,7 @@ from typing import Any, Dict, List, Optional
 
 from sqlalchemy import delete, select
 from sqlalchemy.exc import IntegrityError
-from models.browser_profiles import BrowserProfileRow
+from models.browser_profiles import BrowserProfileRow, BrowserProfileReservation
 
 from core.logging import get_logger
 
@@ -55,6 +55,9 @@ class Profile:
     workflow_id: Optional[str]
     chrome_major: Optional[int]
     sites: tuple = ()
+    runtime_version: int = 0
+    agent_node_id: Optional[str] = None
+    browser_node_id: Optional[str] = None
 
     def to_wire(self) -> Dict[str, Any]:
         return {"id": self.id, "name": self.name, "kind": self.kind, "workflow_id": self.workflow_id, "sites": list(self.sites)}
@@ -138,6 +141,7 @@ class ProfileStore:
                 return
             async with engine.begin() as connection:
                 await connection.run_sync(lambda sync: BrowserProfileRow.__table__.create(sync, checkfirst=True))
+                await connection.run_sync(lambda sync: BrowserProfileReservation.__table__.create(sync, checkfirst=True))
             self._initialized_engines.add(engine)
 
     async def list(self, owner_id: str) -> List[Profile]:
@@ -148,7 +152,18 @@ class ProfileStore:
                     select(BrowserProfileRow).where(BrowserProfileRow.owner_id == owner_id).order_by(BrowserProfileRow.created_at)
                 )
             ).scalars()
-            return [_from_row(r) for r in rows if r.kind != "login"]
+            return [await self._profile(session, r) for r in rows if r.kind != "login"]
+
+    async def _profile(self, session, row):
+        profile = _from_row(row)
+        if row.kind != "agent":
+            return profile
+        reservation = await session.get(BrowserProfileReservation, row.id)
+        if reservation is None or reservation.runtime_version != 1 or reservation.owner_id != row.owner_id:
+            raise ProfileError("Private Browser profile reservation is missing or incompatible")
+        from dataclasses import replace
+        return replace(profile, runtime_version=1, workflow_id=reservation.workflow_id,
+                       agent_node_id=reservation.agent_node_id, browser_node_id=reservation.browser_node_id)
 
     async def get(self, owner_id: str, profile_id: str) -> Profile:
         await self.ensure_schema()
@@ -156,7 +171,7 @@ class ProfileStore:
             row = await session.get(BrowserProfileRow, profile_id)
             if row is None or row.owner_id != owner_id:
                 raise ProfileError("Browser profile not found")
-            return _from_row(row)
+            return await self._profile(session, row)
 
     async def _name_taken(self, session: Any, owner_id: str, name: str, *, exclude_id: Optional[str] = None) -> bool:
         rows = (await session.execute(select(BrowserProfileRow).where(BrowserProfileRow.owner_id == owner_id))).scalars()
@@ -202,6 +217,7 @@ class ProfileStore:
             row = await session.get(BrowserProfileRow, profile_id)
             if row is None or row.owner_id != owner_id:
                 raise ProfileError("Browser profile not found")
+            await session.execute(delete(BrowserProfileReservation).where(BrowserProfileReservation.profile_id == profile_id))
             await session.execute(delete(BrowserProfileRow).where(BrowserProfileRow.id == profile_id))
             await session.commit()
         self.bump_revision()
@@ -242,7 +258,11 @@ class ProfileStore:
                     select(BrowserProfileRow).where(BrowserProfileRow.workflow_id == workflow_id, BrowserProfileRow.kind == "employee")
                 )
             ).scalars()
-            return [_from_row(r) for r in rows]
+            profiles = [_from_row(r) for r in rows]
+            reserved = (await session.execute(select(BrowserProfileRow).join(BrowserProfileReservation,
+                BrowserProfileReservation.profile_id == BrowserProfileRow.id).where(
+                    BrowserProfileReservation.workflow_id == workflow_id))).scalars().all()
+            return profiles + [await self._profile(session, r) for r in reserved]
 
     async def for_workflow(self, owner_id: str, workflow_id: str) -> List[Profile]:
         await self.ensure_schema()
@@ -252,7 +272,12 @@ class ProfileStore:
                     select(BrowserProfileRow).where(BrowserProfileRow.owner_id == owner_id, BrowserProfileRow.workflow_id == workflow_id)
                 )
             ).scalars()
-            return [_from_row(r) for r in rows]
+            profiles = [_from_row(r) for r in rows]
+            private = (await session.execute(select(BrowserProfileRow).join(BrowserProfileReservation,
+                BrowserProfileReservation.profile_id == BrowserProfileRow.id).where(
+                    BrowserProfileReservation.owner_id == owner_id,
+                    BrowserProfileReservation.workflow_id == workflow_id))).scalars().all()
+            return profiles + [await self._profile(session, r) for r in private]
 
     async def update_sites(self, profile_id: str, sites: List[Dict[str, Any]]) -> None:
         await self.ensure_schema()

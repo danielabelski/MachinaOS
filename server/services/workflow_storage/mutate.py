@@ -98,6 +98,19 @@ async def apply_graph_additions(
         # callable identities to the same agent.
         batch, reused = prepare(workflow.data or {}) if prepare else (additions, {})
         placed = add_to_graph(workflow_id, workflow.data or {}, batch)
+        from services.browser_resources import allocate_new_browser_resources, validate_browser_resource_bindings
+        resource_parameters = {}
+        for node in placed.graph.get("nodes", []):
+            row = await _row(session, node["id"])
+            resource_parameters[node["id"]] = dict(row.parameters or {}) if row else {}
+        resource_parameters.update(placed.parameters)
+        principal = str((workflow.data or {}).get("owner_id") or "owner")
+        await allocate_new_browser_resources(session, workflow_id, principal, placed.graph,
+                                            resource_parameters, placed.parameters.keys())
+        await session.flush()
+        await validate_browser_resource_bindings(session, workflow_id, principal, placed.graph, resource_parameters)
+        for node_id in placed.parameters:
+            placed.parameters[node_id] = resource_parameters[node_id]
         operations: List[Dict[str, Any]] = []
         for edge in placed.removed_edges:
             operations.append(workflow_ops.delete_edge(str(edge.get("id"))))

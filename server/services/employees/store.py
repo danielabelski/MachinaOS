@@ -157,6 +157,14 @@ async def commit_hire(database: Any, employee_id: str, claim_token: str, *, name
         if normalized.state_imports:
             raise RuntimeError("new_employee_contains_legacy_state")
         graph = sanitize_workflow_graph({**normalized.graph_data(), "owner_id": row.owner_id})
+        from services.agent_runtime_policy import stamp_new_graph_parameters
+        stamp_new_graph_parameters(graph, normalized.node_parameters, normalized.node_parameters.keys())
+        from services.browser_resources import allocate_new_browser_resources, validate_browser_resource_bindings
+        await allocate_new_browser_resources(session, workflow_id, str(row.owner_id or "owner"), graph,
+                                            normalized.node_parameters, normalized.node_parameters.keys())
+        await session.flush()
+        await validate_browser_resource_bindings(session, workflow_id, str(row.owner_id or "owner"), graph,
+                                               normalized.node_parameters)
         base = slugify_name(name)
         slug = f"{base}_1"
         suffix = 1

@@ -337,12 +337,16 @@ def plan_talk_line(
         tools = view.sources(worker, TOOLS_INPUT)
         if copy_worker_tools:
             for index, tool in enumerate(dict.fromkeys(tools)):
-                if hired:
+                from services.agent_runtime_policy import new_agent_runtime_enabled
+                if hired or (new_agent_runtime_enabled() and view.type_of(tool) == "browser"):
                     original = view.nodes[tool]
                     name = f"talk_worker_tool_{index}"
+                    copied = dict((parameters_by_id or {}).get(tool) or {})
+                    if new_agent_runtime_enabled() and view.type_of(tool) == "browser":
+                        copied.pop("profile_id", None)
                     nodes.append(NewNode(
                         name, view.type_of(tool), str((original.get("data") or {}).get("label") or view.type_of(tool)),
-                        dict((parameters_by_id or {}).get(tool) or {}), (x - 240 + 170 * index, y + 360),
+                        copied, (x - 240 + 170 * index, y + 360),
                     ))
                     edges.append(tool_edge(name, "talk_agent"))
                 else:

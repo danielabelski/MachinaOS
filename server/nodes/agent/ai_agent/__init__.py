@@ -18,7 +18,10 @@ from .._handles import STD_AGENT_HINTS, std_agent_handles
 from .._provider import ProviderRef
 
 
-class AIAgentParams(BaseModel):
+from services.agent_runtime_policy import AgentRuntimeParams
+
+
+class AIAgentParams(AgentRuntimeParams):
     """AI Agent tuning surface.
 
     ``api_key`` is intentionally NOT a node field — credentials are stored

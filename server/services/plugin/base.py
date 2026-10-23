@@ -91,7 +91,10 @@ def locked_tool_fields(node_cls: Any) -> frozenset:
     """
     if node_cls is None:
         return frozenset()
-    return frozenset(getattr(node_cls, "server_controlled_fields", ()) or ())
+    fields = frozenset(getattr(node_cls, "server_controlled_fields", ()) or ())
+    if "runtime_behavior_version" in getattr(getattr(node_cls, "Params", None), "model_fields", {}):
+        fields = fields | {"runtime_behavior_version"}
+    return fields
 
 
 def restore_locked_fields(
@@ -503,6 +506,8 @@ class BaseNode:
             meta["visibility"] = cls.visibility
         ui_hints = _derive_auto_ui_hints(cls.group)
         ui_hints.update(cls.ui_hints)
+        if "runtime_behavior_version" in getattr(getattr(cls, "Params", None), "model_fields", {}) and cls.component_kind == "agent":
+            ui_hints["creationParameters"] = {"runtime_behavior_version": 1}
         if cls.requires_context:
             ui_hints["requiresContext"] = True
         # How long this node may legitimately run, so the client can size its
@@ -1303,6 +1308,7 @@ class BaseNode:
                     # The chat run this run answers (MachinaWorkflow sets it
                     # for a run the owner's chat message started).
                     "run_scope",
+                    "runtime_behavior_version",
                     # A tool call of the agent answering a chat run: where
                     # what it shows goes (show_ui, services/chat/parts.py).
                     "chat_stream",

@@ -3,6 +3,7 @@ import { Edge, Node } from 'reactflow';
 import { toast } from 'sonner';
 import { useAppStore } from '../store/useAppStore';
 import { createBrowserAgent } from '../services/browserAgentApi';
+import { createAgent, createSavedGraphResource } from '../services/agentCreationApi';
 import { addSavedNodes, addSavedEdges } from '../lib/workflowOps';
 import { snapToGrid, getDefaultNodePosition, nextNodeInstanceId } from '../utils/workflow';
 import { theme } from '../styles/theme';
@@ -26,6 +27,7 @@ interface UseDragAndDropProps {
   saveNodeParameters?: (nodeId: string, parameters: Record<string, any>) => Promise<boolean>;
   globalModelDefaults?: { provider: string; model: string } | null;
   workflowId: string;
+  flushCanvas?: () => void;
   /** React Flow's `screenToFlowPosition`: turns a pointer position into
    *  canvas coordinates, accounting for the pane's offset, pan and zoom. */
   screenToFlowPosition: (position: { x: number; y: number }) => { x: number; y: number };
@@ -57,7 +59,7 @@ export const generateUniqueLabel = (displayName: string, nodeType: string, exist
   return `${displayName} ${suffix}`;
 };
 
-export const useDragAndDrop = ({ nodes, setNodes, edges = [], setEdges, saveNodeParameters, globalModelDefaults, workflowId, screenToFlowPosition }: UseDragAndDropProps) => {
+export const useDragAndDrop = ({ nodes, setNodes, edges = [], setEdges, saveNodeParameters, globalModelDefaults, workflowId, screenToFlowPosition, flushCanvas }: UseDragAndDropProps) => {
   const onDragOver = useCallback((event: React.DragEvent) => {
     event.preventDefault();
     event.dataTransfer.dropEffect = 'move';
@@ -91,22 +93,33 @@ export const useDragAndDrop = ({ nodes, setNodes, edges = [], setEdges, saveNode
           position = getDefaultNodePosition(nodes.length);
         }
 
-        if (getCachedNodeSpec(nodeData.type)?.uiHints?.createsBrowserAgent) {
+        const spec = getCachedNodeSpec(nodeData.type);
+        const authoritativeAgent = spec?.componentKind === 'agent' && spec?.uiHints?.creationParameters?.runtime_behavior_version === 1;
+        if (spec?.uiHints?.createsBrowserAgent || authoritativeAgent) {
           const store = useAppStore.getState();
           if (!setEdges || !store.currentWorkflow || store.currentWorkflow.id !== workflowId) {
-            toast.error('Open a workflow before adding Browser AI Agent.');
+            toast.error('Open a workflow before adding an agent.');
             return;
           }
-          store.updateWorkflow({ nodes, edges });
-          if (!(await useAppStore.getState().saveWorkflow())) return;
-          if (useAppStore.getState().currentWorkflow?.id !== workflowId) return;
-          const result = await createBrowserAgent({ workflow_id: workflowId, position: [position.x, position.y],
-            ...(globalModelDefaults || {}) });
-          useAppStore.getState().adoptSavedOperations(workflowId, result.operations);
-          if (useAppStore.getState().currentWorkflow?.id === workflowId) {
-            setNodes(current => addSavedNodes(current, result.operations));
-            setEdges(current => addSavedEdges(current, result.operations));
-          }
+          const mutationId = crypto.randomUUID();
+          const create = async () => {
+            try {
+              const result = await createSavedGraphResource(workflowId,
+                flushCanvas ?? (() => useAppStore.getState().updateWorkflow({ nodes, edges })),
+                () => spec?.uiHints?.createsBrowserAgent
+                  ? createBrowserAgent({ workflow_id: workflowId, position: [position.x, position.y], ...(globalModelDefaults || {}) }, mutationId)
+                  : createAgent({ workflow_id: workflowId, node_type: nodeData.type, position: [position.x, position.y],
+                    parameters: { ...(nodeData.data || {}), ...(globalModelDefaults || {}) } }, mutationId));
+              if (!result) return;
+              if (useAppStore.getState().currentWorkflow?.id === workflowId) {
+                setNodes(current => addSavedNodes(current, result.operations));
+                setEdges(current => addSavedEdges(current, result.operations));
+              }
+            } catch (error) {
+              toast.error(error instanceof Error ? error.message : 'Could not create the agent.', { action: { label: 'Retry', onClick: () => void create() } });
+            }
+          };
+          await create();
           return;
         }
 
@@ -150,7 +163,7 @@ export const useDragAndDrop = ({ nodes, setNodes, edges = [], setEdges, saveNode
         toast.error(error instanceof Error ? error.message : 'Could not add node.');
       }
     },
-    [setNodes, nodes, edges, setEdges, saveNodeParameters, globalModelDefaults, workflowId, screenToFlowPosition]
+    [setNodes, nodes, edges, setEdges, saveNodeParameters, globalModelDefaults, workflowId, screenToFlowPosition, flushCanvas]
   );
 
   const handleComponentDragStart = useCallback((event: React.DragEvent, definition: any) => {

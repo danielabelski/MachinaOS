@@ -33,7 +33,11 @@ class WorkflowSaveRequest(BaseModel):
 async def save_node_parameters(request: NodeParameterRequest, database: Database = Depends(lambda: container.database())):
     """Save node parameters (replaces frontend Dexie)."""
     try:
-        success = await database.save_node_parameters(request.node_id, request.parameters)
+        from services.agent_runtime_policy import preserve_runtime_version
+        from services.browser_resources import validate_browser_parameters
+        saved = await database.get_node_parameters(request.node_id) or {}
+        await validate_browser_parameters(database, request.node_id, request.parameters)
+        success = await database.save_node_parameters(request.node_id, preserve_runtime_version(saved, request.parameters))
         return {"success": success}
     except Exception as e:
         logger.error("Failed to save node parameters", error=str(e), exc_info=True)

@@ -34,7 +34,10 @@ logger = get_logger(__name__)
 from services.cli_agent import CodexTaskSpec  # noqa: E402
 
 
-class CodexAgentParams(BaseModel):
+from services.agent_runtime_policy import AgentRuntimeParams
+
+
+class CodexAgentParams(AgentRuntimeParams):
     """Multi-task batch parameters for Codex."""
 
     tasks: List[CodexTaskSpec] = Field(

@@ -37,11 +37,13 @@ def browser_tool_id(graph: Mapping[str, Any], agent_id: str) -> str:
 def browser_agent_additions(*, agent_parameters: Mapping[str, Any] | None = None,
                             position: tuple[float, float] = (0, 0), agent_ref: str = "agent",
                             browser_node_id: str | None = None, create_agent: bool = True,
-                            create_context: bool = True, create_skills: bool = True) -> GraphAdditions:
+                            create_context: bool = True, create_skills: bool = True,
+                            fresh_skills: bool = False) -> GraphAdditions:
     x, y = position
     nodes, edges = [], []
     if create_agent:
-        parameters = {"system_message": BROWSER_AGENT_ROLE, **dict(agent_parameters or {})}
+        from services.agent_runtime_policy import new_agent_parameters
+        parameters = new_agent_parameters({"system_message": BROWSER_AGENT_ROLE, **dict(agent_parameters or {})})
         nodes.append(NewNode(agent_ref, "browser_agent", "Browser AI Agent", parameters, position=(x, y)))
     if create_context:
         nodes.append(NewNode("context", "context", "Browser context", position=(x, y - 180), context_of=agent_ref))
@@ -51,6 +53,12 @@ def browser_agent_additions(*, agent_parameters: Mapping[str, Any] | None = None
     edges.append(tool_edge(browser_ref, agent_ref))
     if create_skills:
         instructions = (Path(__file__).resolve().parents[1] / "skills/web_agent/browser-skill/SKILL.md").read_text(encoding="utf-8")
+        from services.agent_runtime_policy import new_agent_runtime_enabled
+        if (create_agent or fresh_skills) and new_agent_runtime_enabled():
+            from services.skill_defaults import v1_default
+            variant = v1_default("browser-skill")
+            if variant is not None:
+                instructions = variant.instructions
         nodes.append(NewNode("skills", "masterSkill", "Browser instructions", {
             "skill_folder": "web_agent", "skills_config": {
                 "browser-skill": {"enabled": True, "instructions": instructions, "isCustomized": False},

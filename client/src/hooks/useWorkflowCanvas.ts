@@ -45,5 +45,5 @@ export function useWorkflowCanvas(debounceMs: number) {
   // Preserve edits made just before leaving Dev, without waiting for debounce.
   useEffect(() => flush, [flush]);
 
-  return { nodes, setNodes, onNodesChange, edges, setEdges, onEdgesChange };
+  return { nodes, setNodes, onNodesChange, edges, setEdges, onEdgesChange, flush };
 }

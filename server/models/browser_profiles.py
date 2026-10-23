@@ -2,7 +2,7 @@
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
-from sqlalchemy import JSON, Column, UniqueConstraint, Index, func, text
+from sqlalchemy import JSON, Column, UniqueConstraint, Index, event, func, text
 from sqlmodel import Field, SQLModel
 
 
@@ -22,6 +22,27 @@ class BrowserProfileRow(SQLModel, table=True):
     sites: Optional[List[Dict[str, Any]]] = Field(default=None, sa_column=Column(JSON))
     created_at: datetime = Field(default_factory=_utcnow)
     updated_at: datetime = Field(default_factory=_utcnow)
+
+
+class BrowserProfileReservation(SQLModel, table=True):
+    """Immutable provenance for a newly allocated, agent-private resource.
+
+    Old profiles deliberately have no reservation. This is additive: no old
+    row or login state is upgraded when the runtime is released.
+    """
+    __tablename__ = "browser_profile_reservations"
+    __table_args__ = (UniqueConstraint("owner_id", "workflow_id", "browser_node_id", name="uq_private_browser_binding"),)
+    profile_id: str = Field(primary_key=True, max_length=40)
+    owner_id: str = Field(index=True, max_length=255)
+    workflow_id: str = Field(index=True, max_length=255)
+    agent_node_id: str = Field(index=True, max_length=255)
+    browser_node_id: str = Field(index=True, max_length=255)
+    runtime_version: int = Field(default=1)
+
+
+@event.listens_for(BrowserProfileReservation, "before_update")
+def _immutable_browser_reservation(_mapper, _connection, _target):
+    raise ValueError("Private Browser reservations are immutable; create a separate profile")
 
 
 Index("uq_browser_profile_shared_name", BrowserProfileRow.owner_id, func.lower(BrowserProfileRow.name),

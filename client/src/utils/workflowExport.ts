@@ -24,6 +24,7 @@ export const UI_DATA_FIELDS = new Set([
   // these values; normalization and lifecycle decisions remain server-side.
   'systemManaged',
   'agentNodeId',
+  'private_browser_owner',
 ]);
 
 /**

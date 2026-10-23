@@ -39,6 +39,7 @@ vi.mock('sonner', () => ({
 }));
 
 import { useAppStore } from '../useAppStore';
+import { createSavedGraphResource } from '../../services/agentCreationApi';
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -64,6 +65,22 @@ describe('useAppStore.requestChatFocus', () => {
 });
 
 describe('useAppStore authoritative normalized graph handoff', () => {
+  it('queues ordinary Save behind creation and saves the minted node', async () => {
+    useAppStore.setState({ currentWorkflow: { id: 'queue', name: 'Queue', slug: 'Queue', nodes: [], edges: [], createdAt: new Date(), lastModified: new Date() } });
+    saveWorkflowMock.mockImplementation(async (id, _name, data) => ({ id, slug: 'Queue', data }));
+    let finish!: () => void;
+    const pending = new Promise<void>((resolve) => { finish = resolve; });
+    const create = createSavedGraphResource('queue', () => {}, async () => {
+      await pending;
+      return { node_ids: { agent: 'queue:aiAgent:1' }, operations: [{ type: 'add_node', client_ref: 'agent', minted_id: 'queue:aiAgent:1', node_type: 'aiAgent', parameters: {}, label: 'Agent' }] };
+    });
+    await vi.waitFor(() => expect(saveWorkflowMock).toHaveBeenCalledOnce());
+    const save = useAppStore.getState().saveWorkflow();
+    expect(saveWorkflowMock).toHaveBeenCalledOnce();
+    finish(); await create; await save;
+    expect(saveWorkflowMock).toHaveBeenCalledTimes(2);
+    expect(saveWorkflowMock.mock.calls[1][2].nodes.map((node: { id: string }) => node.id)).toContain('queue:aiAgent:1');
+  });
   it('replaces the edit buffer with save response data and reconciles selection', async () => {
     const draftAgent = {
       id: 'draft-agent',

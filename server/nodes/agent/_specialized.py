@@ -27,7 +27,10 @@ from ._handles import STD_AGENT_HINTS, std_agent_handles
 from ._provider import ProviderRef
 
 
-class SpecializedAgentParams(BaseModel):
+from services.agent_runtime_policy import AgentRuntimeParams
+
+
+class SpecializedAgentParams(AgentRuntimeParams):
     """Identical to AIAgentParams — full LLM tuning surface.
 
     Mirrors AIAgentParams: no ``api_key`` field (credentials come from the

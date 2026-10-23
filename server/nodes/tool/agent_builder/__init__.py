@@ -216,6 +216,21 @@ async def _save(ctx: NodeContext, database: Any, canvas: _Canvas, additions: Gra
     workflow is gone; raises ValueError when the graph changed under the
     plan."""
     from services.workflow_storage.mutate import apply_graph_additions
+    from services.agent_runtime_policy import prepare_new_agent_additions
+    # A new Skill holder can attach to an existing agent. That agent's saved
+    # immutable policy, rather than the caller's policy, selects its defaults.
+    holder_refs = {node.ref for node in additions.nodes if node.type == "masterSkill"}
+    existing_targets = {edge.target for edge in additions.edges if edge.source in holder_refs}
+    if prepare is not None and params.operation == "attach_skill":
+        existing_targets.update(node["id"] for node in canvas.nodes if node.get("id"))
+    existing_parameters = {identifier: await database.get_node_parameters(identifier) or {}
+                           for identifier in existing_targets}
+    additions = prepare_new_agent_additions(additions, existing_parameters)
+    if prepare is not None:
+        original_prepare = prepare
+        def prepare(graph):
+            batch, reused = original_prepare(graph)
+            return prepare_new_agent_additions(batch, existing_parameters), reused
 
     async def authorize(session: Any) -> None:
         from models.employees import EmployeeGrant

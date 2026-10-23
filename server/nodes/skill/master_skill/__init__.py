@@ -15,7 +15,10 @@ from pydantic import BaseModel, ConfigDict, Field
 from services.plugin import ActionNode, NodeContext, Operation, TaskQueue
 
 
-class MasterSkillParams(BaseModel):
+from services.agent_runtime_policy import AgentRuntimeParams
+
+
+class MasterSkillParams(AgentRuntimeParams):
     skill_folder: str = Field(default="assistant")
     skills_config: Dict[str, Any] = Field(
         default_factory=lambda: {

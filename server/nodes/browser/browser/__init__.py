@@ -322,18 +322,29 @@ async def _profile_for(ctx: NodeContext, cfg: BrowserParams):
 
     store = ProfileStore(get_database())
     owner = ctx.user_id or "owner"
+    async def checked(profile):
+        from services.browser_resources import assert_browser_resource_access
+        await assert_browser_resource_access(get_database(), profile_id=profile.id, principal=owner,
+            workflow_id=str(ctx.workflow_id or ""), browser_node_id=ctx.node_id,
+            agent_node_id=ctx.raw.get("invoking_agent_node_id") or ctx.raw.get("parent_node_id"),
+            runtime_version=max(getattr(profile, "runtime_version", 0), int(ctx.raw.get("runtime_behavior_version") == 1)),
+            parameter_snapshot=ctx.raw.get("parameter_snapshot"))
+        return profile
     try:
         binding = ctx.raw.get("_browser_owner")
         if isinstance(binding, dict) and binding.get("profile_id"):
-            return await store.get(owner, str(binding["profile_id"]))
+            return await checked(await store.get(owner, str(binding["profile_id"])))
         if cfg.profile_id:
-            return await store.get(owner, cfg.profile_id)
+            return await checked(await store.get(owner, cfg.profile_id))
+        if ctx.raw.get("runtime_behavior_version") == 1:
+            from services.browser_resources import BrowserResourceError
+            raise BrowserResourceError("A new agent needs its reserved private Browser. Create separate Browser tool/profile.")
         if ctx.workflow_id:
             saved = await get_database().get_workflow(ctx.workflow_id)
             name = getattr(saved, "name", None) if saved is not None else None
             if not name and isinstance(saved, dict):
                 name = saved.get("name")
-            return await store.default_for_workflow(owner, ctx.workflow_id, str(name or "Browser"))
+            return await checked(await store.default_for_workflow(owner, ctx.workflow_id, str(name or "Browser")))
         shared = [p for p in await store.list(owner) if p.kind == "shared" and p.name.lower() == "default"]
         return shared[0] if shared else await store.create(owner, "Default")
     except ProfileError as exc:
@@ -345,6 +356,15 @@ def _read_only_refusal(op: str) -> str:
         f"This browser is read-only for this agent, so '{op}' is not allowed. Read the page, then call "
         "request_user with a message saying exactly what the owner should do."
     )
+
+
+def _observation_required(out, profile):
+    if getattr(profile, "runtime_version", 0) == 1:
+        return _failure(out, "observation_required",
+            "This browser needs a fresh observation, including after runtime recovery. "
+            "Call snapshot before navigation or another page action. This does not establish whether an earlier action occurred.",
+            next_action="snapshot")
+    return _failure(out, "outcome_unknown", "The previous action may already have happened. Inspect a fresh snapshot before taking another action.", next_action="snapshot")
 
 
 class BrowserNode(ToolNode):
@@ -378,7 +398,8 @@ class BrowserNode(ToolNode):
     # The task's claim token and frozen binding and settings
     # (services/browser_owners.py); a call that has none belongs to no task.
     context_keys = ("_browser_task_id", "_browser_owner", "parameter_snapshot",
-                    "native_workspace_version", "browser_runtime_version", "browser_routing_version")
+                    "native_workspace_version", "browser_runtime_version", "browser_routing_version",
+                    "runtime_behavior_version", "invoking_agent_node_id", "parent_node_id")
     task_queue = TaskQueue.BROWSER
     # A page can do anything its logins allow; while the owner asks first
     # it only reads, and hands changes to them (request_user).
@@ -546,11 +567,11 @@ class BrowserNode(ToolNode):
             _fill_page(out, controller)
             return _failure(out, "challenge_required", "This browser is paused for a site challenge. The owner must take control and explicitly hand it back.", next_action="request_user")
         if controller.needs_observation and is_site_action(op, call.tab_action):
-            return _failure(out, "outcome_unknown", "The previous action may already have happened. Inspect a fresh snapshot before taking another action.", next_action="snapshot")
+            return _observation_required(out, profile)
 
         async with controller.agent_op(session, interrupt=prt.cli.interrupt):
             if controller.needs_observation and is_site_action(op, call.tab_action):
-                return _failure(out, "outcome_unknown", "The previous action may already have happened. Inspect a fresh snapshot before taking another action.", next_action="snapshot")
+                return _observation_required(out, profile)
             if is_site_action(op, call.tab_action):
                 decision = runtime.action_guard.admit(
                     origin=_action_origin(op, call, controller), profile_id=profile.id, operation=op,

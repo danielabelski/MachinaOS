@@ -275,6 +275,13 @@ async def handle_save_workflow(data: Dict[str, Any], websocket: WebSocket) -> Di
             "data": normalized_data,
         }
 
+    from services.browser_resources import validate_saved_browser_resources, BrowserResourceError
+    try:
+        await validate_saved_browser_resources(database, workflow_id, normalized_graph["owner_id"], normalized_data,
+                                               normalization.node_parameters)
+    except BrowserResourceError as exc:
+        return {"success": False, "workflow_id": workflow_id, **exc.as_dict()}
+
     # Import exact legacy artifacts before replacing their only topology
     # pointer. Receipts are idempotent, so a failed graph save is safe to retry.
     await import_legacy_context_receipts(

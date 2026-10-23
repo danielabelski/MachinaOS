@@ -17,7 +17,10 @@ from .._handles import STD_AGENT_HINTS, std_agent_handles
 from .._provider import ProviderRef
 
 
-class ChatAgentParams(BaseModel):
+from services.agent_runtime_policy import AgentRuntimeParams
+
+
+class ChatAgentParams(AgentRuntimeParams):
     """Zeenie tuning surface.
 
     Matches AIAgentParams: no ``api_key`` field (credentials auto-injected

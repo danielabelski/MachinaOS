@@ -208,6 +208,8 @@ export interface INodeOperationDefinition {
  * exactly one panel; defaults to `false` (the panel renders normally).
  */
 export interface INodeUIHints {
+  /** Server-advertised creation path; these are hints, not authority. */
+  creationParameters?: { runtime_behavior_version?: 0 | 1 };
   /** Palette creation uses the server's atomic Browser agent bundle. */
   createsBrowserAgent?: boolean;
   /** Graph capability: this node must own one system-managed Context node. */

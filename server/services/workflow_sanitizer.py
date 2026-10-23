@@ -196,6 +196,9 @@ def _sanitize_node(node: Mapping[str, Any]) -> dict[str, Any]:
 
     raw_data = node.get("data")
     allowed_data = _CONTEXT_NODE_DATA_FIELDS if node.get("type") == "context" else _COMMON_NODE_DATA_FIELDS
+    if node.get("type") == "browser":
+        # Display hint only. Resource authorization uses the immutable table.
+        allowed_data = allowed_data | {"private_browser_owner"}
     if isinstance(raw_data, Mapping):
         cleaned["data"] = {key: sanitize_runtime_payload(raw_data[key]) for key in sorted(allowed_data) if key in raw_data}
     else:

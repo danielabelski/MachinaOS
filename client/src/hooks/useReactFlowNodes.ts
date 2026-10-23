@@ -178,12 +178,13 @@ export const useReactFlowNodes = ({ setNodes, setEdges, clearNodeStatus }: UseRe
         setTimeout(() => {
           alert('Connection not allowed: Incompatible connection types.\n\nTip: Connect outputs to compatible inputs (e.g., AI → Main, File → Binary).');
         }, 0);
-        return;
+        return false;
       }
 
       console.log('[onConnect] Connection accepted, adding edge');
       // Add the connection
       setEdges((eds) => addEdge(params, eds));
+      return true;
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps -- isValidConnection is captured by closure; including would re-bind on every render.
     [setEdges]

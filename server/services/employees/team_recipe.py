@@ -219,7 +219,7 @@ def build_team(built: Any, inputs: Any) -> Any:
         built.parameters.update(placed.parameters)
         member["tools"].extend(node["id"] for node in placed.nodes)
         holder = roles[next(key for key, value in roles.items() if key.startswith("specialist_") and value == member["node_id"]) + "_skills"]
-        default_skills = browser_agent_additions(create_agent=False, create_context=False).nodes
+        default_skills = browser_agent_additions(create_agent=False, create_context=False, fresh_skills=True).nodes
         config = next(node.params["skills_config"] for node in default_skills if node.type == "masterSkill")
         built.parameters[holder]["skills_config"].update(config)
     # Keep one memory per member. A legacy Talk line may share the worker's

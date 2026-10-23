@@ -17,6 +17,7 @@ import { snapToGrid } from '../../utils/workflow';
 import { theme } from '../../styles/theme';
 import * as nodeSpecs from '../../lib/nodeSpec';
 import * as browserAgents from '../../services/browserAgentApi';
+import * as agentCreation from '../../services/agentCreationApi';
 import { useAppStore } from '../../store/useAppStore';
 
 const existing: Node = { id: 'wf:start:1', type: 'start', position: { x: 0, y: 0 }, data: { label: 'Start' } };
@@ -33,6 +34,29 @@ function dropEvent(clientX: number, clientY: number) {
 }
 
 describe('useDragAndDrop.onDrop', () => {
+  it('creates a fresh agent through the authoritative API without speculative nodes or parameter writes', async () => {
+    const saveWorkflowWithinMutation = vi.fn().mockResolvedValue(true);
+    const adoptSavedOperations = vi.fn();
+    const state = { currentWorkflow: { id: 'wf' }, saveWorkflowWithinMutation, updateWorkflow: vi.fn(), adoptSavedOperations };
+    const stateSpy = vi.spyOn(useAppStore, 'getState').mockReturnValue(state as unknown as ReturnType<typeof useAppStore.getState>);
+    const specSpy = vi.spyOn(nodeSpecs, 'getCachedNodeSpec').mockReturnValue({ type: 'aiAgent', displayName: 'Agent', icon: '', group: ['agent'], componentKind: 'agent', version: 1, uiHints: { creationParameters: { runtime_behavior_version: 1 } } });
+    let acknowledge!: (value: agentCreation.SavedCreation) => void;
+    const createSpy = vi.spyOn(agentCreation, 'createAgent').mockImplementation(() => new Promise((resolve) => { acknowledge = resolve; }));
+    try {
+      const setNodes = vi.fn(), setEdges = vi.fn(), saveNodeParameters = vi.fn();
+      const { result } = renderHook(() => useDragAndDrop({ nodes: [existing], edges: [], setNodes, setEdges, saveNodeParameters, workflowId: 'wf', screenToFlowPosition: (point) => point }));
+      const event = dropEvent(100, 200);
+      event.dataTransfer.getData = () => JSON.stringify({ type: 'aiAgent', data: { system: 'Be useful' } });
+      let pending!: Promise<void>;
+      await act(async () => { pending = result.current.onDrop(event); await vi.waitFor(() => expect(createSpy).toHaveBeenCalledOnce()); });
+      expect(setNodes).not.toHaveBeenCalled();
+      expect(saveNodeParameters).not.toHaveBeenCalled();
+      await act(async () => { acknowledge({ node_ids: { agent: 'saved' }, operations: [] }); await pending; });
+      expect(createSpy.mock.calls[0][0]).toMatchObject({ workflow_id: 'wf', node_type: 'aiAgent', parameters: { system: 'Be useful' } });
+      expect(createSpy.mock.calls[0][1]).toBeTruthy();
+      expect(setNodes).toHaveBeenCalledOnce();
+    } finally { createSpy.mockRestore(); specSpy.mockRestore(); stateSpy.mockRestore(); }
+  });
   it('uses the atomic creation recipe declared by NodeSpec', async () => {
     const saveWorkflow = vi.fn().mockResolvedValue(true);
     const updateWorkflow = vi.fn();

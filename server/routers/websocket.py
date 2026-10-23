@@ -218,6 +218,10 @@ async def handle_save_node_parameters(data: Dict[str, Any], websocket: WebSocket
     database = container.database()
     broadcaster = get_status_broadcaster()
     node_id, parameters = data["node_id"], data.get("parameters", {})
+    from services.agent_runtime_policy import preserve_runtime_version
+    parameters = preserve_runtime_version(await database.get_node_parameters(node_id) or {}, parameters)
+    from services.browser_resources import validate_browser_parameters
+    await validate_browser_parameters(database, node_id, parameters)
 
     logger.debug(
         f"[SAVE_PARAMS] Node ID: {node_id}, has_code: {'code' in parameters}, code_len: {len(parameters.get('code', '')) if 'code' in parameters else 0}"

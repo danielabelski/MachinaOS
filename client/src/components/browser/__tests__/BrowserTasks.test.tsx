@@ -5,6 +5,7 @@ const { createAgent, adopt } = vi.hoisted(() => ({ createAgent: vi.fn(), adopt: 
 vi.mock('@/services/browserAgentApi', () => ({ createBrowserAgent: createAgent }));
 vi.mock('@/store/useAppStore', () => ({ useAppStore: { getState: () => ({ adoptSavedOperations: adopt }) } }));
 import BrowserTasks from '../BrowserTasks';
+import { CreationError } from '@/services/agentCreationApi';
 
 const task = { invocation_id: 'inv', submission_id: 'sub', node_id: 'agent', prompt: 'Read my account', status: 'running' };
 const response = (body: unknown, ok = true) => ({ ok, json: async () => body });
@@ -56,5 +57,20 @@ describe('direct Browser tasks', () => {
     fireEvent.click(await screen.findByRole('button', { name: 'Add Browser AI Agent' }));
     await waitFor(() => expect(createAgent).toHaveBeenCalledWith({ workflow_id: 'wf', browser_node_id: 'browser' }));
     expect(adopt).toHaveBeenCalledWith('wf', ['saved-operation']);
+  });
+  it('offers a separate browser after a private-profile rejection and retains the mutation on retry', async () => {
+    fetchMock.mockResolvedValue(response({ agents: [] }));
+    createAgent.mockRejectedValueOnce(new CreationError('Create a separate profile.', 'private_browser_required'))
+      .mockRejectedValueOnce(new TypeError('Lost acknowledgement'))
+      .mockResolvedValueOnce({ node_ids: { agent: 'new', browser: 'private' }, operations: [] });
+    const onBrowserCreated = vi.fn();
+    render(<BrowserTasks workflowId="wf" browserNodeId="browser" visible onBrowserCreated={onBrowserCreated} />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Add Browser AI Agent' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Create separate Browser' }));
+    await screen.findByText('Lost acknowledgement');
+    fireEvent.click(screen.getByRole('button', { name: 'Create separate Browser' }));
+    await waitFor(() => expect(onBrowserCreated).toHaveBeenCalledWith('private'));
+    expect(createAgent.mock.calls[1][0]).toEqual({ workflow_id: 'wf' });
+    expect(createAgent.mock.calls[1][1]).toBe(createAgent.mock.calls[2][1]);
   });
 });

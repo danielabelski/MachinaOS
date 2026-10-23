@@ -16,6 +16,7 @@ export interface BrowserWorkspaceProps {
   visible?: boolean;
   /** The name on the agent's cursor (the employee's, on Home). */
   agentName?: string;
+  flushCanvas?: () => void;
 }
 type Phase = 'connecting' | 'idle' | 'live' | 'error';
 interface BrowserState {
@@ -36,7 +37,7 @@ function webPage(url: string): boolean {
 }
 
 /** `ref`: the Workspace's Take over (SurfaceControl), for the browser shown. */
-export default function BrowserWorkspace({ workflowId, nodes, visible = true, agentName, ref }: BrowserWorkspaceProps & { ref?: Ref<SurfaceControl> }) {
+export default function BrowserWorkspace({ workflowId, nodes, visible = true, agentName, flushCanvas, ref }: BrowserWorkspaceProps & { ref?: Ref<SurfaceControl> }) {
   const [selected, setSelected] = useState('');
   const nodeId = nodes.some((n) => n.node_id === selected) ? selected : nodes[0]?.node_id;
   if (!workflowId) return <EmptyBrowser message="Save this workflow to open its browser." />;
@@ -49,7 +50,7 @@ export default function BrowserWorkspace({ workflowId, nodes, visible = true, ag
         </select>
       )}
       <BrowserSessionView key={`${workflowId}:${nodeId}`} workflowId={workflowId} nodeId={nodeId} visible={visible} agentName={agentName} ref={ref} />
-      <BrowserTasks key={`tasks:${workflowId}:${nodeId}`} workflowId={workflowId} browserNodeId={nodeId} visible={visible} />
+      <BrowserTasks key={`tasks:${workflowId}:${nodeId}`} workflowId={workflowId} browserNodeId={nodeId} visible={visible} onBrowserCreated={setSelected} flushCanvas={flushCanvas} />
     </div>
   );
 }

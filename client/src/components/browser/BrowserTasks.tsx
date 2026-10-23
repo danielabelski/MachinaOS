@@ -3,7 +3,9 @@ import { Button } from '@/components/ui/button';
 import { buildApiUrl } from '@/config/api';
 import type { WorkspaceFileRef } from '@/types/workspaceFiles';
 import { createBrowserAgent } from '@/services/browserAgentApi';
-import { useAppStore } from '@/store/useAppStore';
+import { CreationError, createSavedGraphResource } from '@/services/agentCreationApi';
+import { queryClient } from '@/lib/queryClient';
+import { EMPLOYEES_QUERY_KEY, employeeDetailKey } from '@/features/home/data/employeeCache';
 
 interface Agent { node_id: string; label: string }
 interface Task {
@@ -21,7 +23,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   return body;
 }
 
-export default function BrowserTasks({ workflowId, browserNodeId, visible }: { workflowId: string; browserNodeId: string; visible: boolean }) {
+export default function BrowserTasks({ workflowId, browserNodeId, visible, onBrowserCreated, flushCanvas }: { workflowId: string; browserNodeId: string; visible: boolean; onBrowserCreated?: (nodeId: string) => void; flushCanvas?: () => void }) {
   const [agents, setAgents] = useState<Agent[] | null>(null);
   const [selected, setSelected] = useState('');
   const agentId = agents?.some((agent) => agent.node_id === selected) ? selected : agents?.[0]?.node_id;
@@ -30,6 +32,8 @@ export default function BrowserTasks({ workflowId, browserNodeId, visible }: { w
   const [cursor, setCursor] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const [needsPrivateBrowser, setNeedsPrivateBrowser] = useState(false);
+  const privateMutationId = useRef<string | null>(null);
   const [expanded, setExpanded] = useState(false);
   const pending = useRef<{ prompt: string; agent: string; id: string } | null>(null);
   const olderPages = useRef(false);
@@ -69,13 +73,24 @@ export default function BrowserTasks({ workflowId, browserNodeId, visible }: { w
     return () => clearInterval(timer);
   }, [visible, agentId, history]);
 
-  const addAgent = async () => {
+  const addAgent = async (separate = false) => {
     setBusy(true); setError('');
     try {
-      const result = await createBrowserAgent({ workflow_id: workflowId, browser_node_id: browserNodeId });
-      useAppStore.getState().adoptSavedOperations(workflowId, result.operations);
+      if (separate) privateMutationId.current ??= crypto.randomUUID();
+      const result = await createSavedGraphResource(workflowId, flushCanvas ?? (() => {}), () => separate
+        ? createBrowserAgent({ workflow_id: workflowId }, privateMutationId.current!)
+        : createBrowserAgent({ workflow_id: workflowId, browser_node_id: browserNodeId }), { allowClosedWorkflow: true });
+      if (!result) return;
+      if (separate && result.node_ids.browser) {
+        void queryClient.invalidateQueries({ queryKey: EMPLOYEES_QUERY_KEY, exact: true });
+        void queryClient.invalidateQueries({ queryKey: employeeDetailKey(workflowId), exact: true });
+        onBrowserCreated?.(result.node_ids.browser); return;
+      }
       await discover();
-    } catch (cause) { if (mounted.current) setError(cause instanceof Error ? cause.message : 'Could not add the Browser AI Agent.'); }
+    } catch (cause) { if (mounted.current) {
+      if (cause instanceof CreationError && ['private_browser_required', 'BROWSER_PRIVATE_PROFILE_REQUIRED'].includes(cause.code || '')) setNeedsPrivateBrowser(true);
+      setError(cause instanceof Error ? cause.message : 'Could not add the Browser AI Agent.');
+    } }
     finally { if (mounted.current) setBusy(false); }
   };
   const submit = async () => {
@@ -105,7 +120,7 @@ export default function BrowserTasks({ workflowId, browserNodeId, visible }: { w
     {error && <Button size="sm" variant="outline" onClick={() => { setError(''); void discover().catch(() => setError('Browser tasks are temporarily unavailable.')); }}>Retry task connection</Button>}
   </section>;
   return <section aria-label="Browser AI tasks" className="shrink-0 border-t border-border-default bg-bg-panel px-3 py-2 text-xs">
-    {!agentId ? <div className="flex items-center justify-between gap-3"><span className="text-fg-muted">Give this browser a task with a Browser AI Agent.</span><Button size="sm" variant="outline" disabled={busy} onClick={() => void addAgent()}>{busy ? 'Adding…' : 'Add Browser AI Agent'}</Button></div> : <>
+    {!agentId ? <div className="flex items-center justify-between gap-3"><span className="text-fg-muted">{needsPrivateBrowser ? 'This agent needs its own Browser profile. Sign in again after creating it.' : 'Give this browser a task with a Browser AI Agent.'}</span><Button size="sm" variant="outline" disabled={busy} onClick={() => void addAgent(needsPrivateBrowser)}>{busy ? 'Adding…' : needsPrivateBrowser ? 'Create separate Browser' : 'Add Browser AI Agent'}</Button></div> : <>
       {agents.length > 1 && <select aria-label="Browser AI Agent" value={agentId} onChange={(event) => setSelected(event.target.value)} className="mb-2 w-full rounded border border-border-default bg-bg-panel p-1">{agents.map((agent) => <option key={agent.node_id} value={agent.node_id}>{agent.label || 'Browser AI Agent'}</option>)}</select>}
       <form className="flex items-end gap-2" onSubmit={(event) => { event.preventDefault(); void submit(); }}>
         <textarea aria-label="Browser task" placeholder="Describe a task for this browser…" maxLength={20000} rows={2} className="min-w-0 flex-1 resize-y rounded border border-border-default bg-bg-panel p-2 outline-none focus-visible:ring-2 focus-visible:ring-ring" value={prompt} onChange={(event) => setPrompt(event.target.value)} disabled={busy} />

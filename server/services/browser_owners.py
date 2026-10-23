@@ -190,7 +190,10 @@ async def routing_for_node(database: Any, workflow_id: str, node_id: str, princi
     from nodes.browser._handlers import resolve_browser_node
     from nodes.browser._profiles import ProfileStore
     from nodes.browser.browser import BrowserParams
-    await resolve_browser_node(principal, workflow_id, node_id)
+    graph, _node = await resolve_browser_node(principal, workflow_id, node_id)
+    if getattr(database, "engine", None):
+        from services.browser_resources import validate_saved_browser_resources
+        await validate_saved_browser_resources(database, workflow_id, principal, graph, {})
     cfg = BrowserParams.model_validate(await database.get_node_parameters(node_id) or {})
     store = ProfileStore(database)
     active = []
@@ -209,6 +212,9 @@ async def routing_for_node(database: Any, workflow_id: str, node_id: str, princi
         workflow = await database.get_workflow(workflow_id)
         name = getattr(workflow, "name", None) or "Browser"
         profile = await store.default_for_workflow(principal, workflow_id, str(name))
+    from services.browser_resources import assert_browser_resource_access
+    await assert_browser_resource_access(database, profile_id=profile.id, principal=principal,
+                                        workflow_id=workflow_id, browser_node_id=node_id)
     return {**await bind_profile(database, profile.id, principal), "workflow_id": workflow_id, "node_id": node_id,
             "browser_policy": {"allowed_domains": cfg.allowed_domains, "allow_private_network": cfg.allow_private_network}}
 

@@ -17,6 +17,7 @@ import { addSavedEdges, addSavedNodes, type WorkflowOperation } from '../lib/wor
 import { BRAND_STORAGE_KEYS, readAndMigrateStorageValue } from '../lib/brandStorage';
 import { WORKFLOWS_QUERY_KEY, workflowQueryKey, workflowQueryOptions, type SavedWorkflow } from '../hooks/useWorkflowsQuery';
 import { removeEmployee } from '../features/home/data/employeeCache';
+import { serializeWorkflowMutation } from '../lib/workflowMutationQueue';
 
 const invalidateWorkflowsList = (): void => {
   void queryClient.invalidateQueries({ queryKey: WORKFLOWS_QUERY_KEY });
@@ -89,6 +90,8 @@ interface AppStore {
   /** True when the server saved the workflow. On false it has already told
    *  the user why, and the changes stay marked unsaved. */
   saveWorkflow: () => Promise<boolean>;
+  /** Internal: caller already owns the workflow mutation queue. */
+  saveWorkflowWithinMutation: () => Promise<boolean>;
   loadWorkflow: (id: string) => Promise<void>;
   deleteWorkflow: (id: string) => Promise<boolean>;
   /** Apply a successful deletion from this tab or a lifecycle broadcast. */
@@ -307,6 +310,13 @@ export const useAppStore = create<AppStore>((set, get) => ({
   },
   
   saveWorkflow: async () => {
+    const workflowId = get().currentWorkflow?.id;
+    if (!workflowId) return false;
+    return serializeWorkflowMutation(workflowId, async () =>
+      get().currentWorkflow?.id === workflowId ? get().saveWorkflowWithinMutation() : false);
+  },
+
+  saveWorkflowWithinMutation: async () => {
     const { currentWorkflow } = get();
     if (!currentWorkflow) return false;
 

@@ -203,7 +203,8 @@ async def _enable_talk(database: Any, auth_service: Any, workflow_id: str, *, ke
     added = False
     if plan.additions.nodes or plan.additions.edges:
         try:
-            result = await apply_graph_additions(database, workflow_id, plan.additions, mutation_id=f"enable-talk:{workflow_id}:{key}")
+            from services.agent_runtime_policy import prepare_new_agent_additions
+            result = await apply_graph_additions(database, workflow_id, prepare_new_agent_additions(plan.additions), mutation_id=f"enable-talk:{workflow_id}:{key}")
         except ValueError:
             # The graph changed since it was read and the line no longer fits.
             return await _answer(database, auth_service, workflow_id, "conflict")

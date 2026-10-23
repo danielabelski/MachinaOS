@@ -107,7 +107,10 @@ _VALID_CLAUDE_MODELS = frozenset(ClaudeCodeModel.__args__)  # type: ignore[attr-
 _DEFAULT_CLAUDE_MODEL: str = "claude-sonnet-4-6"
 
 
-class ClaudeCodeAgentParams(BaseModel):
+from services.agent_runtime_policy import AgentRuntimeParams
+
+
+class ClaudeCodeAgentParams(AgentRuntimeParams):
     """Claude Code node parameters.
 
     UI surface: a single ``prompt`` field. Every other field is kept on

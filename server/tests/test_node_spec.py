@@ -929,6 +929,7 @@ class TestNodeSpecContractInvariants:
         from models.node_metadata import NODE_METADATA
 
         known = {
+            "creationParameters",
             "createsBrowserAgent",
             "hideInputSection",
             "hideOutputSection",

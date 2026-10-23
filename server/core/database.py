@@ -840,6 +840,7 @@ class Database:
             )
             row = selected.scalar_one_or_none()
             current = deepcopy(row.parameters if row is not None else {})
+            original = deepcopy(current)
             transformed = mutator(current)
             if isinstance(transformed, tuple):
                 new_parameters, metadata = transformed
@@ -847,6 +848,8 @@ class Database:
                 new_parameters, metadata = transformed, {}
             if not isinstance(new_parameters, dict):
                 raise TypeError("node parameter mutator must return a dict")
+            from services.agent_runtime_policy import preserve_runtime_version
+            new_parameters = preserve_runtime_version(original, new_parameters)
             if row is None:
                 session.add(
                     NodeParameter(
@@ -932,9 +935,10 @@ class Database:
                 existing = result.scalar_one_or_none()
 
                 if existing:
-                    existing.parameters = parameters
+                    from services.agent_runtime_policy import preserve_runtime_version
+                    existing.parameters = preserve_runtime_version(existing.parameters or {}, parameters)
                 else:
-                    existing = NodeParameter(node_id=node_id, parameters=parameters)
+                    existing = NodeParameter(node_id=node_id, parameters=deepcopy(parameters))
                     session.add(existing)
 
                 await session.commit()
