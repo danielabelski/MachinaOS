@@ -1,14 +1,593 @@
 {
-  "_generated": "2026-10-09T08:22:06.255463+00:00",
+  "_generated": "2026-10-19T14:49:01.006922+00:00",
   "_source": "openrouter",
   "_model_count": 469,
   "models": {
+    "minimax/minimax-m3.1-flash:free": {
+      "id": "minimax/minimax-m3.1-flash:free",
+      "name": "MiniMax: MiniMax M3.1 Flash (free)",
+      "provider": "minimax",
+      "local_id": "minimax-m3.1-flash:free",
+      "context_length": 1000000,
+      "max_output_tokens": 524288,
+      "input_price_per_mtok": 0.0,
+      "output_price_per_mtok": 0.0,
+      "supports_thinking": false,
+      "thinking_type": "none",
+      "temperature_range": [
+        0.0,
+        2.0
+      ],
+      "is_reasoning_model": false,
+      "supported_parameters": [
+        "include_reasoning",
+        "max_tokens",
+        "reasoning",
+        "reasoning_effort",
+        "response_format",
+        "temperature",
+        "tool_choice",
+        "tools",
+        "top_p"
+      ]
+    },
+    "deepseek/deepseek-v4.1-flash-1017": {
+      "id": "deepseek/deepseek-v4.1-flash-1017",
+      "name": "DeepSeek: DeepSeek V4.1 Flash 1017",
+      "provider": "deepseek",
+      "local_id": "deepseek-v4.1-flash-1017",
+      "context_length": 1048576,
+      "max_output_tokens": 393216,
+      "input_price_per_mtok": 0.15,
+      "output_price_per_mtok": 0.6,
+      "supports_thinking": false,
+      "thinking_type": "none",
+      "temperature_range": [
+        0.0,
+        2.0
+      ],
+      "is_reasoning_model": false,
+      "supported_parameters": [
+        "frequency_penalty",
+        "include_reasoning",
+        "logit_bias",
+        "logprobs",
+        "max_completion_tokens",
+        "max_tokens",
+        "min_p",
+        "parallel_tool_calls",
+        "presence_penalty",
+        "reasoning",
+        "reasoning_effort",
+        "repetition_penalty",
+        "response_format",
+        "seed",
+        "stop",
+        "structured_outputs",
+        "temperature",
+        "tool_choice",
+        "tools",
+        "top_k",
+        "top_logprobs",
+        "top_p"
+      ]
+    },
+    "elorian/glimpse": {
+      "id": "elorian/glimpse",
+      "name": "Elorian: Glimpse",
+      "provider": "elorian",
+      "local_id": "glimpse",
+      "context_length": 262144,
+      "max_output_tokens": 256000,
+      "input_price_per_mtok": 0.6,
+      "output_price_per_mtok": 3.0,
+      "supports_thinking": false,
+      "thinking_type": "none",
+      "temperature_range": [
+        0.0,
+        2.0
+      ],
+      "is_reasoning_model": false,
+      "supported_parameters": [
+        "frequency_penalty",
+        "include_reasoning",
+        "logit_bias",
+        "logprobs",
+        "max_tokens",
+        "min_p",
+        "presence_penalty",
+        "reasoning",
+        "repetition_penalty",
+        "response_format",
+        "stop",
+        "structured_outputs",
+        "temperature",
+        "tool_choice",
+        "tools",
+        "top_k",
+        "top_logprobs",
+        "top_p"
+      ]
+    },
+    "xingchen-agi/xing4.0-29b-a4b:free": {
+      "id": "xingchen-agi/xing4.0-29b-a4b:free",
+      "name": "XingChen: Xing4.0 29B A4B (free)",
+      "provider": "xingchen-agi",
+      "local_id": "xing4.0-29b-a4b:free",
+      "context_length": 262144,
+      "max_output_tokens": 235929,
+      "input_price_per_mtok": 0.0,
+      "output_price_per_mtok": 0.0,
+      "supports_thinking": false,
+      "thinking_type": "none",
+      "temperature_range": [
+        0.0,
+        2.0
+      ],
+      "is_reasoning_model": false,
+      "supported_parameters": [
+        "frequency_penalty",
+        "include_reasoning",
+        "max_tokens",
+        "min_p",
+        "presence_penalty",
+        "reasoning",
+        "repetition_penalty",
+        "response_format",
+        "seed",
+        "stop",
+        "structured_outputs",
+        "temperature",
+        "tool_choice",
+        "tools",
+        "top_k",
+        "top_p"
+      ]
+    },
+    "reflection/beam-1.0-501b-a23b": {
+      "id": "reflection/beam-1.0-501b-a23b",
+      "name": "Reflection: Beam 1.0 501B A23B",
+      "provider": "reflection",
+      "local_id": "beam-1.0-501b-a23b",
+      "context_length": 1048576,
+      "max_output_tokens": 943718,
+      "input_price_per_mtok": 1.0,
+      "output_price_per_mtok": 3.0,
+      "supports_thinking": false,
+      "thinking_type": "none",
+      "temperature_range": [
+        0.0,
+        2.0
+      ],
+      "is_reasoning_model": false,
+      "supported_parameters": [
+        "frequency_penalty",
+        "include_reasoning",
+        "logit_bias",
+        "logprobs",
+        "max_tokens",
+        "min_p",
+        "presence_penalty",
+        "reasoning",
+        "reasoning_effort",
+        "repetition_penalty",
+        "response_format",
+        "seed",
+        "stop",
+        "structured_outputs",
+        "temperature",
+        "tool_choice",
+        "tools",
+        "top_k",
+        "top_logprobs",
+        "top_p"
+      ]
+    },
+    "moondream/moondream3-preview": {
+      "id": "moondream/moondream3-preview",
+      "name": "Moondream: Moondream 3 Preview",
+      "provider": "moondream",
+      "local_id": "moondream3-preview",
+      "context_length": 32000,
+      "max_output_tokens": 4096,
+      "input_price_per_mtok": 0.3,
+      "output_price_per_mtok": 2.5,
+      "supports_thinking": false,
+      "thinking_type": "none",
+      "temperature_range": [
+        0.0,
+        2.0
+      ],
+      "is_reasoning_model": false,
+      "supported_parameters": [
+        "include_reasoning",
+        "max_completion_tokens",
+        "max_tokens",
+        "reasoning",
+        "temperature",
+        "top_p"
+      ]
+    },
+    "moondream/moondream3.1-9b-a2b": {
+      "id": "moondream/moondream3.1-9b-a2b",
+      "name": "Moondream: Moondream 3.1",
+      "provider": "moondream",
+      "local_id": "moondream3.1-9b-a2b",
+      "context_length": 32000,
+      "max_output_tokens": 4096,
+      "input_price_per_mtok": 0.3,
+      "output_price_per_mtok": 2.5,
+      "supports_thinking": false,
+      "thinking_type": "none",
+      "temperature_range": [
+        0.0,
+        2.0
+      ],
+      "is_reasoning_model": false,
+      "supported_parameters": [
+        "include_reasoning",
+        "max_completion_tokens",
+        "max_tokens",
+        "reasoning",
+        "temperature",
+        "top_p"
+      ]
+    },
+    "meta/muse-spark-open": {
+      "id": "meta/muse-spark-open",
+      "name": "Meta: Muse Spark Open",
+      "provider": "meta",
+      "local_id": "muse-spark-open",
+      "context_length": 1048576,
+      "max_output_tokens": 943718,
+      "input_price_per_mtok": 1.25,
+      "output_price_per_mtok": 4.25,
+      "supports_thinking": false,
+      "thinking_type": "none",
+      "temperature_range": [
+        0.0,
+        2.0
+      ],
+      "is_reasoning_model": false,
+      "supported_parameters": [
+        "frequency_penalty",
+        "include_reasoning",
+        "logit_bias",
+        "logprobs",
+        "max_tokens",
+        "min_p",
+        "presence_penalty",
+        "reasoning",
+        "reasoning_effort",
+        "repetition_penalty",
+        "response_format",
+        "seed",
+        "stop",
+        "structured_outputs",
+        "temperature",
+        "tool_choice",
+        "tools",
+        "top_k",
+        "top_logprobs",
+        "top_p"
+      ]
+    },
+    "nvidia/nemotron-3.5-super-vl": {
+      "id": "nvidia/nemotron-3.5-super-vl",
+      "name": "NVIDIA: Nemotron 3.5 Super VL",
+      "provider": "nvidia",
+      "local_id": "nemotron-3.5-super-vl",
+      "context_length": 1048576,
+      "max_output_tokens": 235929,
+      "input_price_per_mtok": 0.1,
+      "output_price_per_mtok": 0.4,
+      "supports_thinking": false,
+      "thinking_type": "none",
+      "temperature_range": [
+        0.0,
+        2.0
+      ],
+      "is_reasoning_model": false,
+      "supported_parameters": [
+        "frequency_penalty",
+        "include_reasoning",
+        "logit_bias",
+        "logprobs",
+        "max_tokens",
+        "min_p",
+        "presence_penalty",
+        "reasoning",
+        "repetition_penalty",
+        "response_format",
+        "seed",
+        "stop",
+        "structured_outputs",
+        "temperature",
+        "tool_choice",
+        "tools",
+        "top_k",
+        "top_logprobs",
+        "top_p"
+      ]
+    },
+    "nvidia/nemotron-3.5-super-vl:free": {
+      "id": "nvidia/nemotron-3.5-super-vl:free",
+      "name": "NVIDIA: Nemotron 3.5 Super VL (free)",
+      "provider": "nvidia",
+      "local_id": "nemotron-3.5-super-vl:free",
+      "context_length": 1000000,
+      "max_output_tokens": 131072,
+      "input_price_per_mtok": 0.0,
+      "output_price_per_mtok": 0.0,
+      "supports_thinking": false,
+      "thinking_type": "none",
+      "temperature_range": [
+        0.0,
+        2.0
+      ],
+      "is_reasoning_model": false,
+      "supported_parameters": [
+        "include_reasoning",
+        "max_tokens",
+        "reasoning",
+        "response_format",
+        "seed",
+        "structured_outputs",
+        "temperature",
+        "tool_choice",
+        "tools",
+        "top_p"
+      ]
+    },
+    "unbiased/pareto-26.10": {
+      "id": "unbiased/pareto-26.10",
+      "name": "Pareto 26.10",
+      "provider": "unbiased",
+      "local_id": "pareto-26.10",
+      "context_length": 1048576,
+      "max_output_tokens": 131072,
+      "input_price_per_mtok": 0.8,
+      "output_price_per_mtok": 3.2,
+      "supports_thinking": false,
+      "thinking_type": "none",
+      "temperature_range": [
+        0.0,
+        2.0
+      ],
+      "is_reasoning_model": false,
+      "supported_parameters": [
+        "max_tokens",
+        "temperature",
+        "tool_choice",
+        "tools",
+        "top_p"
+      ]
+    },
+    "unbiased/pareto-latest": {
+      "id": "~unbiased/pareto-latest",
+      "name": "Pareto Latest",
+      "provider": "unbiased",
+      "local_id": "pareto-latest",
+      "context_length": 1048576,
+      "max_output_tokens": 131072,
+      "input_price_per_mtok": 0.8,
+      "output_price_per_mtok": 3.2,
+      "supports_thinking": false,
+      "thinking_type": "none",
+      "temperature_range": [
+        0.0,
+        2.0
+      ],
+      "is_reasoning_model": false,
+      "supported_parameters": [
+        "max_tokens",
+        "temperature",
+        "tool_choice",
+        "tools",
+        "top_p"
+      ]
+    },
+    "unbiased/pareto-26.9": {
+      "id": "unbiased/pareto-26.9",
+      "name": "Pareto 26.9",
+      "provider": "unbiased",
+      "local_id": "pareto-26.9",
+      "context_length": 262144,
+      "max_output_tokens": 131072,
+      "input_price_per_mtok": 2.5,
+      "output_price_per_mtok": 7.5,
+      "supports_thinking": false,
+      "thinking_type": "none",
+      "temperature_range": [
+        0.0,
+        2.0
+      ],
+      "is_reasoning_model": false,
+      "supported_parameters": [
+        "max_tokens",
+        "response_format",
+        "temperature",
+        "tool_choice",
+        "tools",
+        "top_p"
+      ]
+    },
+    "liquid/lfm-2.5-24b-a2b": {
+      "id": "liquid/lfm-2.5-24b-a2b",
+      "name": "LiquidAI: LFM2.5-24B-A2B",
+      "provider": "liquid",
+      "local_id": "lfm-2.5-24b-a2b",
+      "context_length": 128000,
+      "max_output_tokens": 8192,
+      "input_price_per_mtok": 0.05,
+      "output_price_per_mtok": 0.7,
+      "supports_thinking": false,
+      "thinking_type": "none",
+      "temperature_range": [
+        0.0,
+        2.0
+      ],
+      "is_reasoning_model": false,
+      "supported_parameters": [
+        "frequency_penalty",
+        "include_reasoning",
+        "logprobs",
+        "max_completion_tokens",
+        "max_tokens",
+        "min_p",
+        "presence_penalty",
+        "reasoning",
+        "repetition_penalty",
+        "response_format",
+        "seed",
+        "stop",
+        "structured_outputs",
+        "temperature",
+        "tool_choice",
+        "tools",
+        "top_k",
+        "top_logprobs"
+      ]
+    },
+    "gemini/gemini-4-argon": {
+      "id": "google/gemini-4-argon",
+      "name": "Google: Gemini 4 Argon",
+      "provider": "gemini",
+      "local_id": "gemini-4-argon",
+      "context_length": 1048576,
+      "max_output_tokens": 943718,
+      "input_price_per_mtok": 2.0,
+      "output_price_per_mtok": 10.0,
+      "supports_thinking": false,
+      "thinking_type": "none",
+      "temperature_range": [
+        0.0,
+        2.0
+      ],
+      "is_reasoning_model": false,
+      "supported_parameters": [
+        "include_reasoning",
+        "max_tokens",
+        "reasoning",
+        "reasoning_effort",
+        "response_format",
+        "seed",
+        "stop",
+        "structured_outputs",
+        "temperature",
+        "tool_choice",
+        "tools",
+        "top_p"
+      ]
+    },
+    "gemini/gemini-4-argon:batch": {
+      "id": "google/gemini-4-argon:batch",
+      "name": "Google: Gemini 4 Argon (batch)",
+      "provider": "gemini",
+      "local_id": "gemini-4-argon:batch",
+      "context_length": 1048576,
+      "max_output_tokens": 943718,
+      "input_price_per_mtok": 1.0,
+      "output_price_per_mtok": 5.0,
+      "supports_thinking": false,
+      "thinking_type": "none",
+      "temperature_range": [
+        0.0,
+        2.0
+      ],
+      "is_reasoning_model": false,
+      "supported_parameters": [
+        "include_reasoning",
+        "max_tokens",
+        "reasoning",
+        "reasoning_effort",
+        "response_format",
+        "seed",
+        "stop",
+        "structured_outputs",
+        "temperature",
+        "tool_choice",
+        "tools",
+        "top_p"
+      ]
+    },
+    "scaledown/summarize": {
+      "id": "scaledown/summarize",
+      "name": "ScaleDown: Summarize",
+      "provider": "scaledown",
+      "local_id": "summarize",
+      "context_length": 1000000,
+      "max_output_tokens": 4000,
+      "input_price_per_mtok": 0.04,
+      "output_price_per_mtok": 0.0,
+      "supports_thinking": false,
+      "thinking_type": "none",
+      "temperature_range": [
+        0.0,
+        2.0
+      ],
+      "is_reasoning_model": false,
+      "supported_parameters": [
+        "max_tokens"
+      ]
+    },
+    "scaledown/extract": {
+      "id": "scaledown/extract",
+      "name": "ScaleDown: Extract",
+      "provider": "scaledown",
+      "local_id": "extract",
+      "context_length": 1000000,
+      "max_output_tokens": 900000,
+      "input_price_per_mtok": 0.04,
+      "output_price_per_mtok": 0.0,
+      "supports_thinking": false,
+      "thinking_type": "none",
+      "temperature_range": [
+        0.0,
+        2.0
+      ],
+      "is_reasoning_model": false,
+      "supported_parameters": [
+        "max_tokens"
+      ]
+    },
+    "meta/muse-wonder": {
+      "id": "meta/muse-wonder",
+      "name": "Meta: Muse Wonder",
+      "provider": "meta",
+      "local_id": "muse-wonder",
+      "context_length": 1048576,
+      "max_output_tokens": 943718,
+      "input_price_per_mtok": 4.0,
+      "output_price_per_mtok": 20.0,
+      "supports_thinking": false,
+      "thinking_type": "none",
+      "temperature_range": [
+        0.0,
+        2.0
+      ],
+      "is_reasoning_model": false,
+      "supported_parameters": [
+        "include_reasoning",
+        "max_tokens",
+        "reasoning",
+        "reasoning_effort",
+        "repetition_penalty",
+        "response_format",
+        "structured_outputs",
+        "temperature",
+        "tool_choice",
+        "tools",
+        "top_k",
+        "top_p"
+      ]
+    },
     "stepfun/step-5-preview": {
       "id": "stepfun/step-5-preview",
       "name": "StepFun: Step 5 Preview",
       "provider": "stepfun",
       "local_id": "step-5-preview",
-      "context_length": 1000000,
+      "context_length": 1048576,
       "max_output_tokens": 64000,
       "input_price_per_mtok": 1.0,
       "output_price_per_mtok": 2.7,
@@ -22,15 +601,22 @@
       "supported_parameters": [
         "frequency_penalty",
         "include_reasoning",
+        "logit_bias",
         "logprobs",
         "max_tokens",
+        "min_p",
+        "presence_penalty",
         "reasoning",
         "reasoning_effort",
+        "repetition_penalty",
         "response_format",
+        "seed",
         "stop",
         "structured_outputs",
         "temperature",
+        "tool_choice",
         "tools",
+        "top_k",
         "top_logprobs",
         "top_p"
       ]
@@ -165,9 +751,9 @@
       "provider": "inclusionai",
       "local_id": "ling-3.1-flash",
       "context_length": 262144,
-      "max_output_tokens": 32768,
-      "input_price_per_mtok": 0.0,
-      "output_price_per_mtok": 0.0,
+      "max_output_tokens": 235929,
+      "input_price_per_mtok": 0.075,
+      "output_price_per_mtok": 0.225,
       "supports_thinking": false,
       "thinking_type": "none",
       "temperature_range": [
@@ -178,41 +764,10 @@
       "supported_parameters": [
         "frequency_penalty",
         "include_reasoning",
+        "logit_bias",
         "logprobs",
         "max_tokens",
-        "presence_penalty",
-        "reasoning",
-        "repetition_penalty",
-        "seed",
-        "stop",
-        "temperature",
-        "tool_choice",
-        "tools",
-        "top_k",
-        "top_logprobs",
-        "top_p"
-      ]
-    },
-    "apodex/apodex-1.1-mini:free": {
-      "id": "apodex/apodex-1.1-mini:free",
-      "name": "Apodex: Apodex 1.1 Mini (free)",
-      "provider": "apodex",
-      "local_id": "apodex-1.1-mini:free",
-      "context_length": 262144,
-      "max_output_tokens": 235929,
-      "input_price_per_mtok": 0.0,
-      "output_price_per_mtok": 0.0,
-      "supports_thinking": false,
-      "thinking_type": "none",
-      "temperature_range": [
-        0.0,
-        2.0
-      ],
-      "is_reasoning_model": false,
-      "supported_parameters": [
-        "frequency_penalty",
-        "include_reasoning",
-        "max_tokens",
+        "min_p",
         "presence_penalty",
         "reasoning",
         "repetition_penalty",
@@ -224,30 +779,7 @@
         "tool_choice",
         "tools",
         "top_k",
-        "top_p"
-      ]
-    },
-    "unbiased/pareto-26.10-preview": {
-      "id": "unbiased/pareto-26.10-preview",
-      "name": "Pareto 26.10 Preview",
-      "provider": "unbiased",
-      "local_id": "pareto-26.10-preview",
-      "context_length": 1048576,
-      "max_output_tokens": 131072,
-      "input_price_per_mtok": 0.8,
-      "output_price_per_mtok": 3.2,
-      "supports_thinking": false,
-      "thinking_type": "none",
-      "temperature_range": [
-        0.0,
-        2.0
-      ],
-      "is_reasoning_model": false,
-      "supported_parameters": [
-        "max_tokens",
-        "temperature",
-        "tool_choice",
-        "tools",
+        "top_logprobs",
         "top_p"
       ]
     },
@@ -1281,31 +1813,6 @@
         "top_p"
       ]
     },
-    "unbiased/pareto": {
-      "id": "unbiased/pareto",
-      "name": "Pareto",
-      "provider": "unbiased",
-      "local_id": "pareto",
-      "context_length": 262144,
-      "max_output_tokens": 131072,
-      "input_price_per_mtok": 2.5,
-      "output_price_per_mtok": 7.5,
-      "supports_thinking": false,
-      "thinking_type": "none",
-      "temperature_range": [
-        0.0,
-        2.0
-      ],
-      "is_reasoning_model": false,
-      "supported_parameters": [
-        "max_tokens",
-        "response_format",
-        "temperature",
-        "tool_choice",
-        "tools",
-        "top_p"
-      ]
-    },
     "deepseek/deepseek-pro-latest": {
       "id": "~deepseek/deepseek-pro-latest",
       "name": "DeepSeek: DeepSeek Pro Latest",
@@ -1313,7 +1820,7 @@
       "local_id": "deepseek-pro-latest",
       "context_length": 1048576,
       "max_output_tokens": 393216,
-      "input_price_per_mtok": 0.198,
+      "input_price_per_mtok": 0.1307,
       "output_price_per_mtok": 8.0,
       "supports_thinking": false,
       "thinking_type": "none",
@@ -1352,8 +1859,8 @@
       "local_id": "deepseek-flash-latest",
       "context_length": 1048576,
       "max_output_tokens": 943718,
-      "input_price_per_mtok": 0.016,
-      "output_price_per_mtok": 1.2,
+      "input_price_per_mtok": 0.041,
+      "output_price_per_mtok": 0.6,
       "supports_thinking": false,
       "thinking_type": "none",
       "temperature_range": [
@@ -1366,8 +1873,10 @@
         "include_reasoning",
         "logit_bias",
         "logprobs",
+        "max_completion_tokens",
         "max_tokens",
         "min_p",
+        "parallel_tool_calls",
         "presence_penalty",
         "reasoning",
         "reasoning_effort",
@@ -1625,10 +2134,10 @@
       "name": "inclusionAI: Ling 3.0 Flash VL",
       "provider": "inclusionai",
       "local_id": "ling-3.0-flash-vl",
-      "context_length": 262144,
+      "context_length": 131072,
       "max_output_tokens": 32768,
-      "input_price_per_mtok": 0.021,
-      "output_price_per_mtok": 0.0616,
+      "input_price_per_mtok": 0.06,
+      "output_price_per_mtok": 0.18,
       "supports_thinking": false,
       "thinking_type": "none",
       "temperature_range": [
@@ -1640,7 +2149,6 @@
         "frequency_penalty",
         "include_reasoning",
         "logit_bias",
-        "logprobs",
         "max_tokens",
         "min_p",
         "presence_penalty",
@@ -1654,7 +2162,6 @@
         "tool_choice",
         "tools",
         "top_k",
-        "top_logprobs",
         "top_p"
       ]
     },
@@ -1665,8 +2172,8 @@
       "local_id": "deepseek-v4.1-flash",
       "context_length": 1048576,
       "max_output_tokens": 943718,
-      "input_price_per_mtok": 0.3,
-      "output_price_per_mtok": 1.2,
+      "input_price_per_mtok": 0.0344,
+      "output_price_per_mtok": 0.08,
       "supports_thinking": false,
       "thinking_type": "none",
       "temperature_range": [
@@ -1703,9 +2210,9 @@
       "provider": "deepseek",
       "local_id": "deepseek-v4.1-flash:batch",
       "context_length": 1048576,
-      "max_output_tokens": 131072,
-      "input_price_per_mtok": 0.112,
-      "output_price_per_mtok": 0.336,
+      "max_output_tokens": 384000,
+      "input_price_per_mtok": 0.05,
+      "output_price_per_mtok": 0.15,
       "supports_thinking": false,
       "thinking_type": "none",
       "temperature_range": [
@@ -1717,6 +2224,7 @@
         "frequency_penalty",
         "include_reasoning",
         "logit_bias",
+        "logprobs",
         "max_tokens",
         "min_p",
         "presence_penalty",
@@ -1731,6 +2239,7 @@
         "tool_choice",
         "tools",
         "top_k",
+        "top_logprobs",
         "top_p"
       ]
     },
@@ -1941,40 +2450,6 @@
         "verbosity"
       ]
     },
-    "inclusionai/ling-3.0-flash-sante": {
-      "id": "inclusionai/ling-3.0-flash-sante",
-      "name": "inclusionAI: Ling 3.0 Flash Sante",
-      "provider": "inclusionai",
-      "local_id": "ling-3.0-flash-sante",
-      "context_length": 262144,
-      "max_output_tokens": 32768,
-      "input_price_per_mtok": 0.042,
-      "output_price_per_mtok": 0.1232,
-      "supports_thinking": false,
-      "thinking_type": "none",
-      "temperature_range": [
-        0.0,
-        2.0
-      ],
-      "is_reasoning_model": false,
-      "supported_parameters": [
-        "frequency_penalty",
-        "include_reasoning",
-        "logprobs",
-        "max_tokens",
-        "presence_penalty",
-        "reasoning",
-        "repetition_penalty",
-        "seed",
-        "stop",
-        "temperature",
-        "tool_choice",
-        "tools",
-        "top_k",
-        "top_logprobs",
-        "top_p"
-      ]
-    },
     "qwen/qwen3.8-max-0902": {
       "id": "qwen/qwen3.8-max-0902",
       "name": "Qwen: Qwen3.8 Max (0902)",
@@ -2080,8 +2555,8 @@
       "local_id": "gemini-3.8-flash",
       "context_length": 1048576,
       "max_output_tokens": 65536,
-      "input_price_per_mtok": 0.75,
-      "output_price_per_mtok": 3.75,
+      "input_price_per_mtok": 0.825,
+      "output_price_per_mtok": 4.125,
       "supports_thinking": true,
       "thinking_type": "budget",
       "temperature_range": [
@@ -2269,43 +2744,6 @@
         "top_p"
       ]
     },
-    "inclusionai/ling-3.0-flash-fin": {
-      "id": "inclusionai/ling-3.0-flash-fin",
-      "name": "inclusionAI: Ling 3.0 Flash Fin",
-      "provider": "inclusionai",
-      "local_id": "ling-3.0-flash-fin",
-      "context_length": 262144,
-      "max_output_tokens": 32768,
-      "input_price_per_mtok": 0.042,
-      "output_price_per_mtok": 0.1232,
-      "supports_thinking": false,
-      "thinking_type": "none",
-      "temperature_range": [
-        0.0,
-        2.0
-      ],
-      "is_reasoning_model": false,
-      "supported_parameters": [
-        "frequency_penalty",
-        "include_reasoning",
-        "logit_bias",
-        "logprobs",
-        "max_tokens",
-        "min_p",
-        "presence_penalty",
-        "reasoning",
-        "repetition_penalty",
-        "seed",
-        "stop",
-        "structured_outputs",
-        "temperature",
-        "tool_choice",
-        "tools",
-        "top_k",
-        "top_logprobs",
-        "top_p"
-      ]
-    },
     "z-ai/glm-flash-latest": {
       "id": "~z-ai/glm-flash-latest",
       "name": "Z.ai: GLM Flash Latest",
@@ -2313,8 +2751,8 @@
       "local_id": "glm-flash-latest",
       "context_length": 1048576,
       "max_output_tokens": 943718,
-      "input_price_per_mtok": 0.032,
-      "output_price_per_mtok": 1.1571,
+      "input_price_per_mtok": 0.048,
+      "output_price_per_mtok": 0.16,
       "supports_thinking": false,
       "thinking_type": "none",
       "temperature_range": [
@@ -2387,9 +2825,9 @@
       "provider": "z-ai",
       "local_id": "glm-5.3-flash",
       "context_length": 1048576,
-      "max_output_tokens": 943717,
-      "input_price_per_mtok": 0.15,
-      "output_price_per_mtok": 0.5,
+      "max_output_tokens": 943718,
+      "input_price_per_mtok": 0.048,
+      "output_price_per_mtok": 0.16,
       "supports_thinking": false,
       "thinking_type": "none",
       "temperature_range": [
@@ -2428,8 +2866,8 @@
       "local_id": "glm-5.3-flash:batch",
       "context_length": 1048576,
       "max_output_tokens": 131072,
-      "input_price_per_mtok": 0.06,
-      "output_price_per_mtok": 0.2,
+      "input_price_per_mtok": 0.05,
+      "output_price_per_mtok": 0.18,
       "supports_thinking": false,
       "thinking_type": "none",
       "temperature_range": [
@@ -2441,6 +2879,7 @@
         "frequency_penalty",
         "include_reasoning",
         "logit_bias",
+        "logprobs",
         "max_tokens",
         "min_p",
         "presence_penalty",
@@ -2455,6 +2894,7 @@
         "tool_choice",
         "tools",
         "top_k",
+        "top_logprobs",
         "top_p"
       ]
     },
@@ -2582,9 +3022,9 @@
       "provider": "z-ai",
       "local_id": "glm-latest",
       "context_length": 1048576,
-      "max_output_tokens": 131072,
-      "input_price_per_mtok": 0.0312,
-      "output_price_per_mtok": 4.4,
+      "max_output_tokens": 943718,
+      "input_price_per_mtok": 0.053,
+      "output_price_per_mtok": 6.0,
       "supports_thinking": false,
       "thinking_type": "none",
       "temperature_range": [
@@ -2648,8 +3088,8 @@
       "local_id": "glm-5.3",
       "context_length": 1048576,
       "max_output_tokens": 943718,
-      "input_price_per_mtok": 0.039,
-      "output_price_per_mtok": 7.0,
+      "input_price_per_mtok": 0.079,
+      "output_price_per_mtok": 1.4,
       "supports_thinking": false,
       "thinking_type": "none",
       "temperature_range": [
@@ -2724,9 +3164,9 @@
       "provider": "qwen",
       "local_id": "qwen3.8-27b",
       "context_length": 1000000,
-      "max_output_tokens": 131072,
-      "input_price_per_mtok": 0.425,
-      "output_price_per_mtok": 2.55,
+      "max_output_tokens": 235929,
+      "input_price_per_mtok": 0.24,
+      "output_price_per_mtok": 2.2,
       "supports_thinking": false,
       "thinking_type": "none",
       "temperature_range": [
@@ -2952,9 +3392,9 @@
       "provider": "deepseek",
       "local_id": "deepseek-v4-pro-0813",
       "context_length": 1048576,
-      "max_output_tokens": 393216,
-      "input_price_per_mtok": 1.32,
-      "output_price_per_mtok": 3.96,
+      "max_output_tokens": 384000,
+      "input_price_per_mtok": 0.66,
+      "output_price_per_mtok": 1.98,
       "supports_thinking": false,
       "thinking_type": "none",
       "temperature_range": [
@@ -3053,8 +3493,7 @@
         "tool_choice",
         "tools",
         "top_k",
-        "top_logprobs",
-        "top_p"
+        "top_logprobs"
       ]
     },
     "nvidia/nemotron-3.5-lightning": {
@@ -3063,9 +3502,9 @@
       "provider": "nvidia",
       "local_id": "nemotron-3.5-lightning",
       "context_length": 262144,
-      "max_output_tokens": 131072,
-      "input_price_per_mtok": 0.0469,
-      "output_price_per_mtok": 0.134,
+      "max_output_tokens": 235929,
+      "input_price_per_mtok": 0.07,
+      "output_price_per_mtok": 0.2,
       "supports_thinking": false,
       "thinking_type": "none",
       "temperature_range": [
@@ -3255,8 +3694,8 @@
       "local_id": "deepseek-v4-flash-latest",
       "context_length": 1048576,
       "max_output_tokens": 943718,
-      "input_price_per_mtok": 0.0083,
-      "output_price_per_mtok": 0.1086,
+      "input_price_per_mtok": 0.0065,
+      "output_price_per_mtok": 0.45,
       "supports_thinking": false,
       "thinking_type": "none",
       "temperature_range": [
@@ -3296,8 +3735,8 @@
       "local_id": "deepseek-v4-flash-0731",
       "context_length": 1048576,
       "max_output_tokens": 943718,
-      "input_price_per_mtok": 0.0104,
-      "output_price_per_mtok": 1.28,
+      "input_price_per_mtok": 0.15,
+      "output_price_per_mtok": 0.15,
       "supports_thinking": false,
       "thinking_type": "none",
       "temperature_range": [
@@ -3840,8 +4279,8 @@
       "local_id": "kimi-k3",
       "context_length": 1048576,
       "max_output_tokens": 943718,
-      "input_price_per_mtok": 0.5,
-      "output_price_per_mtok": 12.0,
+      "input_price_per_mtok": 0.239,
+      "output_price_per_mtok": 11.936,
       "supports_thinking": false,
       "thinking_type": "none",
       "temperature_range": [
@@ -4183,8 +4622,8 @@
       "local_id": "gpt-5.6-sol-pro",
       "context_length": 1050000,
       "max_output_tokens": 128000,
-      "input_price_per_mtok": 2.0,
-      "output_price_per_mtok": 10.0,
+      "input_price_per_mtok": 4.0,
+      "output_price_per_mtok": 20.0,
       "supports_thinking": true,
       "thinking_type": "effort",
       "temperature_range": [
@@ -4213,8 +4652,8 @@
       "local_id": "gpt-5.6-sol-pro:batch",
       "context_length": 1050000,
       "max_output_tokens": 128000,
-      "input_price_per_mtok": 1.0,
-      "output_price_per_mtok": 5.0,
+      "input_price_per_mtok": 2.0,
+      "output_price_per_mtok": 10.0,
       "supports_thinking": true,
       "thinking_type": "effort",
       "temperature_range": [
@@ -4242,8 +4681,8 @@
       "local_id": "gpt-5.6-sol",
       "context_length": 1050000,
       "max_output_tokens": 128000,
-      "input_price_per_mtok": 2.0,
-      "output_price_per_mtok": 10.0,
+      "input_price_per_mtok": 4.0,
+      "output_price_per_mtok": 20.0,
       "supports_thinking": true,
       "thinking_type": "effort",
       "temperature_range": [
@@ -4272,8 +4711,8 @@
       "local_id": "gpt-5.6-sol:batch",
       "context_length": 1050000,
       "max_output_tokens": 128000,
-      "input_price_per_mtok": 1.0,
-      "output_price_per_mtok": 5.0,
+      "input_price_per_mtok": 2.0,
+      "output_price_per_mtok": 10.0,
       "supports_thinking": true,
       "thinking_type": "effort",
       "temperature_range": [
@@ -4708,8 +5147,8 @@
       "local_id": "glm-5.2",
       "context_length": 1048576,
       "max_output_tokens": 943718,
-      "input_price_per_mtok": 0.06,
-      "output_price_per_mtok": 4.2,
+      "input_price_per_mtok": 0.62,
+      "output_price_per_mtok": 2.42,
       "supports_thinking": false,
       "thinking_type": "none",
       "temperature_range": [
@@ -4950,9 +5389,9 @@
       "provider": "nvidia",
       "local_id": "nemotron-3-ultra-550b-a55b",
       "context_length": 262144,
-      "max_output_tokens": 16384,
-      "input_price_per_mtok": 0.5,
-      "output_price_per_mtok": 2.2,
+      "max_output_tokens": 182520,
+      "input_price_per_mtok": 0.6,
+      "output_price_per_mtok": 2.4,
       "supports_thinking": false,
       "thinking_type": "none",
       "temperature_range": [
@@ -5018,6 +5457,41 @@
       "max_output_tokens": 131072,
       "input_price_per_mtok": 0.32,
       "output_price_per_mtok": 1.28,
+      "supports_thinking": false,
+      "thinking_type": "none",
+      "temperature_range": [
+        0.0,
+        2.0
+      ],
+      "is_reasoning_model": false,
+      "supported_parameters": [
+        "frequency_penalty",
+        "include_reasoning",
+        "logprobs",
+        "max_tokens",
+        "presence_penalty",
+        "reasoning",
+        "response_format",
+        "seed",
+        "stop",
+        "structured_outputs",
+        "temperature",
+        "tool_choice",
+        "tools",
+        "top_k",
+        "top_logprobs",
+        "top_p"
+      ]
+    },
+    "qwen/qwen3.7-plus:batch": {
+      "id": "qwen/qwen3.7-plus:batch",
+      "name": "Qwen: Qwen3.7 Plus (batch)",
+      "provider": "qwen",
+      "local_id": "qwen3.7-plus:batch",
+      "context_length": 262144,
+      "max_output_tokens": 131072,
+      "input_price_per_mtok": 0.23,
+      "output_price_per_mtok": 0.92,
       "supports_thinking": false,
       "thinking_type": "none",
       "temperature_range": [
@@ -5644,9 +6118,9 @@
       "provider": "gemini",
       "local_id": "gemini-pro-latest",
       "context_length": 1048576,
-      "max_output_tokens": 65536,
+      "max_output_tokens": 943718,
       "input_price_per_mtok": 2.0,
-      "output_price_per_mtok": 12.0,
+      "output_price_per_mtok": 10.0,
       "supports_thinking": false,
       "thinking_type": "none",
       "temperature_range": [
@@ -5676,7 +6150,7 @@
       "local_id": "kimi-latest",
       "context_length": 1048576,
       "max_output_tokens": 943718,
-      "input_price_per_mtok": 0.49,
+      "input_price_per_mtok": 0.238,
       "output_price_per_mtok": 13.0,
       "supports_thinking": false,
       "thinking_type": "none",
@@ -5877,41 +6351,6 @@
         "top_p"
       ]
     },
-    "qwen/qwen3.6-max-preview": {
-      "id": "qwen/qwen3.6-max-preview",
-      "name": "Qwen: Qwen3.6 Max Preview",
-      "provider": "qwen",
-      "local_id": "qwen3.6-max-preview",
-      "context_length": 262144,
-      "max_output_tokens": 65536,
-      "input_price_per_mtok": 1.027,
-      "output_price_per_mtok": 6.162,
-      "supports_thinking": false,
-      "thinking_type": "none",
-      "temperature_range": [
-        0.0,
-        2.0
-      ],
-      "is_reasoning_model": false,
-      "supported_parameters": [
-        "frequency_penalty",
-        "include_reasoning",
-        "logprobs",
-        "max_tokens",
-        "presence_penalty",
-        "reasoning",
-        "response_format",
-        "seed",
-        "stop",
-        "structured_outputs",
-        "temperature",
-        "tool_choice",
-        "tools",
-        "top_k",
-        "top_logprobs",
-        "top_p"
-      ]
-    },
     "qwen/qwen3.6-27b": {
       "id": "qwen/qwen3.6-27b",
       "name": "Qwen: Qwen3.6 27B",
@@ -5919,8 +6358,8 @@
       "local_id": "qwen3.6-27b",
       "context_length": 262144,
       "max_output_tokens": 65536,
-      "input_price_per_mtok": 0.45,
-      "output_price_per_mtok": 2.7,
+      "input_price_per_mtok": 0.25,
+      "output_price_per_mtok": 2.0,
       "supports_thinking": false,
       "thinking_type": "none",
       "temperature_range": [
@@ -6074,8 +6513,8 @@
       "local_id": "deepseek-v4-pro",
       "context_length": 1048576,
       "max_output_tokens": 384000,
-      "input_price_per_mtok": 0.9553,
-      "output_price_per_mtok": 1.9105,
+      "input_price_per_mtok": 0.4343,
+      "output_price_per_mtok": 0.8686,
       "supports_thinking": false,
       "thinking_type": "none",
       "temperature_range": [
@@ -6113,9 +6552,9 @@
       "provider": "deepseek",
       "local_id": "deepseek-v4-flash",
       "context_length": 1048576,
-      "max_output_tokens": 943718,
-      "input_price_per_mtok": 0.0099,
-      "output_price_per_mtok": 1.28,
+      "max_output_tokens": 943717,
+      "input_price_per_mtok": 0.091,
+      "output_price_per_mtok": 0.182,
       "supports_thinking": false,
       "thinking_type": "none",
       "temperature_range": [
@@ -6321,7 +6760,32 @@
         2.0
       ],
       "is_reasoning_model": false,
-      "supported_parameters": []
+      "supported_parameters": [
+        "frequency_penalty",
+        "include_reasoning",
+        "logit_bias",
+        "logprobs",
+        "max_completion_tokens",
+        "max_tokens",
+        "min_p",
+        "parallel_tool_calls",
+        "presence_penalty",
+        "reasoning",
+        "reasoning_effort",
+        "repetition_penalty",
+        "response_format",
+        "seed",
+        "stop",
+        "structured_outputs",
+        "temperature",
+        "tool_choice",
+        "tools",
+        "top_a",
+        "top_k",
+        "top_logprobs",
+        "top_p",
+        "verbosity"
+      ]
     },
     "moonshotai/kimi-k2.6": {
       "id": "moonshotai/kimi-k2.6",
@@ -6330,8 +6794,8 @@
       "local_id": "kimi-k2.6",
       "context_length": 262144,
       "max_output_tokens": 235929,
-      "input_price_per_mtok": 0.465,
-      "output_price_per_mtok": 2.45,
+      "input_price_per_mtok": 0.65,
+      "output_price_per_mtok": 3.41,
       "supports_thinking": false,
       "thinking_type": "none",
       "temperature_range": [
@@ -6532,8 +6996,8 @@
       "local_id": "gemma-4-31b-it",
       "context_length": 262144,
       "max_output_tokens": 16384,
-      "input_price_per_mtok": 0.09,
-      "output_price_per_mtok": 0.34,
+      "input_price_per_mtok": 0.2,
+      "output_price_per_mtok": 0.4,
       "supports_thinking": false,
       "thinking_type": "none",
       "temperature_range": [
@@ -6828,9 +7292,9 @@
       "provider": "minimax",
       "local_id": "minimax-m2.7",
       "context_length": 204800,
-      "max_output_tokens": 176947,
-      "input_price_per_mtok": 0.21,
-      "output_price_per_mtok": 0.84,
+      "max_output_tokens": 131072,
+      "input_price_per_mtok": 0.3,
+      "output_price_per_mtok": 1.2,
       "supports_thinking": false,
       "thinking_type": "none",
       "temperature_range": [
@@ -7449,9 +7913,9 @@
       "provider": "qwen",
       "local_id": "qwen3.5-35b-a3b",
       "context_length": 262144,
-      "max_output_tokens": 32768,
-      "input_price_per_mtok": 0.08,
-      "output_price_per_mtok": 0.75,
+      "max_output_tokens": 235929,
+      "input_price_per_mtok": 0.15,
+      "output_price_per_mtok": 1.0,
       "supports_thinking": false,
       "thinking_type": "none",
       "temperature_range": [
@@ -7487,9 +7951,9 @@
       "provider": "qwen",
       "local_id": "qwen3.5-27b",
       "context_length": 262144,
-      "max_output_tokens": 81920,
-      "input_price_per_mtok": 0.26,
-      "output_price_per_mtok": 2.6,
+      "max_output_tokens": 65536,
+      "input_price_per_mtok": 0.27,
+      "output_price_per_mtok": 2.16,
       "supports_thinking": false,
       "thinking_type": "none",
       "temperature_range": [
@@ -7845,8 +8309,8 @@
       "local_id": "qwen3.5-397b-a17b",
       "context_length": 262144,
       "max_output_tokens": 235929,
-      "input_price_per_mtok": 0.55,
-      "output_price_per_mtok": 3.5,
+      "input_price_per_mtok": 0.5,
+      "output_price_per_mtok": 3.6,
       "supports_thinking": false,
       "thinking_type": "none",
       "temperature_range": [
@@ -7882,9 +8346,9 @@
       "provider": "minimax",
       "local_id": "minimax-m2.5",
       "context_length": 204800,
-      "max_output_tokens": 128000,
+      "max_output_tokens": 32768,
       "input_price_per_mtok": 0.27,
-      "output_price_per_mtok": 1.08,
+      "output_price_per_mtok": 0.95,
       "supports_thinking": false,
       "thinking_type": "none",
       "temperature_range": [
@@ -7920,9 +8384,9 @@
       "provider": "z-ai",
       "local_id": "glm-5",
       "context_length": 204800,
-      "max_output_tokens": 128000,
-      "input_price_per_mtok": 0.6,
-      "output_price_per_mtok": 1.92,
+      "max_output_tokens": 131072,
+      "input_price_per_mtok": 1.0,
+      "output_price_per_mtok": 3.2,
       "supports_thinking": false,
       "thinking_type": "none",
       "temperature_range": [
@@ -7938,41 +8402,6 @@
         "presence_penalty",
         "reasoning",
         "repetition_penalty",
-        "response_format",
-        "seed",
-        "stop",
-        "structured_outputs",
-        "temperature",
-        "tool_choice",
-        "tools",
-        "top_k",
-        "top_logprobs",
-        "top_p"
-      ]
-    },
-    "qwen/qwen3-max-thinking": {
-      "id": "qwen/qwen3-max-thinking",
-      "name": "Qwen: Qwen3 Max Thinking",
-      "provider": "qwen",
-      "local_id": "qwen3-max-thinking",
-      "context_length": 262144,
-      "max_output_tokens": 65536,
-      "input_price_per_mtok": 0.78,
-      "output_price_per_mtok": 3.9,
-      "supports_thinking": false,
-      "thinking_type": "none",
-      "temperature_range": [
-        0.0,
-        2.0
-      ],
-      "is_reasoning_model": false,
-      "supported_parameters": [
-        "frequency_penalty",
-        "include_reasoning",
-        "logprobs",
-        "max_tokens",
-        "presence_penalty",
-        "reasoning",
         "response_format",
         "seed",
         "stop",
@@ -8158,8 +8587,8 @@
       "local_id": "kimi-k2.5",
       "context_length": 262144,
       "max_output_tokens": 235929,
-      "input_price_per_mtok": 0.45,
-      "output_price_per_mtok": 2.25,
+      "input_price_per_mtok": 0.5,
+      "output_price_per_mtok": 2.5,
       "supports_thinking": false,
       "thinking_type": "none",
       "temperature_range": [
@@ -8494,8 +8923,8 @@
       "local_id": "glm-4.7",
       "context_length": 204800,
       "max_output_tokens": 131072,
-      "input_price_per_mtok": 0.6,
-      "output_price_per_mtok": 2.2,
+      "input_price_per_mtok": 0.54,
+      "output_price_per_mtok": 1.98,
       "supports_thinking": false,
       "thinking_type": "none",
       "temperature_range": [
@@ -9117,8 +9546,8 @@
       "provider": "deepseek",
       "local_id": "deepseek-v3.2",
       "context_length": 163840,
-      "max_output_tokens": 147456,
-      "input_price_per_mtok": 0.259,
+      "max_output_tokens": 65536,
+      "input_price_per_mtok": 0.28,
       "output_price_per_mtok": 0.42,
       "supports_thinking": false,
       "thinking_type": "none",
@@ -9360,7 +9789,7 @@
       "provider": "moonshotai",
       "local_id": "kimi-k2-thinking",
       "context_length": 262144,
-      "max_output_tokens": 235929,
+      "max_output_tokens": 98304,
       "input_price_per_mtok": 0.6,
       "output_price_per_mtok": 2.5,
       "supports_thinking": false,
@@ -9510,9 +9939,9 @@
       "provider": "minimax",
       "local_id": "minimax-m2",
       "context_length": 204800,
-      "max_output_tokens": 176947,
-      "input_price_per_mtok": 0.3,
-      "output_price_per_mtok": 1.2,
+      "max_output_tokens": 131072,
+      "input_price_per_mtok": 0.255,
+      "output_price_per_mtok": 1.02,
       "supports_thinking": false,
       "thinking_type": "none",
       "temperature_range": [
@@ -9528,39 +9957,6 @@
         "presence_penalty",
         "reasoning",
         "repetition_penalty",
-        "response_format",
-        "seed",
-        "stop",
-        "structured_outputs",
-        "temperature",
-        "tool_choice",
-        "tools",
-        "top_k",
-        "top_logprobs",
-        "top_p"
-      ]
-    },
-    "qwen/qwen3-vl-32b-instruct": {
-      "id": "qwen/qwen3-vl-32b-instruct",
-      "name": "Qwen: Qwen3 VL 32B Instruct",
-      "provider": "qwen",
-      "local_id": "qwen3-vl-32b-instruct",
-      "context_length": 131072,
-      "max_output_tokens": 32768,
-      "input_price_per_mtok": 0.104,
-      "output_price_per_mtok": 0.416,
-      "supports_thinking": false,
-      "thinking_type": "none",
-      "temperature_range": [
-        0.0,
-        2.0
-      ],
-      "is_reasoning_model": false,
-      "supported_parameters": [
-        "frequency_penalty",
-        "logprobs",
-        "max_tokens",
-        "presence_penalty",
         "response_format",
         "seed",
         "stop",
@@ -9697,50 +10093,15 @@
         "top_p"
       ]
     },
-    "qwen/qwen3-vl-8b-thinking": {
-      "id": "qwen/qwen3-vl-8b-thinking",
-      "name": "Qwen: Qwen3 VL 8B Thinking",
-      "provider": "qwen",
-      "local_id": "qwen3-vl-8b-thinking",
-      "context_length": 131072,
-      "max_output_tokens": 32768,
-      "input_price_per_mtok": 0.18,
-      "output_price_per_mtok": 2.1,
-      "supports_thinking": false,
-      "thinking_type": "none",
-      "temperature_range": [
-        0.0,
-        2.0
-      ],
-      "is_reasoning_model": false,
-      "supported_parameters": [
-        "frequency_penalty",
-        "include_reasoning",
-        "logprobs",
-        "max_tokens",
-        "presence_penalty",
-        "reasoning",
-        "response_format",
-        "seed",
-        "stop",
-        "structured_outputs",
-        "temperature",
-        "tool_choice",
-        "tools",
-        "top_k",
-        "top_logprobs",
-        "top_p"
-      ]
-    },
     "qwen/qwen3-vl-8b-instruct": {
       "id": "qwen/qwen3-vl-8b-instruct",
       "name": "Qwen: Qwen3 VL 8B Instruct",
       "provider": "qwen",
       "local_id": "qwen3-vl-8b-instruct",
       "context_length": 262144,
-      "max_output_tokens": 32768,
-      "input_price_per_mtok": 0.117,
-      "output_price_per_mtok": 0.455,
+      "max_output_tokens": 235929,
+      "input_price_per_mtok": 0.25,
+      "output_price_per_mtok": 0.75,
       "supports_thinking": false,
       "thinking_type": "none",
       "temperature_range": [
@@ -9829,9 +10190,9 @@
       "provider": "qwen",
       "local_id": "qwen3-vl-30b-a3b-thinking",
       "context_length": 262144,
-      "max_output_tokens": 32768,
-      "input_price_per_mtok": 0.2,
-      "output_price_per_mtok": 2.4,
+      "max_output_tokens": 235929,
+      "input_price_per_mtok": 0.29,
+      "output_price_per_mtok": 1.0,
       "supports_thinking": false,
       "thinking_type": "none",
       "temperature_range": [
@@ -9842,19 +10203,14 @@
       "supported_parameters": [
         "frequency_penalty",
         "include_reasoning",
-        "logprobs",
         "max_tokens",
-        "presence_penalty",
         "reasoning",
         "response_format",
-        "seed",
-        "stop",
         "structured_outputs",
         "temperature",
         "tool_choice",
         "tools",
         "top_k",
-        "top_logprobs",
         "top_p"
       ]
     },
@@ -9958,9 +10314,9 @@
       "provider": "z-ai",
       "local_id": "glm-4.6",
       "context_length": 204800,
-      "max_output_tokens": 16384,
-      "input_price_per_mtok": 0.43,
-      "output_price_per_mtok": 1.75,
+      "max_output_tokens": 131072,
+      "input_price_per_mtok": 0.55,
+      "output_price_per_mtok": 2.2,
       "supports_thinking": false,
       "thinking_type": "none",
       "temperature_range": [
@@ -10134,41 +10490,6 @@
         "stop"
       ]
     },
-    "qwen/qwen3-vl-235b-a22b-thinking": {
-      "id": "qwen/qwen3-vl-235b-a22b-thinking",
-      "name": "Qwen: Qwen3 VL 235B A22B Thinking",
-      "provider": "qwen",
-      "local_id": "qwen3-vl-235b-a22b-thinking",
-      "context_length": 131072,
-      "max_output_tokens": 32768,
-      "input_price_per_mtok": 0.4,
-      "output_price_per_mtok": 4.0,
-      "supports_thinking": false,
-      "thinking_type": "none",
-      "temperature_range": [
-        0.0,
-        2.0
-      ],
-      "is_reasoning_model": false,
-      "supported_parameters": [
-        "frequency_penalty",
-        "include_reasoning",
-        "logprobs",
-        "max_tokens",
-        "presence_penalty",
-        "reasoning",
-        "response_format",
-        "seed",
-        "stop",
-        "structured_outputs",
-        "temperature",
-        "tool_choice",
-        "tools",
-        "top_k",
-        "top_logprobs",
-        "top_p"
-      ]
-    },
     "qwen/qwen3-vl-235b-a22b-instruct": {
       "id": "qwen/qwen3-vl-235b-a22b-instruct",
       "name": "Qwen: Qwen3 VL 235B A22B Instruct",
@@ -10193,72 +10514,6 @@
         "min_p",
         "presence_penalty",
         "repetition_penalty",
-        "response_format",
-        "seed",
-        "stop",
-        "structured_outputs",
-        "temperature",
-        "tool_choice",
-        "tools",
-        "top_k",
-        "top_logprobs",
-        "top_p"
-      ]
-    },
-    "qwen/qwen3-max": {
-      "id": "qwen/qwen3-max",
-      "name": "Qwen: Qwen3 Max",
-      "provider": "qwen",
-      "local_id": "qwen3-max",
-      "context_length": 262144,
-      "max_output_tokens": 65536,
-      "input_price_per_mtok": 0.78,
-      "output_price_per_mtok": 3.9,
-      "supports_thinking": false,
-      "thinking_type": "none",
-      "temperature_range": [
-        0.0,
-        2.0
-      ],
-      "is_reasoning_model": false,
-      "supported_parameters": [
-        "frequency_penalty",
-        "logprobs",
-        "max_tokens",
-        "presence_penalty",
-        "response_format",
-        "seed",
-        "stop",
-        "structured_outputs",
-        "temperature",
-        "tool_choice",
-        "tools",
-        "top_k",
-        "top_logprobs",
-        "top_p"
-      ]
-    },
-    "qwen/qwen3-coder-plus": {
-      "id": "qwen/qwen3-coder-plus",
-      "name": "Qwen: Qwen3 Coder Plus",
-      "provider": "qwen",
-      "local_id": "qwen3-coder-plus",
-      "context_length": 1000000,
-      "max_output_tokens": 65536,
-      "input_price_per_mtok": 0.65,
-      "output_price_per_mtok": 3.25,
-      "supports_thinking": false,
-      "thinking_type": "none",
-      "temperature_range": [
-        0.0,
-        2.0
-      ],
-      "is_reasoning_model": false,
-      "supported_parameters": [
-        "frequency_penalty",
-        "logprobs",
-        "max_tokens",
-        "presence_penalty",
         "response_format",
         "seed",
         "stop",
@@ -10340,7 +10595,7 @@
       "provider": "qwen",
       "local_id": "qwen3-next-80b-a3b-thinking",
       "context_length": 262144,
-      "max_output_tokens": 32768,
+      "max_output_tokens": 235929,
       "input_price_per_mtok": 0.15,
       "output_price_per_mtok": 1.2,
       "supports_thinking": false,
@@ -10376,8 +10631,8 @@
       "provider": "qwen",
       "local_id": "qwen3-next-80b-a3b-instruct",
       "context_length": 262144,
-      "max_output_tokens": 235929,
-      "input_price_per_mtok": 0.1,
+      "max_output_tokens": 16384,
+      "input_price_per_mtok": 0.09,
       "output_price_per_mtok": 1.1,
       "supports_thinking": false,
       "thinking_type": "none",
@@ -10394,39 +10649,6 @@
         "min_p",
         "presence_penalty",
         "repetition_penalty",
-        "response_format",
-        "seed",
-        "stop",
-        "structured_outputs",
-        "temperature",
-        "tool_choice",
-        "tools",
-        "top_k",
-        "top_logprobs",
-        "top_p"
-      ]
-    },
-    "qwen/qwen-plus-2025-07-28": {
-      "id": "qwen/qwen-plus-2025-07-28",
-      "name": "Qwen: Qwen Plus 0728",
-      "provider": "qwen",
-      "local_id": "qwen-plus-2025-07-28",
-      "context_length": 1000000,
-      "max_output_tokens": 32768,
-      "input_price_per_mtok": 0.26,
-      "output_price_per_mtok": 0.78,
-      "supports_thinking": false,
-      "thinking_type": "none",
-      "temperature_range": [
-        0.0,
-        2.0
-      ],
-      "is_reasoning_model": false,
-      "supported_parameters": [
-        "frequency_penalty",
-        "logprobs",
-        "max_tokens",
-        "presence_penalty",
         "response_format",
         "seed",
         "stop",
@@ -10471,38 +10693,6 @@
         "top_p"
       ]
     },
-    "qwen/qwen3-30b-a3b-thinking-2507": {
-      "id": "qwen/qwen3-30b-a3b-thinking-2507",
-      "name": "Qwen: Qwen3 30B A3B Thinking 2507",
-      "provider": "qwen",
-      "local_id": "qwen3-30b-a3b-thinking-2507",
-      "context_length": 81920,
-      "max_output_tokens": 32768,
-      "input_price_per_mtok": 0.2,
-      "output_price_per_mtok": 2.4,
-      "supports_thinking": false,
-      "thinking_type": "none",
-      "temperature_range": [
-        0.0,
-        2.0
-      ],
-      "is_reasoning_model": false,
-      "supported_parameters": [
-        "frequency_penalty",
-        "include_reasoning",
-        "max_tokens",
-        "presence_penalty",
-        "reasoning",
-        "response_format",
-        "seed",
-        "stop",
-        "temperature",
-        "tool_choice",
-        "tools",
-        "top_k",
-        "top_p"
-      ]
-    },
     "nousresearch/hermes-4-405b": {
       "id": "nousresearch/hermes-4-405b",
       "name": "Nous: Hermes 4 405B",
@@ -10522,13 +10712,16 @@
       "supported_parameters": [
         "frequency_penalty",
         "include_reasoning",
+        "logprobs",
         "max_tokens",
         "presence_penalty",
         "reasoning",
         "repetition_penalty",
         "response_format",
+        "structured_outputs",
         "temperature",
         "top_k",
+        "top_logprobs",
         "top_p"
       ]
     },
@@ -10846,9 +11039,9 @@
       "provider": "openai",
       "local_id": "gpt-oss-120b",
       "context_length": 131072,
-      "max_output_tokens": 117964,
-      "input_price_per_mtok": 0.037,
-      "output_price_per_mtok": 0.17,
+      "max_output_tokens": 65536,
+      "input_price_per_mtok": 0.15,
+      "output_price_per_mtok": 0.6,
       "supports_thinking": true,
       "thinking_type": "effort",
       "temperature_range": [
@@ -11129,18 +11322,14 @@
       "is_reasoning_model": false,
       "supported_parameters": [
         "frequency_penalty",
-        "logprobs",
         "max_tokens",
-        "presence_penalty",
         "response_format",
-        "seed",
         "stop",
         "structured_outputs",
         "temperature",
         "tool_choice",
         "tools",
         "top_k",
-        "top_logprobs",
         "top_p"
       ]
     },
@@ -11151,7 +11340,7 @@
       "local_id": "qwen3-30b-a3b-instruct-2507",
       "context_length": 262144,
       "max_output_tokens": 235929,
-      "input_price_per_mtok": 0.1,
+      "input_price_per_mtok": 0.09,
       "output_price_per_mtok": 0.3,
       "supports_thinking": false,
       "thinking_type": "none",
@@ -11244,10 +11433,10 @@
       "name": "Qwen: Qwen3 235B A22B Thinking 2507",
       "provider": "qwen",
       "local_id": "qwen3-235b-a22b-thinking-2507",
-      "context_length": 131072,
-      "max_output_tokens": 117964,
-      "input_price_per_mtok": 0.23,
-      "output_price_per_mtok": 2.3,
+      "context_length": 128000,
+      "max_output_tokens": 16384,
+      "input_price_per_mtok": 0.45,
+      "output_price_per_mtok": 3.5,
       "supports_thinking": false,
       "thinking_type": "none",
       "temperature_range": [
@@ -11261,8 +11450,6 @@
         "max_tokens",
         "presence_penalty",
         "reasoning",
-        "response_format",
-        "seed",
         "stop",
         "temperature",
         "tool_choice",
@@ -11551,8 +11738,8 @@
       "name": "Morph: Morph V3 Fast",
       "provider": "morph",
       "local_id": "morph-v3-fast",
-      "context_length": 81920,
-      "max_output_tokens": 38000,
+      "context_length": 262144,
+      "max_output_tokens": 131072,
       "input_price_per_mtok": 0.8,
       "output_price_per_mtok": 1.2,
       "supports_thinking": false,
@@ -11563,9 +11750,13 @@
       ],
       "is_reasoning_model": false,
       "supported_parameters": [
+        "logprobs",
         "max_tokens",
+        "response_format",
         "stop",
-        "temperature"
+        "structured_outputs",
+        "temperature",
+        "top_logprobs"
       ]
     },
     "mistralai/mistral-small-3.2-24b-instruct": {
@@ -11851,34 +12042,6 @@
         "top_p"
       ]
     },
-    "anthropic/claude-sonnet-4": {
-      "id": "anthropic/claude-sonnet-4",
-      "name": "Anthropic: Claude Sonnet 4",
-      "provider": "anthropic",
-      "local_id": "claude-sonnet-4",
-      "context_length": 200000,
-      "max_output_tokens": 64000,
-      "input_price_per_mtok": 3.0,
-      "output_price_per_mtok": 15.0,
-      "supports_thinking": true,
-      "thinking_type": "budget",
-      "temperature_range": [
-        0.0,
-        1.0
-      ],
-      "is_reasoning_model": false,
-      "supported_parameters": [
-        "include_reasoning",
-        "max_tokens",
-        "reasoning",
-        "stop",
-        "temperature",
-        "tool_choice",
-        "tools",
-        "top_k",
-        "top_p"
-      ]
-    },
     "mistralai/mistral-medium-3": {
       "id": "mistralai/mistral-medium-3",
       "name": "Mistral: Mistral Medium 3",
@@ -11944,7 +12107,7 @@
       "name": "Qwen: Qwen3 30B A3B",
       "provider": "qwen",
       "local_id": "qwen3-30b-a3b",
-      "context_length": 131072,
+      "context_length": 40960,
       "max_output_tokens": 16384,
       "input_price_per_mtok": 0.12,
       "output_price_per_mtok": 0.5,
@@ -11975,44 +12138,12 @@
         "top_p"
       ]
     },
-    "qwen/qwen3-8b": {
-      "id": "qwen/qwen3-8b",
-      "name": "Qwen: Qwen3 8B",
-      "provider": "qwen",
-      "local_id": "qwen3-8b",
-      "context_length": 131072,
-      "max_output_tokens": 8192,
-      "input_price_per_mtok": 0.117,
-      "output_price_per_mtok": 0.455,
-      "supports_thinking": false,
-      "thinking_type": "none",
-      "temperature_range": [
-        0.0,
-        2.0
-      ],
-      "is_reasoning_model": false,
-      "supported_parameters": [
-        "frequency_penalty",
-        "include_reasoning",
-        "max_tokens",
-        "presence_penalty",
-        "reasoning",
-        "response_format",
-        "seed",
-        "stop",
-        "temperature",
-        "tool_choice",
-        "tools",
-        "top_k",
-        "top_p"
-      ]
-    },
     "qwen/qwen3-14b": {
       "id": "qwen/qwen3-14b",
       "name": "Qwen: Qwen3 14B",
       "provider": "qwen",
       "local_id": "qwen3-14b",
-      "context_length": 131072,
+      "context_length": 40960,
       "max_output_tokens": 16384,
       "input_price_per_mtok": 0.12,
       "output_price_per_mtok": 0.24,
@@ -12081,38 +12212,6 @@
         "top_a",
         "top_k",
         "top_logprobs",
-        "top_p"
-      ]
-    },
-    "qwen/qwen3-235b-a22b": {
-      "id": "qwen/qwen3-235b-a22b",
-      "name": "Qwen: Qwen3 235B A22B",
-      "provider": "qwen",
-      "local_id": "qwen3-235b-a22b",
-      "context_length": 131072,
-      "max_output_tokens": 8192,
-      "input_price_per_mtok": 0.455,
-      "output_price_per_mtok": 1.82,
-      "supports_thinking": false,
-      "thinking_type": "none",
-      "temperature_range": [
-        0.0,
-        2.0
-      ],
-      "is_reasoning_model": false,
-      "supported_parameters": [
-        "frequency_penalty",
-        "include_reasoning",
-        "max_tokens",
-        "presence_penalty",
-        "reasoning",
-        "response_format",
-        "seed",
-        "stop",
-        "temperature",
-        "tool_choice",
-        "tools",
-        "top_k",
         "top_p"
       ]
     },
@@ -12422,7 +12521,7 @@
       "name": "Meta: Llama 4 Maverick",
       "provider": "meta",
       "local_id": "llama-4-maverick",
-      "context_length": 1048576,
+      "context_length": 524288,
       "max_output_tokens": 16384,
       "input_price_per_mtok": 0.1875,
       "output_price_per_mtok": 0.6525,
@@ -12596,6 +12695,7 @@
       "supported_parameters": [
         "frequency_penalty",
         "logit_bias",
+        "logprobs",
         "max_tokens",
         "min_p",
         "presence_penalty",
@@ -12606,6 +12706,7 @@
         "structured_outputs",
         "temperature",
         "top_k",
+        "top_logprobs",
         "top_p"
       ]
     },
@@ -12712,7 +12813,7 @@
       "context_length": 131072,
       "max_output_tokens": 117964,
       "input_price_per_mtok": 0.08,
-      "output_price_per_mtok": 0.45,
+      "output_price_per_mtok": 0.35,
       "supports_thinking": false,
       "thinking_type": "none",
       "temperature_range": [
@@ -13113,39 +13214,6 @@
         "web_search_options"
       ]
     },
-    "deepseek/deepseek-r1": {
-      "id": "deepseek/deepseek-r1",
-      "name": "DeepSeek: R1",
-      "provider": "deepseek",
-      "local_id": "deepseek-r1",
-      "context_length": 64000,
-      "max_output_tokens": 16000,
-      "input_price_per_mtok": 0.7,
-      "output_price_per_mtok": 2.5,
-      "supports_thinking": false,
-      "thinking_type": "none",
-      "temperature_range": [
-        0.0,
-        2.0
-      ],
-      "is_reasoning_model": false,
-      "supported_parameters": [
-        "frequency_penalty",
-        "include_reasoning",
-        "max_tokens",
-        "presence_penalty",
-        "reasoning",
-        "repetition_penalty",
-        "response_format",
-        "seed",
-        "stop",
-        "temperature",
-        "tool_choice",
-        "tools",
-        "top_k",
-        "top_p"
-      ]
-    },
     "minimax/minimax-01": {
       "id": "minimax/minimax-01",
       "name": "MiniMax: MiniMax-01",
@@ -13234,37 +13302,6 @@
         "top_p"
       ]
     },
-    "sao10k/l3.3-euryale-70b": {
-      "id": "sao10k/l3.3-euryale-70b",
-      "name": "Sao10K: Llama 3.3 Euryale 70B",
-      "provider": "sao10k",
-      "local_id": "l3.3-euryale-70b",
-      "context_length": 131072,
-      "max_output_tokens": 16384,
-      "input_price_per_mtok": 0.65,
-      "output_price_per_mtok": 0.75,
-      "supports_thinking": false,
-      "thinking_type": "none",
-      "temperature_range": [
-        0.0,
-        2.0
-      ],
-      "is_reasoning_model": false,
-      "supported_parameters": [
-        "frequency_penalty",
-        "logprobs",
-        "max_tokens",
-        "presence_penalty",
-        "repetition_penalty",
-        "response_format",
-        "seed",
-        "stop",
-        "structured_outputs",
-        "temperature",
-        "top_logprobs",
-        "top_p"
-      ]
-    },
     "openai/o1": {
       "id": "openai/o1",
       "name": "OpenAI: o1",
@@ -13328,8 +13365,8 @@
       "local_id": "llama-3.3-70b-instruct",
       "context_length": 131072,
       "max_output_tokens": 16384,
-      "input_price_per_mtok": 0.22,
-      "output_price_per_mtok": 0.5,
+      "input_price_per_mtok": 0.1,
+      "output_price_per_mtok": 0.32,
       "supports_thinking": false,
       "thinking_type": "none",
       "temperature_range": [
@@ -13664,9 +13701,9 @@
       "provider": "meta",
       "local_id": "llama-3.2-3b-instruct",
       "context_length": 131072,
-      "max_output_tokens": 117964,
-      "input_price_per_mtok": 0.05,
-      "output_price_per_mtok": 0.33,
+      "max_output_tokens": 72000,
+      "input_price_per_mtok": 0.0509,
+      "output_price_per_mtok": 0.335,
       "supports_thinking": false,
       "thinking_type": "none",
       "temperature_range": [
@@ -14326,35 +14363,6 @@
         "temperature",
         "tool_choice",
         "tools",
-        "top_p"
-      ]
-    },
-    "microsoft/wizardlm-2-8x22b": {
-      "id": "microsoft/wizardlm-2-8x22b",
-      "name": "WizardLM-2 8x22B",
-      "provider": "microsoft",
-      "local_id": "wizardlm-2-8x22b",
-      "context_length": 65535,
-      "max_output_tokens": 8000,
-      "input_price_per_mtok": 0.62,
-      "output_price_per_mtok": 0.62,
-      "supports_thinking": false,
-      "thinking_type": "none",
-      "temperature_range": [
-        0.0,
-        2.0
-      ],
-      "is_reasoning_model": false,
-      "supported_parameters": [
-        "frequency_penalty",
-        "max_tokens",
-        "presence_penalty",
-        "repetition_penalty",
-        "response_format",
-        "seed",
-        "stop",
-        "temperature",
-        "top_k",
         "top_p"
       ]
     },
